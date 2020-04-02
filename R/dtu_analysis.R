@@ -1,103 +1,185 @@
 
-
-#TODO: add bulk option
-#' Title
+#TODO: Refer to combination of sc data matrix
+#' Import the quantification results of many RNAseq quantifiers, including 'alevin' for single-cell data.
 #'
-#' @param path
-#' @param ...
+#' Most likely the first step in your DTUrtle analysis.
+#' Can perform multiple scaling schemes, defaults to scaling schemes appropriate for DTU analysis.
 #'
-#' @return
+#' @param files Vector of files to be imported. Optionally can be named to keep the samples names.
+#' @param type Type of the quantification data. All tools supported by tximport can be selected. If you have single-cell data, the use of `alevin` is proposed.
+#' - `'salmon'`
+#' - `'alevin'`
+#' - `'kallisto'`
+#' - `'rsem'`
+#' - `'stringtie'`
+#' - `'sailfish'`
+#' - `'none'`
+#' @param ... Further parameters to the specific tximport call. See `tximport()` for available parameters.
+#'
+#' @return - For bulk data: A combined count matrix for all specified samples.
+#' - For single-cell data (`type='alevin'`): A list of count matrices per sample. Can be combined and optionally added to a Seurat object with TODO.
 #' @export
 #'
 #' @examples
-readin_alevin <- function(path,  ...){
-    message("Read in ", length(path), " alevin runs.")
-    return_obj = list()
-    for(i in path){
-        browser()
-        #temp <- tximport:::readAlevin(files=i, dropInfReps=F, forceSlow=F, ...)
-        return_obj <- append(return_obj, tximport(files = i, type = "alevin", ...))
-    }
+import_counts <- function(files, type, ...){
+    assert_that(type %in% c("salmon", "alevin", "kallisto", "rsem", "stringtie", "sailfish", "none"))
+    message("Reading in ", length(files), " ", type, " runs.")
 
-    if(!is.null(names(path))){
-        names(return_obj) <- names(path)
+    args=list(...)
+
+    if(type=="alevin"){
+        return_obj = list()
+
+        if(hasArg("countsFromAbundance")){
+            warning("\nImport of alevin files currently does not support using scaling methods.\nPlease note, that in tagged-end single-cell protocols (like 10X chromium) it is assumed\nthat there is no length effect in the fragment generation process - thus making a scaling unnecessary.")
+        }
+
+        for(i in files){
+            return_obj <- append(return_obj, tximport(files = i, type = "alevin", ...)$counts)
+        }
+        if(!is.null(names(files))){
+            names(return_obj) <- names(files)
+        }
+        return(return_obj)
+    }else{
+
+        if(hasArg("countsFromAbundance")){
+            if(!args$countsFromAbundance %in% c("dtuScaledTPM", "scaledTPM")){
+            warning("It is recommended to use the 'countsFromAbundance' scaling schemes 'dtuScaledTPM' or 'scaledTPM',\nto correct for increased counts of longer transcripts.\nIf you are using a tagged-end protocol, the use 'no' is suggested.")
+            }
+        }else{
+            if(hasArg("tx2gene")){
+                message("Using 'dtuScaledTPM' for 'countsFromAbundance'.")
+                args$countsFromAbundance <- "dtuScaledTPM"
+            }else{
+                message("Using 'scaledTPM' for 'countsFromAbundance'. If you specify a 'tx2gene' file, 'dtuScaledTPM' can be used.")
+                args$countsFromAbundance <- "scaledTPM"
+            }
+        }
+        if(hasArg(txOut)){
+            if(args$txOut==F){
+                warning("Unless you exactly know what you are doing it is not recommended to set txOut to FALSE.\nDownstream analysis may fail!")
+            }
+        }else{
+            args$txOut <- T
+        }
+        args$files <- files
+        args$type <- type
+        return(do.call(tximport, args)$counts)
     }
-    return(return_obj)
 }
 
 
 #TODO: Check if seurat_obj is seurat object!
-#' Title
+#TODO: combine to matrix without Seurat! (same extension scheme)
+#' Combine list of sparse transcription count matrices.
 #'
-#' @param tx_mat
-#' @param seurat_obj
+#' Only needed when dealing with single-cell data. Adds a cellname extension if necessary.
+#' Can optionally add the combined matrix to a existing Seurat object (keeping the cellname extension of the object and matching the cells).
 #'
-#' @return
+#' @param tx_list List of sparse transcription count matrices, as returned by `import_counts()` for single-cell data.
+#' @param cell_extensions Optional list of cellname extensions that are added to the cellnames of one sample. The cellnames and the extension are separated by an underscore '_'.
+#' @param seurat_obj Optional seurat object, where the combined matrix is added as an assay. This has the advantage, that the cells are matched and subsetted if necessary. Currently only Seurat 3 objects are supported.
+#' @param assay_name If the combined matrix should be added to an existing Seurat object, the name of the assay can be specified here.
+#'
+#' @return Either a combined sparse transcription count matrix or a seurat object which the  combined sparse transcription count matrix as an assay.
 #' @export
 #'
 #' @examples
-add_to_seurat <- function(tx_mat, seurat_obj){
-    if(!is.list(tx_mat)){
-        tx_mat <- list(tx_mat)
+combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, assay_name="dtutx"){
+
+    if(!is.null(seurat_obj)){
+        assert_that(require("Seurat", character.only = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object!")
+        assert_that(packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported!")
+        #TODO: check if seurat_obj is seurat object!
+        assert_that(is.string(assay_name))
     }
 
-    if(is.null(names(tx_mat))|length(unique(names(tx_mat)))!=length(tx_mat)){
-        names(tx_mat) <- paste0("obj_",seq_along(tx_mat))
+    if(!is.list(tx_list)){
+        tx_list <- list(tx_list)
     }
 
-    if(!all(as.logical(lapply(tx_mat, FUN = function(x) is(x, 'sparseMatrix'))))){
-        stop("Your tx_mat object contains non sparseMatrix elements.")
+    if(!all(as.logical(lapply(tx_list, FUN = function(x) is(x, 'sparseMatrix'))))){
+        stop("Your 'tx_list' object contains non sparseMatrix elements.")
     }
 
-    #map cell extensions
-    extensions_in_seur <- sum(grepl(pattern = "_", x = Cells(seurat_obj), fixed = T))>length(Cells(seurat_obj))*0.1
-    if(extensions_in_seur){
-        message("At least some seurat cellnames show a cellname extension.")
-        extension_list <- paste0("_", unique(stringi::stri_split_fixed(str= Cells(seurat_obj), pattern = "_", n = 2, simplify = T)[,2]))
-        extension_mapping <- names(tx_mat)
-        if(length(extension_list)!=length(extension_mapping)){
-            stop(paste0("Could not 1:1 map seurat cellname extensions and tx file list.\n",
-                        "Try subsetting the seurat object if you do not want to provide tx information of all cells."))
+    if(is.null(names(tx_list))|length(unique(names(tx_list)))!=length(tx_list)){
+        names(tx_list) <- paste0("obj_",seq_along(tx_list))
+    }
+
+    if(!is.null(cell_extensions)){
+        assert_that(are_equal(length(cell_extensions), length(tx_list)), msg="cell_extensions must have same length as tx_list!")
+    }
+
+    dup <- any(duplicated(unlist(lapply(tx_list, FUN = colnames))))
+
+    if(!is.null(seurat_obj)){
+        extensions_in_seur <- sum(grepl(pattern = "_", x = Cells(seurat_obj), fixed = T))>length(Cells(seurat_obj))*0.1
+        if(!extensions_in_seur&dup){
+            stop("Found no Seurat cellname extension but not unique cellnames. Make your cellnames unique or extend the cellnames in your Seurat object.")
         }
-        message("Map extensions:\n\t", paste0(extension_mapping, " --> '", extension_list, "'\n\t"))
-
-        for(i in seq_along(tx_mat)){
-            colnames(tx_mat[[i]]) <- paste0(colnames(tx_mat[[i]]), extension_list[[i]])
+        if(extensions_in_seur){
+            message("At least some seurat cellnames show a cellname extension.")
+            cell_extensions <- paste0("_", unique(stringi::stri_split_fixed(str= Cells(seurat_obj), pattern = "_", n = 2, simplify = T)[,2]))
+            if(length(cell_extensions)!=length(names(tx_list))){
+                stop("Could not 1:1 map seurat cellname extensions and tx file list.\n",
+                     "Try subsetting the seurat object if you do not want to provide tx information for all samples.")
+            }
         }
     }
 
-    all_cells <- unlist(lapply(tx_mat, FUN = colnames))
-    dup_cells <- all_cells[duplicated(all_cells)]
 
-    if(length(dup_cells)>0){
-        stopstr <- ifelse(length(dup_cells)>10, paste0("Found ", length(dup_cells), " duplicated cellnames!"), paste0("Found duplicated cellnames:\n\t", paste0(dup_cells, collapse = "\n\t")))
-        stop(stopstr)
+    if(dup|!is.null(cell_extensions)){
+        if(dup){
+            message("Found overall duplicated cellnames. Trying cellname extension per sample.")
+        }
+
+        if(is.null(cell_extensions)){
+            cell_extensions <- paste0("_", seq_along(tx_list))
+        }
+
+        cell_extensions <- paste0(ifelse(startsWith(cell_extensions, "_"), "", "_"), cell_extensions)
+        message("Map extensions:\n\t", paste0(names(tx_list), " --> '", cell_extensions, "'\n\t"))
+
+        for(i in seq_along(tx_list)){
+            colnames(tx_list[[i]]) <- paste0(colnames(tx_list[[i]]), cell_extensions[[i]])
+        }
+
+
+        all_cells <- unlist(lapply(tx_list, FUN = colnames))
+        dup_cells <- all_cells[duplicated(all_cells)]
+
+        if(length(dup_cells)>0){
+            stopstr <- ifelse(length(dup_cells)>10, paste0("Found ", length(dup_cells), " duplicated cellnames even after cellname extension!"), paste0("Found duplicated cellnames even after cellname extension:\n\t", paste0(dup_cells, collapse = "\n\t")))
+            stop(stopstr)
+        }
+
     }
+
     message("Merging matrices")
-    tx_mat <- merge.sparse(tx_mat)
+    tx_list <- merge_sparse(tx_list)
 
-    common_cells <- intersect(Cells(seurat_obj), colnames(tx_mat))
-    uniq_cells <- setdiff(colnames(tx_mat), Cells(seurat_obj))
-    extra_seurat_cells <- setdiff(Cells(seurat_obj), colnames(tx_mat))
-    message("Of ", ncol(tx_mat), " cells, ", length(common_cells), " (", round(length(common_cells)/ncol(tx_mat)*100), "%) could be found in the provided seurat object.")
-    message(length(uniq_cells), " (",  round(length(uniq_cells)/ncol(tx_mat)*100),"%) are unique to the tx files.")
-    message("The seurat object contains ", length(extra_seurat_cells), " additional cells.")
-    if(length(uniq_cells)>0|length(extra_seurat_cells)>0){
-        message("Subsetting!")
+    if(!is.null(seurat_obj)){
+        common_cells <- intersect(Cells(seurat_obj), colnames(tx_list))
+        uniq_cells <- setdiff(colnames(tx_list), Cells(seurat_obj))
+        extra_seurat_cells <- setdiff(Cells(seurat_obj), colnames(tx_list))
+        message("Of ", ncol(tx_list), " cells, ", length(common_cells), " (", round(length(common_cells)/ncol(tx_list)*100), "%) could be found in the provided seurat object.")
+        message(length(uniq_cells), " (",  round(length(uniq_cells)/ncol(tx_list)*100),"%) are unique to the tx files.")
+        message("The seurat object contains ", length(extra_seurat_cells), " additional cells.")
+        if(length(uniq_cells)>0|length(extra_seurat_cells)>0){
+            message("Subsetting!")
+        }
+        seurat_obj <- subset(seurat_obj, cells=common_cells)
+        tx_list <- tx_list[,common_cells]
+
+        message("Adding assay '",assay_name,"'")
+        seurat_obj[[assay_name]] <- CreateAssayObject(counts=tx_list)
+        return(seurat_obj)
     }
-
-    seurat_obj <- subset(seurat_obj, cells=common_cells)
-    tx_mat <- tx_mat[,common_cells]
-
-    message("Adding assay 'dtutx'")
-    seurat_obj[["dtutx"]] <- CreateAssayObject(counts=tx_mat)
-
-    return(seurat_obj)
+    else{
+        return(tx_list)
+    }
 }
-
-
-
-
 
 
 #' Compute the main DRIMSeq results
@@ -119,11 +201,11 @@ add_to_seurat <- function(tx_mat, seurat_obj){
 #' @param n_core Set the number of CPU cores that should be used in the statistical computations.
 #' @param ... If `filtering_strategy=='own'` specify the wished parameters of `dmFilter()` here.
 #'
-#' @return `DRIM` object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
+#' @return `drim` object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
 #' - `drim`: The results of the DRIMSeq statistical computations (`dmTest()`).
-#' - `design_full`: The design matrix generated from the specified `pd` columns
+#' - `design_full`: The design matrix generated from the specified `pd` columns.
 #' - `cond_levels`: A copy of the specified comparison groups.
-#' - `group`: ?
+#' - `group`: Vector which sample/cell belongs to which comparison group.
 #' - `pct_exp_tx`: Data frame of the expressed-in percentage of all transcripts. [TODO: split by group?]
 #' - `pct_exp_gene`: Data frame of the expressed-in percentage of all genes. [TODO: split by group?]
 #'

@@ -45,17 +45,16 @@ merge_sparse <- function(tx_mat) {
     i <- numeric()
     j <- numeric()
 
-    for (M in tx_mat) {
+    for (mat in tx_mat) {
 
-        cnold <- colnames(M)
-        rnold <- rownames(M)
-
+        cnold <- colnames(mat)
+        rnold <- rownames(mat)
         cnnew <- union(cnnew,cnold)
         rnnew <- union(rnnew,rnold)
 
         cindnew <- match(cnold,cnnew)
         rindnew <- match(rnold,rnnew)
-        ind <- summary(M)
+        ind <- Matrix::summary(mat)
         i <- c(i,rindnew[ind[,1]])
         j <- c(j,cindnew[ind[,2]])
         x <- c(x,ind[,3])
@@ -123,4 +122,18 @@ add_max_delta <- function(dtu_table, dtu){
 
     dtu_table[[paste0("max(",levels(dtu$group)[1], "-",levels(dtu$group)[2],")")]] <- as.numeric(sapply(dtu_table$geneID, FUN = getmax))
     return(dtu_table)
+}
+
+
+
+#' Title
+#'
+#' @param x
+#'
+#' @return
+#' @export
+#'
+#' @examples
+rm_tx_version <- function(x){
+    return(sub("\\..*", "", x))
 }
