@@ -9,4 +9,7 @@ Description: More about what it does (maybe more than one line)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-Imports: tximport, DRIMSeq, stageR, stageR
+Depends: tximport, DRIMSeq, stageR, GenomicFeatures, assertthat
+Imports: matrixStats
+RoxygenNote: 7.1.0
+Roxygen: list(markdown = TRUE)
