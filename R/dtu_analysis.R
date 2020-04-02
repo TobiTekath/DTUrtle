@@ -121,9 +121,9 @@ add_to_seurat <- function(tx_mat, seurat_obj){
 #'
 #' @return `DRIM` object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
 #' - `drim`: The results of the DRIMSeq statistical computations (`dmTest()`).
-#' - `design_full`: The design matrix generated from the specified `pd` columns
+#' - `design_full`: The design matrix generated from the specified `pd` columns.
 #' - `cond_levels`: A copy of the specified comparison groups.
-#' - `group`: ?
+#' - `group`: Vector which sample/cell belongs to which comparison group.
 #' - `pct_exp_tx`: Data frame of the expressed-in percentage of all transcripts. [TODO: split by group?]
 #' - `pct_exp_gene`: Data frame of the expressed-in percentage of all genes. [TODO: split by group?]
 #'

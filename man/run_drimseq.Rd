@@ -46,9 +46,9 @@ run_drimseq(
 \code{DRIM} object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
 \itemize{
 \item \code{drim}: The results of the DRIMSeq statistical computations (\code{dmTest()}).
-\item \code{design_full}: The design matrix generated from the specified \code{pd} columns
+\item \code{design_full}: The design matrix generated from the specified \code{pd} columns.
 \item \code{cond_levels}: A copy of the specified comparison groups.
-\item \code{group}: ?
+\item \code{group}: Vector which sample/cell belongs to which comparison group.
 \item \code{pct_exp_tx}: Data frame of the expressed-in percentage of all transcripts. \link{TODO: split by group?}
 \item \code{pct_exp_gene}: Data frame of the expressed-in percentage of all genes. \link{TODO: split by group?}
 }
