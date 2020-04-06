@@ -2,16 +2,31 @@
 % Please edit documentation in R/dtu_analysis.R
 \name{posthoc_and_stager}
 \alias{posthoc_and_stager}
-\title{Title}
+\title{Perform optional posthoc filtering and run two-staged statistical tests}
 \usage{
-posthoc_and_stager(dtu, ofdr = 0.05, posthoc = T, posthoc_filt = 0.1)
+posthoc_and_stager(dturtle, ofdr = 0.05, posthoc = T, posthoc_filt = 0.1)
 }
 \arguments{
-\item{posthoc_filt}{}
+\item{dturtle}{Result object of \code{run_drimseq()}. Contains all the needed data.}
+
+\item{ofdr}{Overall false discovery rate (OFDR).}
+
+\item{posthoc}{Boolean if posthoc filtering should be performed.}
+
+\item{posthoc_filt}{Specify the minimal proportion level of a transcript that should be kept when performing posthoc filtering.}
 }
 \value{
 
 }
 \description{
-Title
+Perform optional posthoc filtering and run two-staged statistical tests
 }
+\seealso{
+\code{\link[=run_dirmseq]{run_dirmseq()}} for DTU object creation. \code{\link[=create_dtu_table]{create_dtu_table()}} for result visualization.
+
+Other DTUrtle: 
+\code{\link{combine_to_matrix}()},
+\code{\link{import_counts}()},
+\code{\link{run_drimseq}()}
+}
+\concept{DTUrtle}

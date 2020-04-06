@@ -8,6 +8,7 @@ combine_to_matrix(
   tx_list,
   cell_extensions = NULL,
   seurat_obj = NULL,
+  tx2gene = NULL,
   assay_name = "dtutx"
 )
 }
@@ -18,6 +19,8 @@ combine_to_matrix(
 
 \item{seurat_obj}{Optional seurat object, where the combined matrix is added as an assay. This has the advantage, that the cells are matched and subsetted if necessary. Currently only Seurat 3 objects are supported.}
 
+\item{tx2gene}{Optional tx2gene/metadata data frame, which is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the \code{tx_list} objects must be used.}
+
 \item{assay_name}{If the combined matrix should be added to an existing Seurat object, the name of the assay can be specified here.}
 }
 \value{
@@ -27,3 +30,10 @@ Either a combined sparse transcription count matrix or a seurat object which the
 Only needed when dealing with single-cell data. Adds a cellname extension if necessary.
 Can optionally add the combined matrix to a existing Seurat object (keeping the cellname extension of the object and matching the cells).
 }
+\seealso{
+Other DTUrtle: 
+\code{\link{import_counts}()},
+\code{\link{posthoc_and_stager}()},
+\code{\link{run_drimseq}()}
+}
+\concept{DTUrtle}

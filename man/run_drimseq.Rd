@@ -6,22 +6,24 @@
 \usage{
 run_drimseq(
   counts,
+  tx2gene,
   pd,
   id_col = NULL,
   cond_col,
-  cond_levels,
+  cond_levels = NULL,
   filtering_strategy = "bulk",
   n_core = 1,
   ...
 )
 }
 \arguments{
-\item{counts}{Data frame with gene to transcript mapping and feature counts, where the rows correspond to features.
-\itemize{
-\item One column must be called \code{gene_id} and should contain gene identifiers.
-\item One column must be called \code{feature_id} and should contain unique feature identifiers.
-\item One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in \code{id_col}).
+\item{counts}{Can be either:
+\enumerate{
+\item Data frame or matrix with feature counts, where the rows correspond to features (i.e. transcripts). One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in \code{id_col}).
+\item Seurat object with a transcription level assay as \code{active.assay} (most likely result object from \code{combine_to_matrix()})
 }}
+
+\item{tx2gene}{Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in \code{counts} and \code{tx2gene} was provided in \code{combine_to_matrix()}, a vector of the colnames of the specific feature and gene identifierss is sufficient.}
 
 \item{pd}{Data frame with at least a column of sample/cell identifiers (specified in \code{id_col}) and the comparison group definition (specified in \code{cond_col}).}
 
@@ -43,7 +45,7 @@ run_drimseq(
 \item{...}{If \code{filtering_strategy=='own'} specify the wished parameters of \code{dmFilter()} here.}
 }
 \value{
-\code{drim} object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
+\code{dturtle} object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
 \itemize{
 \item \code{drim}: The results of the DRIMSeq statistical computations (\code{dmTest()}).
 \item \code{design_full}: The design matrix generated from the specified \code{pd} columns.
@@ -56,3 +58,10 @@ run_drimseq(
 \description{
 Run the main DRIMSeq pipeline, including generation of a design matrix, gene/feature filtering and running the statistical computations of DRIMSeq (\code{dmPrecision()}, \code{dmFit()} and \code{dmTest()})
 }
+\seealso{
+Other DTUrtle: 
+\code{\link{combine_to_matrix}()},
+\code{\link{import_counts}()},
+\code{\link{posthoc_and_stager}()}
+}
+\concept{DTUrtle}

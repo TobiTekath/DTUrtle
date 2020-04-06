@@ -6,7 +6,8 @@
 #' @param gene_description
 #'
 #' @return
-#' @export
+#' @family DTUrtle visualization
+#' @seealso
 #'
 #' @examples
 create_dtu_table <- function(dtu, gene_name_info=NULL, gene_chromosome_info=NULL, gene_description=NULL){
@@ -39,7 +40,7 @@ create_dtu_table <- function(dtu, gene_name_info=NULL, gene_chromosome_info=NULL
     }
     dtu_table <- dtu_table[order(abs(dtu_table[[max_delta_col]]), decreasing = T),]
 
-    return(append(dtu, list("dtu_table"=dtu_table)))
+    return(append(list("dtu_table"=dtu_table), dtu))
 }
 
 

@@ -63,6 +63,43 @@ merge_sparse <- function(tx_mat) {
 }
 
 
+#' Title
+#'
+#' @param seurat_obj
+#' @param tx2gene
+#'
+#' @return
+#' @export
+#'
+#' @examples
+seurat_add_tx2gene <- function(seurat_obj, tx2gene){
+    assay_name <- seurat_obj@active.assay
+    order <- rownames(seurat_obj[[assay_name]]@meta.features)
+    tx2gene <- tx2gene[match(order, tx2gene[[1]]),]
+    assert_that(are_equal(nrow(seurat_obj[[assay_name]]@meta.features), nrow(tx2gene)), msg = "'tx2gene' data frame does not contain information for all transcripts.")
+    seurat_obj[[assay_name]]@meta.features <- cbind(seurat_obj[[assay_name]]@meta.features,tx2gene)
+    return(seurat_obj)
+}
+
+
+#' Title
+#'
+#' @param drim
+#' @param filt
+#'
+#' @return
+#' @export
+#'
+#' @examples
+run_posthoc <- function(drim, filt){
+    res.txp.filt <- DRIMSeq::results(drim, level="feature")
+    filt <- smallProportionSD(drim, filt)
+    res.txp.filt$pvalue[filt] <- 1
+    res.txp.filt$adj_pvalue[filt] <- 1
+    message("Posthoc filtered ", sum(filt, na.rm = TRUE), " transcripts")
+    return(res.txp.filt)
+}
+
 #TODO: reevaluate and switch to message
 #' Title
 #'
@@ -122,6 +159,22 @@ add_max_delta <- function(dtu_table, dtu){
 
     dtu_table[[paste0("max(",levels(dtu$group)[1], "-",levels(dtu$group)[2],")")]] <- as.numeric(sapply(dtu_table$geneID, FUN = getmax))
     return(dtu_table)
+}
+
+
+#TODO: Enhance!
+#' Title
+#'
+#' @param gtf_file
+#'
+#' @return
+#' @export
+#'
+#' @examples
+create_tx2gene <- function(gtf_file){
+    txdb <- GenomicFeatures::makeTxDbFromGFF(gtf_file)
+    tx2gene <- select(txdb, keys(txdb, keytype = "TXNAME"), "GENEID", "TXNAME")
+    return(tx2gene)
 }
 
 

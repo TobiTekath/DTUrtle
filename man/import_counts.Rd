@@ -25,10 +25,17 @@ import_counts(files, type, ...)
 \value{
 \itemize{
 \item For bulk data: A combined count matrix for all specified samples.
-\item For single-cell data (\code{type='alevin'}): A list of count matrices per sample. Can be combined and optionally added to a Seurat object with TODO.
+\item For single-cell data (\code{type='alevin'}): A list of count matrices per sample. Should be combined and optionally added to a Seurat object with \code{combine_to_matrix()}.
 }
 }
 \description{
 Most likely the first step in your DTUrtle analysis.
 Can perform multiple scaling schemes, defaults to scaling schemes appropriate for DTU analysis.
 }
+\seealso{
+Other DTUrtle: 
+\code{\link{combine_to_matrix}()},
+\code{\link{posthoc_and_stager}()},
+\code{\link{run_drimseq}()}
+}
+\concept{DTUrtle}
