@@ -2,7 +2,7 @@
 % Please edit documentation in R/dtu_analysis.R
 \name{import_counts}
 \alias{import_counts}
-\title{Import the quantification results of many RNAseq quantifiers, including 'alevin' for single-cell data.}
+\title{Import quantification results}
 \usage{
 import_counts(files, type, ...)
 }
@@ -29,7 +29,10 @@ import_counts(files, type, ...)
 }
 }
 \description{
+Import the quantification results of many RNAseq quantifiers, including 'alevin' for single-cell data.
 Most likely the first step in your DTUrtle analysis.
+}
+\details{
 Can perform multiple scaling schemes, defaults to scaling schemes appropriate for DTU analysis.
 }
 \seealso{

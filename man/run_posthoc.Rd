@@ -2,16 +2,19 @@
 % Please edit documentation in R/utility_functions.R
 \name{run_posthoc}
 \alias{run_posthoc}
-\title{Title}
+\title{Posthoc filtering}
 \usage{
 run_posthoc(drim, filt)
 }
 \arguments{
-\item{filt}{}
+\item{filt}{Threshold}
 }
 \value{
-
+A filtered \code{DRIMSeq::results()} data frame.
 }
 \description{
-Title
+Perform posthoc filtering.
+}
+\details{
+Sets pvalue and adjusted pvalue of 'filtered' elements to 1.
 }

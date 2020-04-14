@@ -2,7 +2,7 @@
 % Please edit documentation in R/dtu_analysis.R
 \name{posthoc_and_stager}
 \alias{posthoc_and_stager}
-\title{Perform optional posthoc filtering and run two-staged statistical tests}
+\title{Posthoc filtering and two-staged statistical tests}
 \usage{
 posthoc_and_stager(dturtle, ofdr = 0.05, posthoc = T, posthoc_filt = 0.1)
 }
@@ -19,10 +19,15 @@ posthoc_and_stager(dturtle, ofdr = 0.05, posthoc = T, posthoc_filt = 0.1)
 
 }
 \description{
-Perform optional posthoc filtering and run two-staged statistical tests
+Perform optional posthoc filtering and run two-staged statistical tests.
+}
+\details{
+The posthoc filter excludes transcripts, which standard deviation of the proportion per cell/sample is below the threshold.
+The two-staged statistical test performed by stageR first determines if any of the transcripts of a gene is showing signs of DTU.
+The second step tries to identify on singular transcript level the significantly different transcripts.
 }
 \seealso{
-\code{\link[=run_dirmseq]{run_dirmseq()}} for DTU object creation. \code{\link[=create_dtu_table]{create_dtu_table()}} for result visualization.
+\code{\link[=run_drimseq]{run_drimseq()}} for DTU object creation. \code{\link[=create_dtu_table]{create_dtu_table()}} for result visualization.
 
 Other DTUrtle: 
 \code{\link{combine_to_matrix}()},

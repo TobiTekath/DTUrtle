@@ -2,16 +2,18 @@
 % Please edit documentation in R/utility_functions.R
 \name{add_max_delta}
 \alias{add_max_delta}
-\title{Title}
+\title{Add a column specifying the maximal difference between the two comparison groups}
 \usage{
-add_max_delta(dtu_table, dtu)
+add_max_delta(dtu_table, dturtle)
 }
 \arguments{
-\item{dtu}{}
+\item{dtu_table}{The dtu data frame where the column shall be added.}
+
+\item{dturtle}{The corresponding dturtle object the \code{dtu_table} originates from.}
 }
 \value{
-
+A dtu data frame with the added column.
 }
 \description{
-Title
+Add a column specifying the maximal difference between the two comparison groups
 }

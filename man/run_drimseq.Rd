@@ -12,7 +12,7 @@ run_drimseq(
   cond_col,
   cond_levels = NULL,
   filtering_strategy = "bulk",
-  n_core = 1,
+  BPPARAM = BiocParallel::SerialParam(),
   ...
 )
 }
@@ -40,9 +40,9 @@ run_drimseq(
 \item \code{'own'}: Can be used to specify a user-defined strategy via the \code{...} argument (using the parameters of \code{dmFilter()}).
 }}
 
-\item{n_core}{Set the number of CPU cores that should be used in the statistical computations.}
-
 \item{...}{If \code{filtering_strategy=='own'} specify the wished parameters of \code{dmFilter()} here.}
+
+\item{n_core}{Set the number of CPU cores that should be used in the statistical computations.}
 }
 \value{
 \code{dturtle} object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
@@ -56,6 +56,9 @@ run_drimseq(
 }
 }
 \description{
+Compute the main DRIMSeq results.
+}
+\details{
 Run the main DRIMSeq pipeline, including generation of a design matrix, gene/feature filtering and running the statistical computations of DRIMSeq (\code{dmPrecision()}, \code{dmFit()} and \code{dmTest()})
 }
 \seealso{

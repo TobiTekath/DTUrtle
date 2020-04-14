@@ -7,6 +7,7 @@
 #'
 #' @return
 #' @family DTUrtle visualization
+#' @export
 #' @seealso
 #'
 #' @examples

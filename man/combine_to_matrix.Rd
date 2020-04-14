@@ -2,7 +2,7 @@
 % Please edit documentation in R/dtu_analysis.R
 \name{combine_to_matrix}
 \alias{combine_to_matrix}
-\title{Combine list of sparse transcription count matrices.}
+\title{Combine sparse matrices.}
 \usage{
 combine_to_matrix(
   tx_list,
@@ -27,8 +27,12 @@ combine_to_matrix(
 Either a combined sparse transcription count matrix or a seurat object which the  combined sparse transcription count matrix as an assay.
 }
 \description{
+Combine list of sparse transcription count matrices.
+}
+\details{
 Only needed when dealing with single-cell data. Adds a cellname extension if necessary.
 Can optionally add the combined matrix to a existing Seurat object (keeping the cellname extension of the object and matching the cells).
+Also removes overall non expressed features.
 }
 \seealso{
 Other DTUrtle: 

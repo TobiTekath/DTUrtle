@@ -2,16 +2,16 @@
 % Please edit documentation in R/utility_functions.R
 \name{no_na}
 \alias{no_na}
-\title{Title}
+\title{Replaces NA values by 1.}
 \usage{
 no_na(x)
 }
 \arguments{
-\item{x}{}
+\item{x}{Vector of values (i.e. pvalues).}
 }
 \value{
-
+Vector of values with NAs replaced.
 }
 \description{
-Title
+Replaces NA values by 1.
 }

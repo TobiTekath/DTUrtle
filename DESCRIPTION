@@ -6,10 +6,10 @@ Author: Tobias Tekath
 Maintainer: The package maintainer <yourself@somewhere.net>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
-Depends: R (>= 3.3.0)
-Imports: tximport, DRIMSeq, stageR, matrixStats, GenomicFeatures, formattable, DT, Gviz, assertthat, Matrix
+Depends: R (>= 3.4.0)
+Imports: tximport, DRIMSeq, stageR, rtracklayer, formattable, DT, Gviz, assertthat, Matrix
 RoxygenNote: 7.1.0
 Roxygen: list(markdown = TRUE)

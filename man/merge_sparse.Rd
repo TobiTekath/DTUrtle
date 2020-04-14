@@ -2,16 +2,16 @@
 % Please edit documentation in R/utility_functions.R
 \name{merge_sparse}
 \alias{merge_sparse}
-\title{Title}
+\title{Merge two or more sparse matrices.}
 \usage{
 merge_sparse(tx_mat)
 }
 \arguments{
-\item{tx_mat}{}
+\item{tx_mat}{List of sparse matrices that shall be merged.}
 }
 \value{
-
+Sparse matrix, containing the information of all provided matrices.
 }
 \description{
-Title
+Merge two or more sparse matrices.
 }

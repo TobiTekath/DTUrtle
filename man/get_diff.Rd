@@ -2,16 +2,18 @@
 % Please edit documentation in R/utility_functions.R
 \name{get_diff}
 \alias{get_diff}
-\title{Title}
+\title{Get the transcript-wise proportion differnces of the specified gene}
 \usage{
-get_diff(gID, dtu)
+get_diff(gID, dturtle)
 }
 \arguments{
-\item{dtu}{}
+\item{gID}{gene identifier}
+
+\item{dturtle}{dturtle object}
 }
 \value{
-
+Data frame with the transcript-wise proportion differences.
 }
 \description{
-Title
+Get the transcript-wise proportion differnces of the specified gene
 }

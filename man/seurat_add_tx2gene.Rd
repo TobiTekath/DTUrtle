@@ -2,7 +2,7 @@
 % Please edit documentation in R/utility_functions.R
 \name{seurat_add_tx2gene}
 \alias{seurat_add_tx2gene}
-\title{Title}
+\title{Add tx2gene}
 \usage{
 seurat_add_tx2gene(seurat_obj, tx2gene)
 }
@@ -10,8 +10,8 @@ seurat_add_tx2gene(seurat_obj, tx2gene)
 \item{tx2gene}{}
 }
 \value{
-
+Seurat object with added data.
 }
 \description{
-Title
+Add a data frame as feature level metadata to the Seurat active assay.
 }
