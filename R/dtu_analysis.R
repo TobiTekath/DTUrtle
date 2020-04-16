@@ -204,36 +204,33 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 }
 
 #TODO: Specify predefined strategies!
-#TODO: Used filter options in result object (sub-list?)
-#TODO: Sparse dmFilter?
-#' Compute the main DRIMSeq results
+#' Main DRIMSeq results
 #'
 #' Compute the main DRIMSeq results.
 #'
 #' Run the main DRIMSeq pipeline, including generation of a design matrix, gene/feature filtering and running the statistical computations of DRIMSeq (`dmPrecision()`, `dmFit()` and `dmTest()`)
 #'
 #' @param counts Can be either:
-#' 1. Data frame or matrix with feature counts, where the rows correspond to features (i.e. transcripts). One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in `id_col`).
+#' 1. Data frame or matrix with feature counts, where the rows correspond to features (e.g. transcripts). One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in `id_col`).
 #' 2. Seurat object with a transcription level assay as `active.assay` (most likely result object from `combine_to_matrix()`)
 #' @param tx2gene Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in `counts` and `tx2gene` was provided in `combine_to_matrix()`, a vector of the colnames of the specific feature and gene identifierss is sufficient.
 #' @param pd Data frame with at least a column of sample/cell identifiers (specified in `id_col`) and the comparison group definition (specified in `cond_col`).
 #' @param id_col Name of the column in `pd`, where unique sample/cell identifiers are stored. If `NULL` (default), use rownames of `pd`.
-#' @param cond_col Name of the column in `pd`, where the comparison groups are defined. Can contain more than 2 levels/groups, as the groups that should be used are defined in `cond_levels`.
+#' @param cond_col Name of the column in `pd`, where the comparison groups are defined. If more than 2 levels/groups are present, the groups that should be used must be specified in `cond_levels`.
 #' @param cond_levels Define two levels/groups of `cond_col`, that should be compared. The order of the levels states the comparison formula (i.e. `cond_col[1]-cond_col[2]`).
-#' @param filtering_strategy Define the filtering_strategy used in `dmFilter()`.
+#' @param filtering_strategy Define the filtering strategy to reduce and noise and increase statistical power.
 #' - `'bulk'`: Predefined strategy for bulk RNAseq data. (default)
 #' - `'sc'`: Predefined strategy for single-cell RNAseq data.
 #' - `'own'`: Can be used to specify a user-defined strategy via the `...` argument (using the parameters of `dmFilter()`).
-#' @param n_core Set the number of CPU cores that should be used in the statistical computations.
-#' @param ... If `filtering_strategy=='own'` specify the wished parameters of `dmFilter()` here.
+#' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for standard non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
+#' @param ... If `filtering_strategy='own'` specify the wished parameters of `dmFilter()` here.
 #'
 #' @return `dturtle` object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
 #' - `drim`: The results of the DRIMSeq statistical computations (`dmTest()`).
 #' - `design_full`: The design matrix generated from the specified `pd` columns.
-#' - `cond_levels`: A copy of the specified comparison groups.
 #' - `group`: Vector which sample/cell belongs to which comparison group.
-#' - `pct_exp_tx`: Data frame of the expressed-in percentage of all transcripts. [TODO: split by group?]
-#' - `pct_exp_gene`: Data frame of the expressed-in percentage of all genes. [TODO: split by group?]
+#' - `pct_exp_tx`: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0.
+#' - `pct_exp_gene`: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0.
 #'
 #' @family DTUrtle
 #' @export
@@ -287,39 +284,37 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     }
     message("Proceed with cells/samples: ",paste0(capture.output(table(samp$condition)), collapse = "\n"))
 
-
-    browser()
-
     #TODO: Reevaluate!
     message("\nFiltering...\n")
     total_sample <- round(nrow(samp)*0.8)
     smallest_group <- min(min(table(samp$condition)), 10)
-    switch(filtering_strategy, sc={
-        counts <- sparse_filter(counts = counts, tx2gene = tx2gene,
-                                BPPARAM = BPPARAM,
-                                min_samps_feature_prop = smallest_group,
-                                min_feature_prop = 0.1, run_gene_twice = T)
+    filter_opt_list <- list("min_samps_gene_expr" = 0,
+                             "min_samps_feature_expr" = 0, "min_samps_feature_prop" = 0,
+                             "min_gene_expr" = 0, "min_feature_expr" = 0, "min_feature_prop" = 0,
+                             "run_gene_twice" = FALSE)
+    switch(filtering_strategy,
+    sc={
+
+        filter_opt_list <- modifyList(filter_opt_list, list("min_samps_feature_prop" = smallest_group,
+                                      "min_feature_prop" = 0.1, "run_gene_twice" = T))
     },
     bulk={
-        counts <- sparse_filter(counts = counts, tx2gene = tx2gene,
-                                BPPARAM = BPPARAM,
-                                min_samps_feature_expr = smallest_group,
-                                min_feature_expr = 1,
-                                min_samps_gene_expr = total_sample,
-                                min_gene_expr = 5,
-                                min_samps_feature_prop = smallest_group,
-                                min_feature_prop = 0.05, run_gene_twice = T)
+
+        filter_opt_list <- modifyList(filter_opt_list,
+                                      list("min_samps_feature_expr" = smallest_group,
+                                           "min_feature_expr" = 1,
+                                           "min_samps_gene_expr" = total_sample,
+                                           "min_gene_expr" = 5,
+                                           "min_samps_feature_prop" = smallest_group,
+                                           "min_feature_prop" = 0.05, "run_gene_twice" = T))
 
     },
     own={
-        counts <- sparse_filter(counts = counts, tx2gene = tx2gene,
-                                BPPARAM = BPPARAM, ...)
+        filter_opt_list <- modifyList(filter_opt_list, list(...))
     })
+    counts <- do.call(sparse_filter, args = c(list(counts = counts, tx2gene = tx2gene, BPPARAM = BPPARAM),
+                                              filter_opt_list))
     tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
-
-    #TODO:
-    #estimate needed size:
-    #format(structure(as.double(nrow(counts))*as.double(ncol(counts))*8, class="object_size"), units="auto")
 
     if(is(counts, 'sparseMatrix')){
         counts <- tryCatch(
@@ -328,32 +323,29 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
             },
             error=function(cond) {
                 message(cond)
-                stop("Your sparse count matrix is probably too big and a non-sparse representation would need too much memory. Try subsetting or filtering the sparse matrix beforehand.")
+                stop("Your sparse count matrix is probably too big and a non-sparse representation would need too much memory.",
+                     "\nTry subsetting or filtering the sparse matrix beforehand.\n\nOperation would require approximately ",
+                     format(structure(as.double(nrow(counts))*as.double(ncol(counts))*8, class="object_size"), units="auto"), " of memory.")
             })
     }
-    counts_df <- data.frame(tx2gene, counts, row.names = NULL, stringsAsFactors = F)
+    counts <- data.frame(tx2gene, counts, row.names = NULL, stringsAsFactors = F)
 
-    drim <- DRIMSeq::dmDSdata(counts = counts_df, samples = samp)
+    drim <- DRIMSeq::dmDSdata(counts = counts, samples = samp)
 
-    pct_exp_tx <- data.frame("gene"=rep(names(drimt@counts@partitioning), lengths(drim@counts@partitioning)),
-                             "tx"=rownames(drim@counts@unlistData),
-                             "pct_exp"=rowSums(drim@counts@unlistData!=0)/ncol(drim@counts@unlistData))
-
-    pct_exp_gene <- data.frame("gene"=names(drim@counts@partitioning),
-                               "pct_exp"=sapply(drim@counts@partitioning,
-                                                FUN = function(x) sum(colSums(drim@counts@unlistData[names(x),])!=0)/ncol(drim@counts@unlistData)))
+    exp_in_tx <- ratio_expression_in(drim, "tx")
+    exp_in_gn <- ratio_expression_in(drim, "gene")
 
     design_full <- model.matrix(~condition, data=samp)
 
-
-    drim_test <- DRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, speed=F, add_uniform=T)
+    message("\nPerforming statistical tests...\n")
+    drim_test <- DRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, add_uniform=T)
     drim_test <- DRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=T)
-    drim_test <- DRIMSeq::dmTest(drim_test, coef=colnames(design_full)[2], BBPARAM=BPPARAM)
+    drim_test <- DRIMSeq::dmTest(drim_test, coef=colnames(design_full)[2], BPPARAM=BPPARAM)
 
-    group <- factor(samp$condition, levels = cond_levels)
+    group <- factor(samp$condition, levels = cond_levels, ordered = T)
 
-    return_obj <- list("drim"=drim_test, "design_full"=design_full, "cond_levels"=cond_levels, "group"=group,
-                       "pct_exp_tx"=pct_exp_tx, "pct_exp_gene"=pct_exp_gene)
+    return_obj <- list("drim"=drim_test, "design_full"=design_full, "group"=group,
+                       "pct_exp_tx"=exp_in_tx, "pct_exp_gene"=exp_in_gn, "used_filtering_options"=filter_opt_list)
     class(return_obj) <- "dturtle"
     return(return_obj)
 }
@@ -418,10 +410,9 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=T, posthoc_filt=0.1){
 #' @inheritParams DRIMSeq::dmFilter
 #'
 #' @return Filtered sparse matrix
-#' @export
 sparse_filter <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), min_samps_gene_expr = 0,
                                 min_gene_expr = 0, min_samps_feature_expr = 0, min_feature_expr = 0,
-                                min_samps_feature_prop = 10, min_feature_prop = 0.1,
+                                min_samps_feature_prop = 0, min_feature_prop = 0,
                                 run_gene_twice=FALSE){
 
     counts <- counts[Matrix::rowSums(counts)>0,]
@@ -492,7 +483,7 @@ sparse_filter <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), 
 
 sparse_filter_naive <- function(counts, tx2gene, min_samps_gene_expr = 0,
                                 min_gene_expr = 0, min_samps_feature_expr = 0, min_feature_expr = 0,
-                                min_samps_feature_prop = 10, min_feature_prop = 0.1,
+                                min_samps_feature_prop = 0, min_feature_prop = 0,
                                 run_gene_twice=FALSE){
     counts <- counts[Matrix::rowSums(counts)>0,]
     tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
@@ -567,7 +558,7 @@ sparse_filter_naive <- function(counts, tx2gene, min_samps_gene_expr = 0,
 
 sparse_filter_naive_parallel <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), min_samps_gene_expr = 0,
                                          min_gene_expr = 0, min_samps_feature_expr = 0, min_feature_expr = 0,
-                                         min_samps_feature_prop = 10, min_feature_prop = 0.1,
+                                         min_samps_feature_prop = 0, min_feature_prop = 0,
                                          run_gene_twice=FALSE){
 
 
@@ -645,7 +636,7 @@ sparse_filter_naive_parallel <- function(counts, tx2gene, BPPARAM=BiocParallel::
 
 sparse_filter_index <- function(counts, tx2gene, min_samps_gene_expr = 0,
                                 min_gene_expr = 0, min_samps_feature_expr = 0, min_feature_expr = 0,
-                                min_samps_feature_prop = 10, min_feature_prop = 0.1,
+                                min_samps_feature_prop = 0, min_feature_prop = 0,
                                 run_gene_twice=FALSE){
 
     counts <- counts[Matrix::rowSums(counts)>0,]

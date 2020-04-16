@@ -2,7 +2,7 @@
 % Please edit documentation in R/dtu_analysis.R
 \name{run_drimseq}
 \alias{run_drimseq}
-\title{Compute the main DRIMSeq results}
+\title{Main DRIMSeq results}
 \usage{
 run_drimseq(
   counts,
@@ -19,7 +19,7 @@ run_drimseq(
 \arguments{
 \item{counts}{Can be either:
 \enumerate{
-\item Data frame or matrix with feature counts, where the rows correspond to features (i.e. transcripts). One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in \code{id_col}).
+\item Data frame or matrix with feature counts, where the rows correspond to features (e.g. transcripts). One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in \code{id_col}).
 \item Seurat object with a transcription level assay as \code{active.assay} (most likely result object from \code{combine_to_matrix()})
 }}
 
@@ -29,30 +29,29 @@ run_drimseq(
 
 \item{id_col}{Name of the column in \code{pd}, where unique sample/cell identifiers are stored. If \code{NULL} (default), use rownames of \code{pd}.}
 
-\item{cond_col}{Name of the column in \code{pd}, where the comparison groups are defined. Can contain more than 2 levels/groups, as the groups that should be used are defined in \code{cond_levels}.}
+\item{cond_col}{Name of the column in \code{pd}, where the comparison groups are defined. If more than 2 levels/groups are present, the groups that should be used must be specified in \code{cond_levels}.}
 
 \item{cond_levels}{Define two levels/groups of \code{cond_col}, that should be compared. The order of the levels states the comparison formula (i.e. \code{cond_col[1]-cond_col[2]}).}
 
-\item{filtering_strategy}{Define the filtering_strategy used in \code{dmFilter()}.
+\item{filtering_strategy}{Define the filtering strategy to reduce and noise and increase statistical power.
 \itemize{
 \item \code{'bulk'}: Predefined strategy for bulk RNAseq data. (default)
 \item \code{'sc'}: Predefined strategy for single-cell RNAseq data.
 \item \code{'own'}: Can be used to specify a user-defined strategy via the \code{...} argument (using the parameters of \code{dmFilter()}).
 }}
 
-\item{...}{If \code{filtering_strategy=='own'} specify the wished parameters of \code{dmFilter()} here.}
+\item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for standard non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
 
-\item{n_core}{Set the number of CPU cores that should be used in the statistical computations.}
+\item{...}{If \code{filtering_strategy=='own'} specify the wished parameters of \code{dmFilter()} here.}
 }
 \value{
 \code{dturtle} object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
 \itemize{
 \item \code{drim}: The results of the DRIMSeq statistical computations (\code{dmTest()}).
 \item \code{design_full}: The design matrix generated from the specified \code{pd} columns.
-\item \code{cond_levels}: A copy of the specified comparison groups.
 \item \code{group}: Vector which sample/cell belongs to which comparison group.
-\item \code{pct_exp_tx}: Data frame of the expressed-in percentage of all transcripts. \link{TODO: split by group?}
-\item \code{pct_exp_gene}: Data frame of the expressed-in percentage of all genes. \link{TODO: split by group?}
+\item \code{pct_exp_tx}: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0.
+\item \code{pct_exp_gene}: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0.
 }
 }
 \description{

@@ -178,3 +178,45 @@ move_columns_to_front <- function(df, columns){
 rm_version <- function(x){
     return(sub("\\..*", "", x))
 }
+
+
+#' Ratio of expressing samples
+#'
+#' Get ratio of expressing samples per gene/transcript.
+#'
+#' Expressing samples are defined as feature expression > 0. Also splits expressing samples by condtion.
+#'
+#' @param drim DRIMSeq object
+#' @param type Type of the summarization that shall be performed. Options are:
+#' - `'tx'`: Transcript-level expressed-in ratios.
+#' - `'gene'`: Gene-level expressed-in ratios.
+#'
+#' @return Data frame with the expressed-in ratios.
+#'
+#' @examples
+ratio_expression_in <- function(drim, type){
+    assertthat::assert_that(type %in% c("tx", "gene"))
+    part <- drim@counts@partitioning
+    data <- drim@counts@unlistData
+    cond <- levels(drim@samples$condition)
+    if(type=="tx"){
+        ret <- data.frame(rep(names(part), lengths(part)),
+                          rownames(data),
+                          rowSums(data!=0)/ncol(data),
+                          sapply(cond, function(x){
+                              group_data = data[,drim@samples$sample_id[drim@samples$condition==x],drop=F]
+                              return(rowSums(group_data!=0)/ncol(group_data))
+                          }))
+        colnames(ret) <- c("gene","tx","exp_in",paste0("exp_in_",cond))
+    }else{
+        data <-  t(sapply(part, function(x) colSums(data[x,,drop=F])))
+        ret <- data.frame(rownames(data),
+                          rowSums(data!=0)/ncol(data),
+                          sapply(cond, function(x){
+                              group_data = data[,drim@samples$sample_id[drim@samples$condition==x],drop=F]
+                              return(rowSums(group_data!=0)/ncol(group_data))
+                          }))
+        colnames(ret) <- c("gene","exp_in",paste0("exp_in_",cond))
+    }
+    return(ret)
+}

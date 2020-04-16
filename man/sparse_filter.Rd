@@ -12,8 +12,8 @@ sparse_filter(
   min_gene_expr = 0,
   min_samps_feature_expr = 0,
   min_feature_expr = 0,
-  min_samps_feature_prop = 10,
-  min_feature_prop = 0.1,
+  min_samps_feature_prop = 0,
+  min_feature_prop = 0,
   run_gene_twice = FALSE
 )
 }
