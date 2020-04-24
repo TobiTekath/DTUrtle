@@ -5,7 +5,7 @@
 \title{Title}
 \usage{
 create_dtu_table(
-  dtu,
+  dturtle,
   gene_name_info = NULL,
   gene_chromosome_info = NULL,
   gene_description = NULL

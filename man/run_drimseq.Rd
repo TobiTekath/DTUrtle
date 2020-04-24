@@ -13,6 +13,8 @@ run_drimseq(
   cond_levels = NULL,
   filtering_strategy = "bulk",
   BPPARAM = BiocParallel::SerialParam(),
+  force_dense = F,
+  carry_over_metadata = T,
   ...
 )
 }
@@ -42,16 +44,21 @@ run_drimseq(
 
 \item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for standard non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
 
-\item{...}{If \code{filtering_strategy=='own'} specify the wished parameters of \code{dmFilter()} here.}
+\item{force_dense}{If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying \code{TRUE}. Might reduce runtime, but massively increases memory usage. Only recommended if any problems with sparse calculations appear.}
+
+\item{carry_over_metadata}{Specify if compatible additional columns of \code{tx2gene} shall be carried over to the gene and transcript level \code{meta_table} in the results. Columns with \code{NA} values are not carried over.}
+
+\item{...}{If \code{filtering_strategy='own'} specify the wished parameters of \code{dmFilter()} here.}
 }
 \value{
 \code{dturtle} object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
 \itemize{
+\item \code{meta_table_gene}: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0. Can be used to add gene level metainformation for plotting.
+\item \code{meta_table_tx}: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0. Can be used to add transcript level metainformation for plotting.
 \item \code{drim}: The results of the DRIMSeq statistical computations (\code{dmTest()}).
-\item \code{design_full}: The design matrix generated from the specified \code{pd} columns.
+\item \code{design}: The design matrix generated from the specified \code{pd} columns.
 \item \code{group}: Vector which sample/cell belongs to which comparison group.
-\item \code{pct_exp_tx}: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0.
-\item \code{pct_exp_gene}: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0.
+\item \code{used_filtering_options}: Vector of the used filtering options.
 }
 }
 \description{

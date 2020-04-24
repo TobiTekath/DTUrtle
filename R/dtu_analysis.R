@@ -223,20 +223,25 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #' - `'sc'`: Predefined strategy for single-cell RNAseq data.
 #' - `'own'`: Can be used to specify a user-defined strategy via the `...` argument (using the parameters of `dmFilter()`).
 #' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for standard non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
+#' @param force_dense If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying `TRUE`. Might reduce runtime, but massively increases memory usage. Only recommended if any problems with sparse calculations appear.
+#' @param carry_over_metadata Specify if compatible additional columns of `tx2gene` shall be carried over to the gene and transcript level `meta_table` in the results. Columns with `NA` values are not carried over.
 #' @param ... If `filtering_strategy='own'` specify the wished parameters of `dmFilter()` here.
 #'
 #' @return `dturtle` object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
+#' - `meta_table_gene`: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0. Can be used to add gene level metainformation for plotting.
+#' - `meta_table_tx`: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0. Can be used to add transcript level metainformation for plotting.
 #' - `drim`: The results of the DRIMSeq statistical computations (`dmTest()`).
-#' - `design_full`: The design matrix generated from the specified `pd` columns.
+#' - `design`: The design matrix generated from the specified `pd` columns.
 #' - `group`: Vector which sample/cell belongs to which comparison group.
-#' - `pct_exp_tx`: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0.
-#' - `pct_exp_gene`: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0.
+#' - `used_filtering_options`: Vector of the used filtering options.
 #'
 #' @family DTUrtle
 #' @export
 #'
 #' @examples
-run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", BPPARAM=BiocParallel::SerialParam(), ...){
+run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", BPPARAM=BiocParallel::SerialParam(), force_dense=F, carry_over_metadata=T, ...){
+    tictoc::tic("Total time")
+    tictoc::tic("Preprocess")
     if(is(counts, "Seurat")){
         assertthat::assert_that(require("Seurat", character.only = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
         assertthat::assert_that(packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
@@ -253,6 +258,9 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     assertthat::assert_that(ncol(tx2gene)>1)
     assertthat::assert_that(cond_col %in% colnames(pd), msg = paste0("Could not find", cond_col, " in colnames of pd."))
     assertthat::assert_that(filtering_strategy %in% c("bulk", "sc", "own"), msg = "Please select a valid filtering strategy ('bulk', 'sc' or 'own').")
+    assertthat::assert_that(is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
+    assertthat::assert_that(is.logical(force_dense))
+    assertthat::assert_that(is.logical(carry_over_metadata))
 
     tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
     assertthat::assert_that(nrow(tx2gene)==nrow(counts))
@@ -314,9 +322,9 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     })
     counts <- do.call(sparse_filter, args = c(list(counts = counts, tx2gene = tx2gene, BPPARAM = BPPARAM),
                                               filter_opt_list))
-    tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
+    tx2gene <- tx2gene[match(rownames(counts), tx2gene$feature_id),]
 
-    if(is(counts, 'sparseMatrix')){
+    if(is(counts, 'sparseMatrix')&force_dense){
         counts <- tryCatch(
             {
                 as.matrix(counts)
@@ -328,27 +336,55 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
                      format(structure(as.double(nrow(counts))*as.double(ncol(counts))*8, class="object_size"), units="auto"), " of memory.")
             })
     }
-    counts <- data.frame(tx2gene, counts, row.names = NULL, stringsAsFactors = F)
+    # counts <- data.frame(tx2gene, counts, row.names = NULL, stringsAsFactors = F)
+    #
+    # drim <- DRIMSeq::dmDSdata(counts = counts, samples = samp)
 
-    drim <- DRIMSeq::dmDSdata(counts = counts, samples = samp)
+    drim <- sparseDRIMSeq::sparse_dmDSdata(tx2gene = tx2gene, counts = counts, samples = samp)
 
     exp_in_tx <- ratio_expression_in(drim, "tx")
     exp_in_gn <- ratio_expression_in(drim, "gene")
 
+    #carry over metadata
+    if(carry_over_metadata&ncol(tx2gene)>2){
+        temp <- tx2gene[match(rownames(exp_in_tx), tx2gene$feature_id),]
+        temp <- temp[,!apply(temp,2,function(x) any(is.na(x)))]
+        if(nrow(temp)==nrow(exp_in_tx)&ncol(temp)>2){
+            exp_in_tx <- cbind(exp_in_tx, temp[,-c(1,2)])
+            add_to_gene_columns <- check_unique_by_partition(temp[,-c(1,2)], drim@counts@partitioning)
+            if(!is.null(add_to_gene_columns)){
+                temp <- get_by_partition(df = temp, columns =add_to_gene_columns, partitioning = drim@counts@partitioning, FUN=unique)
+                exp_in_gn <- cbind(exp_in_gn, temp[match(rownames(exp_in_gn), temp[[1]]),-c(1)])
+            }
+        }
+    }
+
+
     design_full <- model.matrix(~condition, data=samp)
 
+    tictoc::toc(log = T)
     message("\nPerforming statistical tests...\n")
-    drim_test <- DRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, add_uniform=T)
-    drim_test <- DRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=T)
-    drim_test <- DRIMSeq::dmTest(drim_test, coef=colnames(design_full)[2], BPPARAM=BPPARAM)
+    tictoc::tic("Precision")
+    drim_test <- sparseDRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, add_uniform=T)
+    tictoc::toc(log = T)
+    tictoc::tic("Fit")
+    drim_test <- sparseDRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=T)
+    tictoc::toc(log = T)
+    tictoc::tic("Test")
+    drim_test <- sparseDRIMSeq::dmTest(drim_test, coef=colnames(design_full)[2], BPPARAM=BPPARAM)
+    tictoc::toc(log = T)
 
     group <- factor(samp$condition, levels = cond_levels, ordered = T)
-
-    return_obj <- list("drim"=drim_test, "design_full"=design_full, "group"=group,
-                       "pct_exp_tx"=exp_in_tx, "pct_exp_gene"=exp_in_gn, "used_filtering_options"=filter_opt_list)
-    class(return_obj) <- "dturtle"
+    tictoc::toc(log = T)
+    return_obj <- list("meta_table_gene"=exp_in_gn, "meta_table_tx"=exp_in_tx,
+                       "drim"=drim_test, "design_full"=design_full, "group"=group,
+                       "used_filtering_options"=list("DRIM"=filter_opt_list), "tictoc"=tictoc::tic.log(format = T))
+    class(return_obj) <- append("dturtle", class(return_obj))
     return(return_obj)
 }
+
+
+#TODO: implement Noise - IQR filtering
 
 #' Posthoc filtering and two-staged statistical tests
 #'
@@ -359,24 +395,33 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 #' The second step tries to identify on singular transcript level the significantly different transcripts.
 #'
 #'
-#' @param dturtle Result object of `run_drimseq()`. Contains all the needed data.
-#' @param ofdr Overall false discovery rate (OFDR).
-#' @param posthoc Boolean if posthoc filtering should be performed.
-#' @param posthoc_filt Specify the minimal proportion level of a transcript that should be kept when performing posthoc filtering.
+#' @param dturtle Result object of `run_drimseq()`. Must be of class `dturtle`.
+#' @param ofdr Overall false discovery rate (OFDR) threshold.
+#' @param posthoc_filt Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or `FALSE` can be provided.
+#' @return An extended `dturtle` object. Additional slots include:
+#' - `DE_gene`:
+#' - `DE_tx` :
+#' - `FDR_table` :
 #'
-#' @return
 #' @family DTUrtle
 #' @export
 #' @seealso [run_drimseq()] for DTU object creation. [create_dtu_table()] for result visualization.
 #'
 #' @examples
-posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=T, posthoc_filt=0.1){
+posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
+    assertthat::assert_that(is(dturtle,"dturtle"), msg = "The provided dturtle object is not of class 'dturtle'.")
+    if(posthoc!=F){
+        assertthat::assert_that(0<=posthoc & posthoc<=1, msg = "The provided 'posthoc' parameter is invalid. Must be a number between [0,1] or FALSE.")
+    }else{
+        assertthat::assert_that(posthoc==F, msg = "The provided 'posthoc' parameter is invalid. Must be a number between [0,1] or FALSE.")
+    }
+    assertthat::assert_that(0<=ofdr & ofdr<=1, msg = "The provided 'ofdr' parameter is invalid. Must be a number between [0,1].")
+
     res <- DRIMSeq::results(dturtle$drim)
     res_txp <- DRIMSeq::results(dturtle$drim, level="feature")
 
-    #posthoc
-    if(posthoc==T){
-        res_txp <- run_posthoc(dturtle$drim, posthoc_filt)
+    if(posthoc!=F|posthoc>0){
+        res_txp <- run_posthoc(dturtle$drim, posthoc)
     }
 
     res$pvalue <- no_na(res$pvalue)
@@ -389,317 +434,23 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=T, posthoc_filt=0.1){
 
     stageRObj <- stageR::stageRTx(pScreen = pscreen, pConfirmation = pconfirm, pScreenAdjusted = F, tx2gene = tx2gene)
     stageRObj <- stageR::stageWiseAdjustment(stageRObj, method = "dtu", alpha = ofdr)
-    final_q <- stageR::getAdjustedPValues(stageRObj, order = F, onlySignificantGenes = T)
-    final_q_unfiltered <- stageR::getAdjustedPValues(stageRObj, order = F, onlySignificantGenes = F)
-    final_q <- final_q[order(final_q$gene), ]
-    final_q_tx <- final_q[final_q$transcript<ofdr,]
-    message("Found ",length(unique(final_q$geneID))," significant genes with ",nrow(final_q_tx)," significant transcripts (OFDR: ",ofdr,")")
-    return(append(dturtle, list("final_q" = final_q, "final_q_tx" = final_q_tx, "final_q_unfiltered" = final_q_unfiltered, "ofdr" = ofdr, "posthoc"=ifelse(posthoc, posthoc_filt,0))))
-}
+    fdr_table <- stageR::getAdjustedPValues(stageRObj, order = F, onlySignificantGenes = F)
+    DE_gene <- unique(as.character(fdr_table$geneID[fdr_table$gene<ofdr]))
 
-
-
-#' dmFilter for sparse matrix
-#'
-#' Perform dmFilter-like filtering for sparse matrices
-#'
-#' Runtime optimised version, which can optionally be executed in parallel.
-#'
-#' @param counts Sparse count matrix.
-#' @param tx2gene Feature to gene mapping.
-#' @inheritParams DRIMSeq::dmFilter
-#'
-#' @return Filtered sparse matrix
-sparse_filter <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), min_samps_gene_expr = 0,
-                                min_gene_expr = 0, min_samps_feature_expr = 0, min_feature_expr = 0,
-                                min_samps_feature_prop = 0, min_feature_prop = 0,
-                                run_gene_twice=FALSE){
-
-    counts <- counts[Matrix::rowSums(counts)>0,]
-    tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
-    #genes with at least two transcripts
-    inds <- which(duplicated(tx2gene[[2]]) | duplicated(tx2gene[[2]], fromLast = TRUE))
-    inds <- split(inds, f = tx2gene[inds,2])
-
-    filter <- function(row_index){
-        expr_features <- counts[row_index,]
-
-        ### genes with min expression
-        if(! sum(Matrix::colSums(expr_features) >= min_gene_expr, na.rm = TRUE) >=
-           min_samps_gene_expr )
-            return(NULL)
-
-        ### features with min expression
-        row_index <- Matrix::rowSums(expr_features >= min_feature_expr, na.rm = TRUE) >=
-            min_samps_feature_expr
-
-        ### no genes with one feature
-        if(sum(row_index) <= 1)
-            return(NULL)
-
-        expr_features <- expr_features[row_index, , drop = FALSE]
-
-        ### genes with zero expression
-        samps2keep <- Matrix::colSums(expr_features) > 0 & !is.na(expr_features[1, ])
-
-        if(sum(samps2keep) < max(1, min_samps_feature_prop))
-            return(NULL)
-
-        temp <- expr_features[, samps2keep, drop = FALSE]
-        prop <- sweep(temp, 2, Matrix::colSums(temp), "/")
-
-        ### features with min proportion
-        row_index <- Matrix::rowSums(prop >= min_feature_prop) >= min_samps_feature_prop
-
-        ### no genes with one feature
-        if(sum(row_index) <= 1)
-            return(NULL)
-
-        expr <- expr_features[row_index, , drop = FALSE]
-
-        if (run_gene_twice) {
-            ### no genes with no expression
-            if(sum(expr_features, na.rm = TRUE) == 0)
-                return(NULL)
-
-            ### genes with min expression
-            if(! sum(Matrix::colSums(expr_features) >= min_gene_expr, na.rm = TRUE) >=
-               min_samps_gene_expr )
-                return(NULL)
-        }
-        return(rownames(expr))
+    if(length(DE_gene)>0){
+        DE_tx <- fdr_table$txID[fdr_table$gene<ofdr&fdr_table$transcript<ofdr]
+        message("Found ",length(DE_gene)," significant genes with ",length(DE_tx)," significant transcripts (OFDR: ",ofdr,")")
+    }else{
+        DE_gene <- NULL
+        DE_tx <- NULL
+        message("No gene passed the screening test. If applicable try to adjust the OFDR level.")
     }
-
-    counts_new <- BiocParallel::bplapply(inds, FUN=filter, BPPARAM=BPPARAM)
-    counts_new <- counts[unlist(counts_new),]
-
-    assertthat::assert_that(nrow(counts_new)>0, msg = "No Features left after filtering. Maybe try more relaxed filtering parameter.")
-    message("Retain ",nrow(counts_new), " of ",nrow(counts)," features.\nRemoved ", nrow(counts)-nrow(counts_new), " features.")
-    return(counts_new)
-}
-
-
-
-
-sparse_filter_naive <- function(counts, tx2gene, min_samps_gene_expr = 0,
-                                min_gene_expr = 0, min_samps_feature_expr = 0, min_feature_expr = 0,
-                                min_samps_feature_prop = 0, min_feature_prop = 0,
-                                run_gene_twice=FALSE){
-    counts <- counts[Matrix::rowSums(counts)>0,]
-    tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
-    #genes with at least two transcripts
-    inds <- unique(tx2gene[[2]][duplicated(tx2gene[[2]])])
-    inds <- lapply(inds, FUN=function(x) counts[tx2gene[[1]][tx2gene[[2]]==x],])
-
-    counts_new <- NULL
-    for(expr_features in inds){
-        ### no genes with no expression
-        if(sum(expr_features, na.rm = TRUE) == 0)
-            next()
-
-        ### genes with min expression
-        if(! sum(Matrix::colSums(expr_features) >= min_gene_expr, na.rm = TRUE) >=
-           min_samps_gene_expr )
-            next()
-
-        ### no features with no expression
-        features2keep <- Matrix::rowSums(expr_features > 0, na.rm = TRUE) > 0
-
-        ### no genes with one feature
-        if(sum(features2keep) <= 1)
-            next()
-
-        expr_features <- expr_features[features2keep, , drop = FALSE]
-
-        ### features with min expression
-        features2keep <- Matrix::rowSums(expr_features >= min_feature_expr, na.rm = TRUE) >=
-            min_samps_feature_expr
-
-        ### no genes with one feature
-        if(sum(features2keep) <= 1)
-            next()
-
-        expr_features <- expr_features[features2keep, , drop = FALSE]
-
-        ### genes with zero expression
-        samps2keep <- Matrix::colSums(expr_features) > 0 & !is.na(expr_features[1, ])
-
-        if(sum(samps2keep) < max(1, min_samps_feature_prop))
-            next()
-
-        temp <- expr_features[, samps2keep, drop = FALSE]
-        prop <- sweep(temp, 2, Matrix::colSums(temp), "/")
-
-        ### features with min proportion
-        features2keep <- Matrix::rowSums(prop >= min_feature_prop) >= min_samps_feature_prop
-
-        ### no genes with one feature
-        if(sum(features2keep) <= 1)
-            next()
-
-        expr <- expr_features[features2keep, , drop = FALSE]
-
-        if (run_gene_twice) {
-            ### no genes with no expression
-            if(sum(expr_features, na.rm = TRUE) == 0)
-                next()
-
-            ### genes with min expression
-            if(! sum(Matrix::colSums(expr_features) >= min_gene_expr, na.rm = TRUE) >=
-               min_samps_gene_expr )
-                next()
-        }
-        counts_new <- rbind(counts_new, expr)
-    }
-    assertthat::assert_that(nrow(counts_new)>0, msg = "No Features left after filtering. Maybe try more relaxed filtering parameter.")
-    message("Retain ",nrow(counts_new), " of ",nrow(counts)," features.\nRemoved ", nrow(counts)-nrow(counts_new), " features.")
-    return(counts_new)
-}
-
-sparse_filter_naive_parallel <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), min_samps_gene_expr = 0,
-                                         min_gene_expr = 0, min_samps_feature_expr = 0, min_feature_expr = 0,
-                                         min_samps_feature_prop = 0, min_feature_prop = 0,
-                                         run_gene_twice=FALSE){
-
-
-    tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
-    #genes with at least two transcripts
-    inds <- unique(tx2gene[[2]][duplicated(tx2gene[[2]])])
-    inds <- lapply(inds, FUN=function(x) counts[tx2gene[[1]][tx2gene[[2]]==x],])
-
-    filter <- function(expr_features){
-        ### no genes with no expression
-        if(sum(expr_features, na.rm = TRUE) == 0)
-            return(NULL)
-
-        ### genes with min expression
-        if(! sum(Matrix::colSums(expr_features) >= min_gene_expr, na.rm = TRUE) >=
-           min_samps_gene_expr )
-            return(NULL)
-
-        ### no features with no expression
-        features2keep <- Matrix::rowSums(expr_features > 0, na.rm = TRUE) > 0
-
-        ### no genes with one feature
-        if(sum(features2keep) <= 1)
-            return(NULL)
-
-        expr_features <- expr_features[features2keep, , drop = FALSE]
-
-        ### features with min expression
-        features2keep <- Matrix::rowSums(expr_features >= min_feature_expr, na.rm = TRUE) >=
-            min_samps_feature_expr
-
-        ### no genes with one feature
-        if(sum(features2keep) <= 1)
-            return(NULL)
-
-        expr_features <- expr_features[features2keep, , drop = FALSE]
-
-        ### genes with zero expression
-        samps2keep <- Matrix::colSums(expr_features) > 0 & !is.na(expr_features[1, ])
-
-        if(sum(samps2keep) < max(1, min_samps_feature_prop))
-            return(NULL)
-
-        temp <- expr_features[, samps2keep, drop = FALSE]
-        prop <- sweep(temp, 2, Matrix::colSums(temp), "/")
-
-        ### features with min proportion
-        features2keep <- Matrix::rowSums(prop >= min_feature_prop) >= min_samps_feature_prop
-
-        ### no genes with one feature
-        if(sum(features2keep) <= 1)
-            return(NULL)
-
-        expr <- expr_features[features2keep, , drop = FALSE]
-
-        if (run_gene_twice) {
-            ### no genes with no expression
-            if(sum(expr_features, na.rm = TRUE) == 0)
-                return(NULL)
-
-            ### genes with min expression
-            if(! sum(Matrix::colSums(expr_features) >= min_gene_expr, na.rm = TRUE) >=
-               min_samps_gene_expr )
-                return(NULL)
-        }
-        return(expr)
-    }
-
-    counts_new <- BiocParallel::bplapply(inds, FUN=filter, BPPARAM=BPPARAM)
-    counts_new <- do.call(rbind, counts_new)
-
-    assertthat::assert_that(nrow(counts_new)>0, msg = "No Features left after filtering. Maybe try more relaxed filtering parameter.")
-    return(counts_new)
-}
-
-sparse_filter_index <- function(counts, tx2gene, min_samps_gene_expr = 0,
-                                min_gene_expr = 0, min_samps_feature_expr = 0, min_feature_expr = 0,
-                                min_samps_feature_prop = 0, min_feature_prop = 0,
-                                run_gene_twice=FALSE){
-
-    counts <- counts[Matrix::rowSums(counts)>0,]
-    tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
-    #genes with at least two transcripts
-    inds <- which(duplicated(tx2gene[[2]]) | duplicated(tx2gene[[2]], fromLast = TRUE))
-    inds <- split(inds, f = tx2gene[inds,2])
-
-    filter <- function(row_index){
-        expr_features <- counts[row_index,]
-
-        ### genes with min expression
-        if(! sum(Matrix::colSums(expr_features) >= min_gene_expr, na.rm = TRUE) >=
-           min_samps_gene_expr )
-            return(NULL)
-
-        ### features with min expression
-        row_index <- Matrix::rowSums(expr_features >= min_feature_expr, na.rm = TRUE) >=
-            min_samps_feature_expr
-
-        ### no genes with one feature
-        if(sum(row_index) <= 1)
-            return(NULL)
-
-        expr_features <- expr_features[row_index, , drop = FALSE]
-
-        ### genes with zero expression
-        samps2keep <- Matrix::colSums(expr_features) > 0 & !is.na(expr_features[1, ])
-
-        if(sum(samps2keep) < max(1, min_samps_feature_prop))
-            return(NULL)
-
-        temp <- expr_features[, samps2keep, drop = FALSE]
-        prop <- sweep(temp, 2, Matrix::colSums(temp), "/")
-
-        ### features with min proportion
-        row_index <- Matrix::rowSums(prop >= min_feature_prop) >= min_samps_feature_prop
-
-        ### no genes with one feature
-        if(sum(row_index) <= 1)
-            return(NULL)
-
-        expr <- expr_features[row_index, , drop = FALSE]
-
-        if (run_gene_twice) {
-            ### no genes with no expression
-            if(sum(expr_features, na.rm = TRUE) == 0)
-                return(NULL)
-
-            ### genes with min expression
-            if(! sum(Matrix::colSums(expr_features) >= min_gene_expr, na.rm = TRUE) >=
-               min_samps_gene_expr )
-                return(NULL)
-        }
-        return(rownames(expr))
-    }
-
-    counts_new <- lapply(inds, FUN=filter)
-    counts_new <- counts[unlist(counts_new),]
-
-    assertthat::assert_that(nrow(counts_new)>0, msg = "No Features left after filtering. Maybe try more relaxed filtering parameter.")
-    message("Retain ",nrow(counts_new), " of ",nrow(counts)," features.\nRemoved ", nrow(counts)-nrow(counts_new), " features.")
-    return(counts_new)
+    return_obj <- append(list("DE_gene" = DE_gene, "DE_tx" = DE_tx,
+                                       "FDR_table" = fdr_table), dturtle)
+    return_obj$used_filtering_options$posthoc_stager <- list("ofdr" = ofdr,
+                                       "posthoc"=ifelse(posthoc==F, 0, posthoc))
+    class(return_obj) <- append("dturtle", class(return_obj))
+    return(return_obj)
 }
 
 

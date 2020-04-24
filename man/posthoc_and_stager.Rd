@@ -4,19 +4,22 @@
 \alias{posthoc_and_stager}
 \title{Posthoc filtering and two-staged statistical tests}
 \usage{
-posthoc_and_stager(dturtle, ofdr = 0.05, posthoc = T, posthoc_filt = 0.1)
+posthoc_and_stager(dturtle, ofdr = 0.05, posthoc = 0.1)
 }
 \arguments{
-\item{dturtle}{Result object of \code{run_drimseq()}. Contains all the needed data.}
+\item{dturtle}{Result object of \code{run_drimseq()}. Must be of class \code{dturtle}.}
 
-\item{ofdr}{Overall false discovery rate (OFDR).}
+\item{ofdr}{Overall false discovery rate (OFDR) threshold.}
 
-\item{posthoc}{Boolean if posthoc filtering should be performed.}
-
-\item{posthoc_filt}{Specify the minimal proportion level of a transcript that should be kept when performing posthoc filtering.}
+\item{posthoc_filt}{Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or \code{FALSE} can be provided.}
 }
 \value{
-
+An extended \code{dturtle} object. Additional slots include:
+\itemize{
+\item \code{DE_gene}:
+\item \code{DE_tx} :
+\item \code{FDR_table} :
+}
 }
 \description{
 Perform optional posthoc filtering and run two-staged statistical tests.

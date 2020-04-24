@@ -8,6 +8,7 @@ no_na <- function(x){
 }
 
 #TODO: test
+#Not working for sparse! Need grouped row sums like rowsums
 #' Filter out
 #'
 #' @param d
@@ -16,9 +17,10 @@ no_na <- function(x){
 #' @return
 smallProportionSD <- function(d, filter) {
     browser()
-    cts <- as.matrix(subset(DRIMSeq::counts(d), select=-c("gene_id", "feature_id")))
-    gene.cts <- rowsum(cts, DRIMSeq::counts(d)$gene_id)
-    total.cts <- gene.cts[match(DRIMSeq::counts(d)$gene_id, rownames(gene.cts)),]
+    d <- DRIMSeq::counts(d)
+    cts <- as.matrix(d[,!colnames(d) %in% c("gene_id", "feature_id")])
+    gene.cts <- rowsum(cts, d$gene_id)
+    total.cts <- gene.cts[match(d$gene_id, rownames(gene.cts)),]
     props <- cts/total.cts
     #propSD <- sqrt(matrixStats::rowVars(props))
 
@@ -199,24 +201,87 @@ ratio_expression_in <- function(drim, type){
     part <- drim@counts@partitioning
     data <- drim@counts@unlistData
     cond <- levels(drim@samples$condition)
+    if(is.null(cond)){
+        cond <- unique(drim@samples$condition)
+    }
+
     if(type=="tx"){
         ret <- data.frame(rep(names(part), lengths(part)),
                           rownames(data),
-                          rowSums(data!=0)/ncol(data),
+                          Matrix::rowSums(data!=0)/ncol(data),
                           sapply(cond, function(x){
                               group_data = data[,drim@samples$sample_id[drim@samples$condition==x],drop=F]
-                              return(rowSums(group_data!=0)/ncol(group_data))
-                          }))
+                              return(Matrix::rowSums(group_data!=0)/ncol(group_data))
+                          }), stringsAsFactors = F)
         colnames(ret) <- c("gene","tx","exp_in",paste0("exp_in_",cond))
     }else{
-        data <-  t(sapply(part, function(x) colSums(data[x,,drop=F])))
+        data <-  t(sapply(part, function(x) Matrix::colSums(data[x,,drop=F])))
         ret <- data.frame(rownames(data),
-                          rowSums(data!=0)/ncol(data),
+                          Matrix::rowSums(data!=0)/ncol(data),
                           sapply(cond, function(x){
                               group_data = data[,drim@samples$sample_id[drim@samples$condition==x],drop=F]
-                              return(rowSums(group_data!=0)/ncol(group_data))
-                          }))
+                              return(Matrix::rowSums(group_data!=0)/ncol(group_data))
+                          }), stringsAsFactors = F)
         colnames(ret) <- c("gene","exp_in",paste0("exp_in_",cond))
     }
     return(ret)
 }
+
+
+#' Check if data frame columns agree with partitioning
+#'
+#' Efficiently check if the columns of the data frame agree with the partitioning.
+#'
+#' Agreement means, that only a unique value is provided per partition per column.
+#'
+#' @param df Data frame that shall be checked.
+#' @param partitioning Nested list, specifying which `df` rows belong to one partition.
+#' @param columns Optional: Only check the specified columns of `df`. Defaults to all columns.
+#'
+#' @return Vector of column names of the columns, that agree with the partitioning.
+#' @export
+check_unique_by_partition <- function(df, partitioning, columns=NULL){
+    assertthat::assert_that(is.data.frame(df))
+    assertthat::assert_that(is.list(partitioning))
+    if(!is.null(columns)){
+        assertthat::assert_that(all(columns %in% colnames(df)))
+        df <- df[,columns]
+    }
+        cols <- colnames(df)
+        for(part in partitioning){
+            dat <- df[part,cols]
+            cols <- cols[apply(dat, 2, function(x){all(x == x[1])})]
+            if(length(cols)==0){
+                return(NULL)
+            }
+        }
+        return(cols)
+}
+
+
+#' Aggregate data frame by partitions
+#'
+#' Convenience function to aggregate the data frame according to the partitioning.
+#' Can specify a aggregation function like in \code{\link[stats:aggregate.data.frame]{aggregate}}.
+#'
+#'
+#'
+#' @param df Data frame that shall be aggregated.
+#' @param partitioning Nested list, specifying which `df` rows belong to one partition.
+#' @param FUN Aggregation function. Can be a base function like `unique`, `length`, etc., or a custom function.
+#' @param columns Optional: Only aggregate the specified columns of `df`. Defaults to all columns.
+#' @inheritParams stats::aggregate.data.frame
+#'
+#' @return Data frame with Group column that specifies the partition and one column per specified column with aggregated values.
+#' @export
+get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, drop=T){
+    assertthat::assert_that(is.data.frame(df))
+    assertthat::assert_that(is.list(partitioning))
+    assertthat::assert_that(is.function(FUN))
+    if(!is.null(columns)){
+        assertthat::assert_that(all(columns %in% colnames(df)))
+        df <- df[,columns]
+    }
+    return(stats::aggregate(df, by=list(rep(names(partitioning), lengths(partitioning))), FUN=FUN,  simplify=simplify, drop=T))
+}
+
