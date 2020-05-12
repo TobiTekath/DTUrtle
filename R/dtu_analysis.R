@@ -83,7 +83,7 @@ import_counts <- function(files, type, ...){
 #' @param tx_list List of sparse transcription count matrices, as returned by `import_counts()` for single-cell data.
 #' @param cell_extensions Optional list of cellname extensions that are added to the cellnames of one sample. The cellnames and the extension are separated by an underscore '_'.
 #' @param seurat_obj Optional seurat object, where the combined matrix is added as an assay. This has the advantage, that the cells are matched and subsetted if necessary. Currently only Seurat 3 objects are supported.
-#' @param tx2gene Optional tx2gene/metadata data frame, which is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the `tx_list` objects must be used.
+#' @param tx2gene Optional tx2gene/metadata data frame, can only be used in conjunction with a seurat object. Metadata is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the `tx_list` objects must be used.
 #' @param assay_name If the combined matrix should be added to an existing Seurat object, the name of the assay can be specified here.
 #'
 #' @return Either a combined sparse transcription count matrix or a seurat object which the  combined sparse transcription count matrix as an assay.
@@ -247,21 +247,25 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
         assertthat::assert_that(packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
         assertthat::assert_that(counts@version>="3.0.0", msg = "The provided 'counts' is not a Seurat 3 object. Currently only Seurat 3 objects are supported.")
         if(is.vector(tx2gene)){
-            if(ncol(counts[[counts@active.assay]]@meta.features)>1){
-                tx2gene <-  counts[[counts@active.assay]]@meta.features[,tx2gene]
-            }else{
-                stop("No feature-level meta data in seurat object. Was 'tx2gene' provided in 'combine_to_matrix()'?\nAlternatively provide a real tx2gene dataframe.")
-            }
+            meta_df <- counts[[counts@active.assay]]@meta.features
+            assertthat::assert_that(ncol(meta_df)>1, msg="No feature-level meta data in active assay of seurat object. Was 'tx2gene' provided in 'combine_to_matrix()'?\nAlternatively provide a real tx2gene dataframe.")
+            assertthat::assert_that(all(tx2gene %in% colnames(meta_df)), msg = "Not all provided 'tx2gene' colnames are present in the feature-level meta data.")
+            tx2gene <-  counts[[counts@active.assay]]@meta.features[,tx2gene]
         }
         counts <- GetAssayData(counts)
     }
+    assertthat::assert_that(is(counts, "matrix")|is(counts, "sparseMatrix"))
+    assertthat::assert_that(is(tx2gene, "data.frame"))
+    assertthat::assert_that(is(pd, "data.frame"))
     assertthat::assert_that(ncol(tx2gene)>1)
     assertthat::assert_that(cond_col %in% colnames(pd), msg = paste0("Could not find", cond_col, " in colnames of pd."))
     assertthat::assert_that(filtering_strategy %in% c("bulk", "sc", "own"), msg = "Please select a valid filtering strategy ('bulk', 'sc' or 'own').")
     assertthat::assert_that(is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
     assertthat::assert_that(is.logical(force_dense))
     assertthat::assert_that(is.logical(carry_over_metadata))
+    assertthat::assert_that(all(rownames(counts) %in% tx2gene[[1]]), msg = "Not all rownames of the counts are present in the first tx2gene column. You may want to reorder the tx2gene columns with 'move_columns_to_front()'.")
 
+    tx2gene <- rapply(tx2gene, as.character, classes="factor", how="replace")
     tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
     assertthat::assert_that(nrow(tx2gene)==nrow(counts))
     colnames(tx2gene)[c(1,2)] <- c("feature_id", "gene_id")
@@ -320,8 +324,9 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     own={
         filter_opt_list <- modifyList(filter_opt_list, list(...))
     })
-    counts <- do.call(sparse_filter, args = c(list(counts = counts, tx2gene = tx2gene, BPPARAM = BPPARAM),
-                                              filter_opt_list))
+    tictoc::tic("Filter")
+    counts <- do.call(sparse_filter, args = c(list("counts" = counts, "tx2gene" = tx2gene, "BPPARAM" = BPPARAM), filter_opt_list), quote=TRUE)
+    tictoc::toc(log = T)
     tx2gene <- tx2gene[match(rownames(counts), tx2gene$feature_id),]
 
     if(is(counts, 'sparseMatrix')&force_dense){
@@ -336,15 +341,13 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
                      format(structure(as.double(nrow(counts))*as.double(ncol(counts))*8, class="object_size"), units="auto"), " of memory.")
             })
     }
-    # counts <- data.frame(tx2gene, counts, row.names = NULL, stringsAsFactors = F)
-    #
-    # drim <- DRIMSeq::dmDSdata(counts = counts, samples = samp)
 
     drim <- sparseDRIMSeq::sparse_dmDSdata(tx2gene = tx2gene, counts = counts, samples = samp)
-
-    exp_in_tx <- ratio_expression_in(drim, "tx")
-    exp_in_gn <- ratio_expression_in(drim, "gene")
-
+    tictoc::tic("Ratios")
+    exp_in_tx <- ratio_expression_in(drim, "tx", BPPARAM=BPPARAM)
+    exp_in_gn <- ratio_expression_in(drim, "gene", BPPARAM=BPPARAM)
+    tictoc::toc(log = T)
+    tictoc::tic("Metadata")
     #carry over metadata
     if(carry_over_metadata&ncol(tx2gene)>2){
         temp <- tx2gene[match(rownames(exp_in_tx), tx2gene$feature_id),]
@@ -353,13 +356,12 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
             exp_in_tx <- cbind(exp_in_tx, temp[,-c(1,2)])
             add_to_gene_columns <- check_unique_by_partition(temp[,-c(1,2)], drim@counts@partitioning)
             if(!is.null(add_to_gene_columns)){
-                temp <- get_by_partition(df = temp, columns =add_to_gene_columns, partitioning = drim@counts@partitioning, FUN=unique)
+                temp <- get_by_partition(df = temp, columns =add_to_gene_columns, partitioning = drim@counts@partitioning, FUN=unique, BPPARAM = BPPARAM)
                 exp_in_gn <- cbind(exp_in_gn, temp[match(rownames(exp_in_gn), temp[[1]]),-c(1)])
             }
         }
     }
-
-
+    tictoc::toc(log = T)
     design_full <- model.matrix(~condition, data=samp)
 
     tictoc::toc(log = T)
@@ -385,6 +387,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 
 
 #TODO: implement Noise - IQR filtering
+#TODO: Posthoc!
 
 #' Posthoc filtering and two-staged statistical tests
 #'
@@ -399,13 +402,13 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 #' @param ofdr Overall false discovery rate (OFDR) threshold.
 #' @param posthoc_filt Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or `FALSE` can be provided.
 #' @return An extended `dturtle` object. Additional slots include:
-#' - `DE_gene`:
-#' - `DE_tx` :
-#' - `FDR_table` :
+#' - `DE_gene`: A character vector of all genes where the first stageR step was significant. Basically the significant genes, that showed signs of DTU.
+#' - `DE_tx` : A named character vector of transcripts where the second stageR step was significant. Basically the significant transcripts of the significant genes.
+#' - `FDR_table` : A data frame of the stage-wise adjusted p-values for all genes/transcripts. Might contain NA-values, as transcript level p-values are not avaible when the gene level test was not significant.
 #'
 #' @family DTUrtle
 #' @export
-#' @seealso [run_drimseq()] for DTU object creation. [create_dtu_table()] for result visualization.
+#' @seealso [run_drimseq()] for DTU object creation. [create_dtu_table()] for result table creation.
 #'
 #' @examples
 posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
@@ -417,8 +420,8 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
     }
     assertthat::assert_that(0<=ofdr & ofdr<=1, msg = "The provided 'ofdr' parameter is invalid. Must be a number between [0,1].")
 
-    res <- DRIMSeq::results(dturtle$drim)
-    res_txp <- DRIMSeq::results(dturtle$drim, level="feature")
+    res <- sparseDRIMSeq::results(dturtle$drim)
+    res_txp <- sparseDRIMSeq::results(dturtle$drim, level="feature")
 
     if(posthoc!=F|posthoc>0){
         res_txp <- run_posthoc(dturtle$drim, posthoc)
@@ -438,7 +441,8 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
     DE_gene <- unique(as.character(fdr_table$geneID[fdr_table$gene<ofdr]))
 
     if(length(DE_gene)>0){
-        DE_tx <- fdr_table$txID[fdr_table$gene<ofdr&fdr_table$transcript<ofdr]
+        temp <- fdr_table[fdr_table$gene<ofdr&fdr_table$transcript<ofdr,]
+        DE_tx <- setNames(as.character(temp$txID), temp$geneID)
         message("Found ",length(DE_gene)," significant genes with ",length(DE_tx)," significant transcripts (OFDR: ",ofdr,")")
     }else{
         DE_gene <- NULL

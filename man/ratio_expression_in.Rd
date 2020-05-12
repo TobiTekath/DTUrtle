@@ -4,7 +4,7 @@
 \alias{ratio_expression_in}
 \title{Ratio of expressing samples}
 \usage{
-ratio_expression_in(drim, type)
+ratio_expression_in(drim, type, BPPARAM = BiocParallel::SerialParam())
 }
 \arguments{
 \item{drim}{DRIMSeq object}
@@ -14,6 +14,8 @@ ratio_expression_in(drim, type)
 \item \code{'tx'}: Transcript-level expressed-in ratios.
 \item \code{'gene'}: Gene-level expressed-in ratios.
 }}
+
+\item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for standard non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
 }
 \value{
 Data frame with the expressed-in ratios.

@@ -1,44 +1,91 @@
-#' Title
+#' Summarize DTUrtle results
 #'
-#' @param dturtle
-#' @param gene_name_info
-#' @param gene_chromosome_info
-#' @param gene_description
+#' Summarize the key results of the DTUrtle analysis to a gene-level data frame.
 #'
-#' @return
+#' This function provides an easy interface to summarize the key DTUrtle results toegther with user-defined meta data columns to a gene-level data frame.
+#'
+#' @param dturtle Result object of `posthoc_and_stager()`. Must be of class `dturtle`.
+#' @param add_gene_metadata A list of columns of the object's `meta_table_gene`, the gene-level meta data table.
+#' Names can be specified, which are used as the column names in the final output.
+#' @param add_tx_metadata A list of tuples for the object's `meta_table_tx`, the transcript-level meta data table.
+#' The tuples must consist of the name of the column in `meta_table_tx` and a gene-level summarization function.
+#' This function shall summarize the trancript-level information in such a way, that only one value for each gene is returned.
+#' Names can be specified, which are used as the column names in the final output.
+#'
+#' @return An extended `dturtle` object, including the added `dtu_table`.
 #' @family DTUrtle visualization
 #' @export
-#' @seealso
+#' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [plot_dtu_table()] for table visualization.
 #'
 #' @examples
-create_dtu_table <- function(dturtle, gene_name_info=NULL, gene_chromosome_info=NULL, gene_description=NULL){
-    max_delta_col <- paste0("max(",dturtle$cond_levels[1], "-",dturtle$cond_levels[2],")")
-    dtu_table <- data.frame("geneID" = as.character(unique(dturtle$final_q$geneID)), stringsAsFactors = F)
+create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="exp_in"), add_tx_metadata = list("max_pct_tx_expr"=c("exp_in", max))){
+    assertthat::assert_that(is(dturtle,"dturtle"), msg = "The provided dturtle object is not of class 'dturtle'.")
+    assertthat::assert_that(!is.null(dturtle$DE_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+    assertthat::assert_that(!is.null(dturtle$DE_tx), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+    assertthat::assert_that(!is.null(dturtle$FDR_table), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+    assertthat::assert_that(!is.null(dturtle$group), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+    assertthat::assert_that(!is.null(dturtle$drim), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+    assertthat::assert_that(length(dturtle$DE_gene)>0, msg = "The provided dturtle object does not contain any significant gene. Maybe try to rerun the pipeline with more relaxes thresholds.")
+    assertthat::assert_that(is.null(add_gene_metadata)|(is(add_gene_metadata, "list")&&all(lengths(add_tx_metadata)>0)), msg = "The add_gene_metadata object must be a list of non-empty elements or NULL.")
+    assertthat::assert_that(is.null(add_tx_metadata)|(is(add_tx_metadata, "list")&&all(lengths(add_tx_metadata)>0)), msg = "The add_tx_metadata object must be a list of non-empty elements or or NULL.")
 
-    if(!is.null(gene_name_info)){
-        #TODO: either pull data from seurat or general function that handles named lists or dataframes with 2 columns
-        dtu_table$geneName <- sapply(dtu_table$geneID, FUN = function(x) unique(txdf$external_gene_name[txdf$GENEID == x])[1])
+    max_delta_col <- paste0("max(",levels(dturtle$group)[1], "-",levels(dturtle$group)[2],")")
+    dtu_table <- data.frame("geneID" = dturtle$DE_gene, stringsAsFactors = F)
+
+    dtu_table$gene_qval <- sapply(dtu_table$geneID, FUN = function(x) min(dturtle$FDR_table$gene[dturtle$FDR_table$geneID == x]))
+    dtu_table$min_tx_qval <- sapply(dtu_table$geneID, FUN = function(x) min(dturtle$FDR_table$transcript[dturtle$FDR_table$geneID == x]))
+    dtu_table$n_tx <- sapply(dtu_table$geneID, FUN = function(x) length(dturtle$FDR_table$geneID[dturtle$FDR_table$geneID == x]))
+    dtu_table$n_sig_tx <- sapply(dtu_table$geneID, FUN = function(x) length(dturtle$DE_tx[names(dturtle$DE_tx) == x]))
+    dtu_table[[max_delta_col]] <- as.numeric(mapply(dtu_table$geneID, FUN = getmax, MoreArgs = list(dturtle = dturtle)))
+    # dtu_table$pct_expr_gene <- dturtle$meta_table_gene$pct_exp[match(dtu_table$geneID, dturtle$pct_exp_gene$gene)]
+    # dtu_table$max_pct_expr_tx <- sapply(dtu_table$geneID, FUN = function(x) max(dturtle$pct_exp_tx$pct_exp[dturtle$pct_exp_tx$gene == x]))
+
+    if(!is.null(add_gene_metadata)){
+      valid_cols <- add_gene_metadata[add_gene_metadata %in% colnames(dturtle$meta_table_gene)]
+      if(length(valid_cols) != length(add_gene_metadata)){
+        message("\nCould not find the following columns in 'meta_table_gene':\n\t", paste0(setdiff(add_gene_metadata, valid_cols), collapse = "\n\t"))
+      }
+      #names(valid_cols) <- make.names(names(valid_cols))
+      add_table <- dturtle$meta_table_gene[match(dtu_table$geneID, dturtle$meta_table_gene$gene), unlist(valid_cols)]
+      if(is.null(names(valid_cols))){
+        names(valid_cols) <- make.names(unlist(valid_cols))
+      }else{
+        names(valid_cols)[names(valid_cols) == ""] <- unlist(valid_cols[names(valid_cols) == ""])
+      }
+      colnames(add_table) <- make.names(names(valid_cols))
+      dtu_table <- cbind(dtu_table, add_table)
     }
 
-    if(!is.null(gene_chromosome_info)){
-        #TODO
-        dtu_table$chromosome <- sapply(dtu_table$geneID, FUN = function(x) unique(txdf$chromosome_name[txdf$GENEID == x]))
+    if(!is.null(add_tx_metadata)){
+      valid_cols <- add_tx_metadata[lengths(add_tx_metadata)==2 & lapply(add_tx_metadata, `[[`, 1) %in% colnames(dturtle$meta_table_tx)]
+      funcs <- lapply(valid_cols, `[[`, 2)
+      valid_cols <- lapply(valid_cols, `[[`, 1)
+
+      if(length(valid_cols) != length(add_tx_metadata)){
+        message("\nInvalid vector (must be of length 2) or could not find columns in 'meta_table_tx':\n\t", paste0(setdiff(lapply(add_tx_metadata, `[[`, 1), valid_cols), collapse = "\n\t"))
+      }
+      assertthat::assert_that(all(unlist(lapply(funcs, is, "function"))), msg = "Not all provided 'add_tx_metadata' functions are functions!")
+      temp_table <- dturtle$meta_table_tx[dturtle$meta_table_tx$gene %in% dtu_table$geneID, c("gene",unlist(valid_cols)), drop=F]
+      add_table <- lapply(dtu_table$geneID, function(gene){
+        temp <- temp_table[temp_table$gene==gene,]
+        sapply(seq_along(funcs), function(i) funcs[[i]](temp[[i+1]]))
+      })
+      if(any(unlist(lapply(add_table, lengths))>1)){
+        stop("One or multiple transcript-level summararizations did return more than one value. These were:\n\t", paste0(valid_cols[unique(unlist(lapply(lapply(add_table, lengths) ,function(x) which(x>1))))], collapse = "\n\t"))
+      }
+
+      add_table <- do.call(rbind.data.frame, add_table)
+      assertthat::assert_that(nrow(add_table)==nrow(dtu_table))
+      if(is.null(names(valid_cols))){
+        names(valid_cols) <- make.names(unlist(valid_cols))
+      }else{
+        names(valid_cols)[names(valid_cols) == ""] <- unlist(valid_cols[names(valid_cols) == ""])
+      }
+      colnames(add_table) <- make.names(names(valid_cols))
+      dtu_table <- cbind(dtu_table, add_table)
     }
 
-    dtu_table$gene_qval <- sapply(dtu_table$geneID, FUN = function(x) min(dturtle$final_q$gene[dturtle$final_q$geneID == x]))
-    dtu_table$min_tx_qval <- sapply(dtu_table$geneID, FUN = function(x) min(dturtle$final_q$transcript[dturtle$final_q$geneID == x]))
-    dtu_table$n_tx <- sapply(dtu_table$geneID, FUN = function(x) length(dturtle$final_q$geneID[dturtle$final_q$geneID == x]))
-    dtu_table$n_sig_tx <- sapply(dtu_table$geneID, FUN = function(x) length(dturtle$final_q_tx$geneID[dturtle$final_q_tx$geneID == x]))
-    dtu_table <- add_max_delta(dtu_table, dturtle)
-    dtu_table$pct_expr_gene <- dturtle$pct_exp_gene$pct_exp[match(dtu_table$geneID, dturtle$pct_exp_gene$gene)]
-    dtu_table$max_pct_expr_tx <- sapply(dtu_table$geneID, FUN = function(x) max(dturtle$pct_exp_tx$pct_exp[dturtle$pct_exp_tx$gene == x]))
-
-    dtu_table <- dtu_table[!is.na(dtu_table[[max_delta_col]]),]
-
-    if(!is.null(gene_description)){
-        #TODO
-        dtu_table$description <- sapply(dtu_table$geneID, FUN = function(x) unique(txdf$description[txdf$GENEID == x])[1])
-    }
+    dtu_table <- rapply(dtu_table, as.character, classes="factor", how="replace")
     dtu_table <- dtu_table[order(abs(dtu_table[[max_delta_col]]), decreasing = T),]
 
     return_obj <- append(list("dtu_table"=dtu_table), dturtle)
@@ -48,7 +95,29 @@ create_dtu_table <- function(dturtle, gene_name_info=NULL, gene_chromosome_info=
 
 
 
-plot_DTU_table <- function(dtu, txdf, title, folder, cores=1, image_folder="images/",
+#' Title
+#'
+#' @param dtu
+#' @param txdf
+#' @param title
+#' @param folder
+#' @param cores
+#' @param image_folder
+#' @param dtu_table_image
+#' @param include_bar
+#' @param include_heat
+#' @param include_txplot
+#' @param heat_all_counts
+#' @param heat_mut
+#' @param heat_draw_genes
+#' @param txplot_reduce_introns
+#' @param txplot_reduce_introns_fill
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_dtu_table <- function(dtu, txdf, title, folder, cores=1, image_folder="images/",
                            dtu_table_image = F, include_bar=F, include_heat=F, include_txplot=F,
                            heat_all_counts=all_counts_dtu, heat_mut=mut_table, heat_draw_genes=anno_genes,
                            txplot_reduce_introns=F, txplot_reduce_introns_fill = "grey95") {

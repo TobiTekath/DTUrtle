@@ -22,8 +22,7 @@ sparse_filter(
 
 \item{tx2gene}{Feature to gene mapping.}
 
-\item{BPPARAM}{Parallelization method used by 
-\code{\link[BiocParallel]{bplapply}}.}
+\item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for standard non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
 
 \item{min_samps_gene_expr}{Minimal number of samples where genes should be 
 expressed. See Details.}

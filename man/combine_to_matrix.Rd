@@ -19,7 +19,7 @@ combine_to_matrix(
 
 \item{seurat_obj}{Optional seurat object, where the combined matrix is added as an assay. This has the advantage, that the cells are matched and subsetted if necessary. Currently only Seurat 3 objects are supported.}
 
-\item{tx2gene}{Optional tx2gene/metadata data frame, which is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the \code{tx_list} objects must be used.}
+\item{tx2gene}{Optional tx2gene/metadata data frame, can only be used in conjunction with a seurat object. Metadata is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the \code{tx_list} objects must be used.}
 
 \item{assay_name}{If the combined matrix should be added to an existing Seurat object, the name of the assay can be specified here.}
 }

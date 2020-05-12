@@ -10,7 +10,7 @@ run_posthoc(drim, filt)
 \item{filt}{Threshold}
 }
 \value{
-A filtered \code{DRIMSeq::results()} data frame.
+A filtered \code{sparseDRIMSeq::results()} data frame.
 }
 \description{
 Perform posthoc filtering.

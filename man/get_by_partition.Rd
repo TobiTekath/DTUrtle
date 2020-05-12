@@ -4,7 +4,15 @@
 \alias{get_by_partition}
 \title{Aggregate data frame by partitions}
 \usage{
-get_by_partition(df, partitioning, FUN, columns = NULL, simplify = T, drop = T)
+get_by_partition(
+  df,
+  partitioning,
+  FUN,
+  columns = NULL,
+  simplify = T,
+  drop = T,
+  BPPARAM = BiocParallel::SerialParam()
+)
 }
 \arguments{
 \item{df}{Data frame that shall be aggregated.}
@@ -21,6 +29,8 @@ get_by_partition(df, partitioning, FUN, columns = NULL, simplify = T, drop = T)
 \item{drop}{a logical indicating whether to drop unused combinations
     of grouping values.  The non-default case \code{drop=FALSE} has been
     amended for \R 3.5.0 to drop unused combinations.}
+
+\item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for standard non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
 }
 \value{
 Data frame with Group column that specifies the partition and one column per specified column with aggregated values.

@@ -2,25 +2,35 @@
 % Please edit documentation in R/visualization.R
 \name{create_dtu_table}
 \alias{create_dtu_table}
-\title{Title}
+\title{Summarize DTUrtle results}
 \usage{
 create_dtu_table(
   dturtle,
-  gene_name_info = NULL,
-  gene_chromosome_info = NULL,
-  gene_description = NULL
+  add_gene_metadata = list(pct_gene_expr = "exp_in"),
+  add_tx_metadata = list(max_pct_tx_expr = c("exp_in", max))
 )
 }
 \arguments{
-\item{gene_description}{}
+\item{dturtle}{Result object of \code{posthoc_and_stager()}. Must be of class \code{dturtle}.}
+
+\item{add_gene_metadata}{A list of columns of the object's \code{meta_table_gene}, the gene-level meta data table.
+Names can be specified, which are used as the column names in the final output.}
+
+\item{add_tx_metadata}{A list of tuples for the object's \code{meta_table_tx}, the transcript-level meta data table.
+The tuples must consist of the name of the column in \code{meta_table_tx} and a gene-level summarization function.
+This function shall summarize the trancript-level information in such a way, that only one value for each gene is returned.
+Names can be specified, which are used as the column names in the final output.}
 }
 \value{
-
+An extended \code{dturtle} object, including the added \code{dtu_table}.
 }
 \description{
-Title
+Summarize the results of the DTUrtle analysis to a gene-level data frame.
+}
+\details{
+This function provides an easy interface to summarize the main DTUrtle results toegther with user-defined meta data columns to a gene-level data frame.
 }
 \seealso{
-
+\code{\link[=run_drimseq]{run_drimseq()}} and \code{\link[=posthoc_and_stager]{posthoc_and_stager()}} for DTU object creation. \code{\link[=plot_dtu_table]{plot_dtu_table()}} for table visualization.
 }
 \concept{DTUrtle visualization}
