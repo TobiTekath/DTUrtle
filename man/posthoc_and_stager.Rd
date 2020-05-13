@@ -16,8 +16,8 @@ posthoc_and_stager(dturtle, ofdr = 0.05, posthoc = 0.1)
 \value{
 An extended \code{dturtle} object. Additional slots include:
 \itemize{
-\item \code{DE_gene}: A character vector of all genes where the first stageR step was significant. Basically the significant genes, that showed signs of DTU.
-\item \code{DE_tx} : A named character vector of transcripts where the second stageR step was significant. Basically the significant transcripts of the significant genes.
+\item \code{sig_gene}: A character vector of all genes where the first stageR step was significant. Basically the significant genes, that showed signs of DTU.
+\item \code{sig_tx} : A named character vector of transcripts where the second stageR step was significant. Basically the significant transcripts of the significant genes.
 \item \code{FDR_table} : A data frame of the stage-wise adjusted p-values for all genes/transcripts. Might contain NA-values, as transcript level p-values are not avaible when the gene level test was not significant.
 }
 }

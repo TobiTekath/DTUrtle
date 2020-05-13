@@ -10,6 +10,6 @@ License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.4.0)
-Imports: Matrix, tximport, sparseDRIMSeq, stageR, rtracklayer, formattable, DT, Gviz, assertthat
+Imports: Matrix, tximport, sparseDRIMSeq, stageR, rtracklayer, formattable, DT, Gviz, assertthat, scales, ggplot2, reshape2, BiocParallel
 RoxygenNote: 7.1.0
 Roxygen: list(markdown = TRUE)

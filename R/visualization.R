@@ -19,78 +19,78 @@
 #'
 #' @examples
 create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="exp_in"), add_tx_metadata = list("max_pct_tx_expr"=c("exp_in", max))){
-    assertthat::assert_that(is(dturtle,"dturtle"), msg = "The provided dturtle object is not of class 'dturtle'.")
-    assertthat::assert_that(!is.null(dturtle$DE_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
-    assertthat::assert_that(!is.null(dturtle$DE_tx), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
-    assertthat::assert_that(!is.null(dturtle$FDR_table), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
-    assertthat::assert_that(!is.null(dturtle$group), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
-    assertthat::assert_that(!is.null(dturtle$drim), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
-    assertthat::assert_that(length(dturtle$DE_gene)>0, msg = "The provided dturtle object does not contain any significant gene. Maybe try to rerun the pipeline with more relaxes thresholds.")
-    assertthat::assert_that(is.null(add_gene_metadata)|(is(add_gene_metadata, "list")&&all(lengths(add_tx_metadata)>0)), msg = "The add_gene_metadata object must be a list of non-empty elements or NULL.")
-    assertthat::assert_that(is.null(add_tx_metadata)|(is(add_tx_metadata, "list")&&all(lengths(add_tx_metadata)>0)), msg = "The add_tx_metadata object must be a list of non-empty elements or or NULL.")
+  assertthat::assert_that(is(dturtle,"dturtle"), msg = "The provided dturtle object is not of class 'dturtle'.")
+  assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(!is.null(dturtle$sig_tx), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(!is.null(dturtle$FDR_table), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(!is.null(dturtle$group), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(!is.null(dturtle$drim), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(length(dturtle$sig_gene)>0, msg = "The provided dturtle object does not contain any significant gene. Maybe try to rerun the pipeline with more relaxes thresholds.")
+  assertthat::assert_that(is.null(add_gene_metadata)||(is(add_gene_metadata, "list")&&all(lengths(add_tx_metadata)>0)), msg = "The add_gene_metadata object must be a list of non-empty elements or NULL.")
+  assertthat::assert_that(is.null(add_tx_metadata)||(is(add_tx_metadata, "list")&&all(lengths(add_tx_metadata)>0)), msg = "The add_tx_metadata object must be a list of non-empty elements or or NULL.")
 
-    max_delta_col <- paste0("max(",levels(dturtle$group)[1], "-",levels(dturtle$group)[2],")")
-    dtu_table <- data.frame("geneID" = dturtle$DE_gene, stringsAsFactors = F)
+  max_delta_col <- paste0("max(",levels(dturtle$group)[1], "-",levels(dturtle$group)[2],")")
+  dtu_table <- data.frame("geneID" = dturtle$sig_gene, stringsAsFactors = F)
 
-    dtu_table$gene_qval <- sapply(dtu_table$geneID, FUN = function(x) min(dturtle$FDR_table$gene[dturtle$FDR_table$geneID == x]))
-    dtu_table$min_tx_qval <- sapply(dtu_table$geneID, FUN = function(x) min(dturtle$FDR_table$transcript[dturtle$FDR_table$geneID == x]))
-    dtu_table$n_tx <- sapply(dtu_table$geneID, FUN = function(x) length(dturtle$FDR_table$geneID[dturtle$FDR_table$geneID == x]))
-    dtu_table$n_sig_tx <- sapply(dtu_table$geneID, FUN = function(x) length(dturtle$DE_tx[names(dturtle$DE_tx) == x]))
-    dtu_table[[max_delta_col]] <- as.numeric(mapply(dtu_table$geneID, FUN = getmax, MoreArgs = list(dturtle = dturtle)))
-    # dtu_table$pct_expr_gene <- dturtle$meta_table_gene$pct_exp[match(dtu_table$geneID, dturtle$pct_exp_gene$gene)]
-    # dtu_table$max_pct_expr_tx <- sapply(dtu_table$geneID, FUN = function(x) max(dturtle$pct_exp_tx$pct_exp[dturtle$pct_exp_tx$gene == x]))
+  dtu_table$gene_qval <- sapply(dtu_table$geneID, FUN = function(x) min(dturtle$FDR_table$gene[dturtle$FDR_table$geneID == x]))
+  dtu_table$min_tx_qval <- sapply(dtu_table$geneID, FUN = function(x) min(dturtle$FDR_table$transcript[dturtle$FDR_table$geneID == x]))
+  dtu_table$n_tx <- sapply(dtu_table$geneID, FUN = function(x) length(dturtle$FDR_table$geneID[dturtle$FDR_table$geneID == x]))
+  dtu_table$n_sig_tx <- sapply(dtu_table$geneID, FUN = function(x) length(dturtle$sig_tx[names(dturtle$sig_tx) == x]))
+  dtu_table[[max_delta_col]] <- as.numeric(mapply(dtu_table$geneID, FUN = getmax, MoreArgs = list(dturtle = dturtle)))
+  # dtu_table$pct_expr_gene <- dturtle$meta_table_gene$pct_exp[match(dtu_table$geneID, dturtle$pct_exp_gene$gene)]
+  # dtu_table$max_pct_expr_tx <- sapply(dtu_table$geneID, FUN = function(x) max(dturtle$pct_exp_tx$pct_exp[dturtle$pct_exp_tx$gene == x]))
 
-    if(!is.null(add_gene_metadata)){
-      valid_cols <- add_gene_metadata[add_gene_metadata %in% colnames(dturtle$meta_table_gene)]
-      if(length(valid_cols) != length(add_gene_metadata)){
-        message("\nCould not find the following columns in 'meta_table_gene':\n\t", paste0(setdiff(add_gene_metadata, valid_cols), collapse = "\n\t"))
-      }
-      #names(valid_cols) <- make.names(names(valid_cols))
-      add_table <- dturtle$meta_table_gene[match(dtu_table$geneID, dturtle$meta_table_gene$gene), unlist(valid_cols)]
-      if(is.null(names(valid_cols))){
-        names(valid_cols) <- make.names(unlist(valid_cols))
-      }else{
-        names(valid_cols)[names(valid_cols) == ""] <- unlist(valid_cols[names(valid_cols) == ""])
-      }
-      colnames(add_table) <- make.names(names(valid_cols))
-      dtu_table <- cbind(dtu_table, add_table)
+  if(!is.null(add_gene_metadata)){
+    valid_cols <- add_gene_metadata[add_gene_metadata %in% colnames(dturtle$meta_table_gene)]
+    if(length(valid_cols) != length(add_gene_metadata)){
+      message("\nCould not find the following columns in 'meta_table_gene':\n\t", paste0(setdiff(add_gene_metadata, valid_cols), collapse = "\n\t"))
+    }
+    #names(valid_cols) <- make.names(names(valid_cols))
+    add_table <- dturtle$meta_table_gene[match(dtu_table$geneID, dturtle$meta_table_gene$gene), unlist(valid_cols)]
+    if(is.null(names(valid_cols))){
+      names(valid_cols) <- make.names(unlist(valid_cols))
+    }else{
+      names(valid_cols)[names(valid_cols) == ""] <- unlist(valid_cols[names(valid_cols) == ""])
+    }
+    colnames(add_table) <- make.names(names(valid_cols))
+    dtu_table <- cbind(dtu_table, add_table)
+  }
+
+  if(!is.null(add_tx_metadata)){
+    valid_cols <- add_tx_metadata[lengths(add_tx_metadata)==2 & lapply(add_tx_metadata, `[[`, 1) %in% colnames(dturtle$meta_table_tx)]
+    funcs <- lapply(valid_cols, `[[`, 2)
+    valid_cols <- lapply(valid_cols, `[[`, 1)
+
+    if(length(valid_cols) != length(add_tx_metadata)){
+      message("\nInvalid vector (must be of length 2) or could not find columns in 'meta_table_tx':\n\t", paste0(setdiff(lapply(add_tx_metadata, `[[`, 1), valid_cols), collapse = "\n\t"))
+    }
+    assertthat::assert_that(all(unlist(lapply(funcs, is, "function"))), msg = "Not all provided 'add_tx_metadata' functions are functions!")
+    temp_table <- dturtle$meta_table_tx[dturtle$meta_table_tx$gene %in% dtu_table$geneID, c("gene",unlist(valid_cols)), drop=F]
+    add_table <- lapply(dtu_table$geneID, function(gene){
+      temp <- temp_table[temp_table$gene==gene,]
+      sapply(seq_along(funcs), function(i) funcs[[i]](temp[[i+1]]))
+    })
+    if(any(unlist(lapply(add_table, lengths))>1)){
+      stop("One or multiple transcript-level summararizations did return more than one value. These were:\n\t", paste0(valid_cols[unique(unlist(lapply(lapply(add_table, lengths) ,function(x) which(x>1))))], collapse = "\n\t"))
     }
 
-    if(!is.null(add_tx_metadata)){
-      valid_cols <- add_tx_metadata[lengths(add_tx_metadata)==2 & lapply(add_tx_metadata, `[[`, 1) %in% colnames(dturtle$meta_table_tx)]
-      funcs <- lapply(valid_cols, `[[`, 2)
-      valid_cols <- lapply(valid_cols, `[[`, 1)
-
-      if(length(valid_cols) != length(add_tx_metadata)){
-        message("\nInvalid vector (must be of length 2) or could not find columns in 'meta_table_tx':\n\t", paste0(setdiff(lapply(add_tx_metadata, `[[`, 1), valid_cols), collapse = "\n\t"))
-      }
-      assertthat::assert_that(all(unlist(lapply(funcs, is, "function"))), msg = "Not all provided 'add_tx_metadata' functions are functions!")
-      temp_table <- dturtle$meta_table_tx[dturtle$meta_table_tx$gene %in% dtu_table$geneID, c("gene",unlist(valid_cols)), drop=F]
-      add_table <- lapply(dtu_table$geneID, function(gene){
-        temp <- temp_table[temp_table$gene==gene,]
-        sapply(seq_along(funcs), function(i) funcs[[i]](temp[[i+1]]))
-      })
-      if(any(unlist(lapply(add_table, lengths))>1)){
-        stop("One or multiple transcript-level summararizations did return more than one value. These were:\n\t", paste0(valid_cols[unique(unlist(lapply(lapply(add_table, lengths) ,function(x) which(x>1))))], collapse = "\n\t"))
-      }
-
-      add_table <- do.call(rbind.data.frame, add_table)
-      assertthat::assert_that(nrow(add_table)==nrow(dtu_table))
-      if(is.null(names(valid_cols))){
-        names(valid_cols) <- make.names(unlist(valid_cols))
-      }else{
-        names(valid_cols)[names(valid_cols) == ""] <- unlist(valid_cols[names(valid_cols) == ""])
-      }
-      colnames(add_table) <- make.names(names(valid_cols))
-      dtu_table <- cbind(dtu_table, add_table)
+    add_table <- do.call(rbind.data.frame, add_table)
+    assertthat::assert_that(nrow(add_table)==nrow(dtu_table))
+    if(is.null(names(valid_cols))){
+      names(valid_cols) <- make.names(unlist(valid_cols))
+    }else{
+      names(valid_cols)[names(valid_cols) == ""] <- unlist(valid_cols[names(valid_cols) == ""])
     }
+    colnames(add_table) <- make.names(names(valid_cols))
+    dtu_table <- cbind(dtu_table, add_table)
+  }
 
-    dtu_table <- rapply(dtu_table, as.character, classes="factor", how="replace")
-    dtu_table <- dtu_table[order(abs(dtu_table[[max_delta_col]]), decreasing = T),]
+  dtu_table <- rapply(dtu_table, as.character, classes="factor", how="replace")
+  dtu_table <- dtu_table[order(abs(dtu_table[[max_delta_col]]), decreasing = T),]
 
-    return_obj <- append(list("dtu_table"=dtu_table), dturtle)
-    class(return_obj) <- append("dturtle", class(return_obj))
-    return(return_obj)
+  return_obj <- append(list("dtu_table"=dtu_table), dturtle)
+  class(return_obj) <- append("dturtle", class(return_obj))
+  return(return_obj)
 }
 
 
@@ -340,27 +340,75 @@ plot_dtu_table <- function(dtu, txdf, title, folder, cores=1, image_folder="imag
 
 
 
-#TODO: group parameter? different shape (44?) as current one does not scale
-plotProp_bar <- function(dtu, txdf=txdf, gene_id, path){
+#' Title
+#'
+#' @param dturtle Result object of `posthoc_and_stager()`. Must be of class `dturtle`.
+#' @param genes Character vector of genes to plot. If `NULL`, defaults to all found significant genes (`sig_genes`).
+#' @param meta_gene_id
+#' @param group_colors
+#' @param dash_color
+#' @param savepath
+#'
+#' @return
+#' @family DTUrtle visualization
+#' @export
+#'
+#' @examples
+plot_prop_bar <- function(dturtle, genes=NULL, meta_gene_id=NULL, group_colors=NULL, dash_color="red", savepath=NULL){
+  assertthat::assert_that(is(dturtle,"dturtle"), msg = "The provided dturtle object is not of class 'dturtle'.")
+  assertthat::assert_that(is.null(genes)||(is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
+  assertthat::assert_that(is.null(meta_gene_id)||(is(meta_gene_id, "character")&&meta_gene_id %in% colnames(dturtle$meta_table_gene)), msg = "The provided meta_gene_id column could not be found or is of wrong format.")
+  assertthat::assert_that(is.null(group_colors)||(is(group_colors, "list")&&!is.null(names(group_colors))), msg = "The provided group colors must be a named list or NULL.")
+  assertthat::assert_that(is.null(dash_color)||is(dash_color,"character"), msg = "The provided dash_color must be of type character or NULL.")
+  assertthat::assert_that(is.null(savepath)||is(savepath,"character"), msg = "The provided savepath must be of type character or NULL.")
+  assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(length(dturtle$sig_gene)>0, msg = "The provided dturtle object does not contain any significant gene. Maybe try to rerun the pipeline with more relaxes thresholds.")
+  assertthat::assert_that(!is.null(dturtle$meta_table_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(!is.null(dturtle$drim), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(!is.null(dturtle$sig_tx), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(!is.null(dturtle$group), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
 
-    gene_id <- as.character(gene_id)
-    group
-    counts_gene <- dtu$drim@counts[[gene_id]]
+  if(is.null(genes)){
+    genes <- dturtle$sig_gene
+  }
 
-    gene_name <- txdf$external_gene_name[txdf$GENEID==gene_id][1]
-    mean_1 <- mean(colSums(counts_gene[,which(group==levels(group)[1])]), na.rm = TRUE)
-    mean_2 <- mean(colSums(counts_gene[,which(group==levels(group)[2])]), na.rm = TRUE)
-    sd_1 <- sd(colSums(counts_gene[,which(group==levels(group)[1])]), na.rm = TRUE)
-    sd_2 <- sd(colSums(counts_gene[,which(group==levels(group)[2])]), na.rm = TRUE)
-    main <- paste0(gene_name," (",gene_id,")",
-                   "\n\tMean expression (CV) ",levels(group)[1]," = ", round(mean_1)," (",round((sd_1/mean_1)*100, digits=1),"%)",
-                   "\n\tMean expression (CV) ",levels(group)[2], " = ",round(mean_2)," (",round((sd_2/mean_2)*100, digits=1),"%)")
+  valid_genes <- genes[genes %in% dturtle$drim@results_gene$gene_id]
 
-    fit_full <- dtu$drim@fit_full[[gene_id]]
-    md <- dtu$drim@samples
+  if(length(genes)!=length(valid_genes)){
+    message("Removed ", length(genes)-length(valid_genes), " genes, which where not present in the drimseq analysis.")
+  }
 
-    proportions <- prop.table(counts_gene, 2)
-    proportions[proportions == "NaN"] <- NA
+  if(!is.null(meta_gene_id)){
+    gene_ids <- dturtle$meta_table_gene[match(valid_genes, dturtle$meta_table_gene$gene),meta_gene_id]
+    names(gene_ids) <- valid_genes
+  }
+
+  plot_list <- lapply(valid_genes, function(gene){
+    counts_gene <- as.matrix(dturtle$drim@counts[[gene]])
+    group <- dturtle$group
+
+    sum1 <- colSums(counts_gene[,which(group==levels(group)[1])])
+    sum2 <- colSums(counts_gene[,which(group==levels(group)[2])])
+    mean_1 <- mean(sum1, na.rm = T)
+    mean_2 <- mean(sum2, na.rm = T)
+    sd_1 <- sd(sum1, na.rm = T)
+    sd_2 <- sd(sum2, na.rm = T)
+
+    if(!is.null(meta_gene_id)){
+      gene_id <- gene_ids[[gene]]
+      main <- paste0(gene," (",gene_id,")")
+    }else{
+      main <- gene
+    }
+    main <- paste0(main,
+                   "\n\tMean expression (CV) ", levels(group)[1], " = ", round(mean_1), " (" ,round((sd_1/mean_1)*100, digits=1), "%)",
+                   "\n\tMean expression (CV) ", levels(group)[2], " = ", round(mean_2), " (" ,round((sd_2/mean_2)*100, digits=1), "%)")
+
+    fit_full <- dturtle$drim@fit_full[[gene]]
+    md <- dturtle$drim@samples
+
+    proportions <- sweep(counts_gene, 2, colSums(counts_gene), "/")
+    proportions[is.nan(proportions)] <- NA
     prop_samp <- data.frame(feature_id = rownames(proportions), proportions, stringsAsFactors = F, check.names = F)
     prop_fit <- data.frame(feature_id = rownames(fit_full), fit_full, stringsAsFactors = F, check.names = F)
 
@@ -372,11 +420,6 @@ plotProp_bar <- function(dtu, txdf=txdf, gene_id, path){
     o <- order(group, -prop_samp[feature_levels[1],-1])
     sample_levels <- colnames(counts_gene)[o]
 
-    #txname labels with transcript support level
-    labels <- txdf$external_transcript_name[match(feature_levels, txdf$TXNAME)]
-    tsl <- gsub("tsl", "", txdf$transcript_tsl[match(feature_levels, txdf$TXNAME)])
-    x_label <- paste0(labels, rep(" (", length(labels)), tsl, rep(")", length(labels)))
-
     prop_samp <- reshape2::melt(prop_samp, id.vars = "feature_id", variable.name = "sample_id",
                                 value.name = "proportion", factorsAsStrings = FALSE)
     prop_samp$feature_id <- factor(prop_samp$feature_id, levels = feature_levels)
@@ -385,7 +428,7 @@ plotProp_bar <- function(dtu, txdf=txdf, gene_id, path){
 
     mm <- match(prop_samp$sample_id, md$sample_id)
     for (i in setdiff(colnames(md), c("sample_id", "group"))) {
-        prop_samp[, i] <- md[mm, i]
+      prop_samp[, i] <- md[mm, i]
     }
 
     prop_fit <- reshape2::melt(prop_fit, id.vars = "feature_id", variable.name = "sample_id",
@@ -396,30 +439,39 @@ plotProp_bar <- function(dtu, txdf=txdf, gene_id, path){
 
     mm <- match(prop_fit$sample_id, md$sample_id)
     for (i in setdiff(colnames(md), c("sample_id", "group"))) {
-        prop_fit[, i] <- md[mm, i]
+      prop_fit[, i] <- md[mm, i]
     }
 
     #colours
-    group_colors <- scales::hue_pal()(nlevels(group))
-    names(group_colors) <- levels(group)
-    text_colour <- ifelse(feature_levels %in% dtu$final_q_tx$txID, "red", "dimgrey")
+    if(is.null(group_colors)){
+      group_colors <- scales::hue_pal()(nlevels(group))
+      names(group_colors) <- levels(group)
+    }
+    text_colour <- ifelse(feature_levels %in% dturtle$sig_tx, "red", "dimgrey")
 
     #barplot
-    library(ggplot2)
-    ggp <- ggplot() +
-        geom_bar(data = prop_samp,
-                 aes_string(x = "feature_id", y = "proportion", group = "sample_id", fill = "group"),
-                 stat = "identity", position = position_dodge(width = 0.9)) +
-        theme_bw() +
-        theme(axis.text.x = element_text(angle = 25, vjust = 1, hjust=1, colour = text_colour), axis.text = element_text(size = 12),
-              axis.title = element_text(size = 12, face = "bold"), plot.title = element_text(size = 12),
-              legend.position = "right", legend.title = element_text(size = 12), legend.text = element_text(size = 12)) +
-        scale_fill_manual(name = "Groups", values = group_colors, breaks = names(group_colors)) +
-        ggtitle(main) + xlab("Features") + ylab("Proportions") +
-        geom_point(data = prop_fit, aes_string(x = "feature_id", y = "proportion", group = "sample_id"),
-                   position = position_dodge(width = 0.9), size = 3, shape = 46, alpha = 0.2, colour = "red") +
-        scale_x_discrete(labels = x_label)
-    ggplot2::ggsave(paste0(path,make.names(gene_name),"_bar.png"),ggp, dpi=250, scale=1.5)
+    ggp <- ggplot2::ggplot() +
+      ggplot2::geom_bar(data = prop_samp, ggplot2::aes_string(x = "feature_id", y = "proportion", group = "sample_id", fill = "group"),
+               stat = "identity", position = ggplot2::position_dodge(width = 0.9)) + ggplot2::theme_bw() +
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 25, vjust = 1, hjust=1, colour = text_colour), axis.text = ggplot2::element_text(size = 12),
+                     axis.title = ggplot2::element_text(size = 12, face = "bold"), plot.title = ggplot2::element_text(size = 12),
+                     legend.position = "right", legend.title = ggplot2::element_text(size = 12), legend.text = ggplot2::element_text(size = 12)) +
+      ggplot2::scale_fill_manual(name = "Groups", values = group_colors, breaks = names(group_colors)) +
+      ggplot2::labs(title = main, x = "Features", y = "Proportions")
+
+    if(!is.null(dash_color)){
+      ggp <- ggp + ggplot2::geom_errorbar(data = prop_fit, ggplot2::aes_string(x = "feature_id", ymin = "proportion", ymax = "proportion", group = "sample_id"),
+                                 position = ggplot2::position_dodge(width = 0.9), size=0.5, linetype = "dashed", inherit.aes = F, width = 1, colour = dash_color)
+    }
+    if(!is.null(savepath)){
+      if(!dir.exists(savepath)){
+        dir.create(savepath)
+      }
+      ggplot2::ggsave(filename = paste0(savepath,make.names(gene),"_bar.png"), plot = ggp, ...)
+    }
+    return(setNames(list(ggp),gene))
+  })
+  return(plot_list)
 }
 
 plot_heat_per_gene <- function(gene_id, txdf, all_counts, mut, mut_genes, path){

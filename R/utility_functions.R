@@ -241,17 +241,17 @@ check_unique_by_partition <- function(df, partitioning, columns=NULL){
     assertthat::assert_that(is.list(partitioning))
     if(!is.null(columns)){
         assertthat::assert_that(all(columns %in% colnames(df)))
-        df <- df[,columns]
+        df <- df[,columns, drop=F]
     }
-        cols <- colnames(df)
-        for(part in partitioning){
-            dat <- df[part,cols]
-            cols <- cols[apply(dat, 2, function(x){all(x == x[1])})]
-            if(length(cols)==0){
-                return(NULL)
-            }
+    cols <- colnames(df)
+    for(part in partitioning){
+        dat <- df[part, cols, drop=F]
+        cols <- cols[apply(dat, 2, function(x){all(x == x[1])})]
+        if(length(cols)==0){
+            return(NULL)
         }
-        return(cols)
+    }
+    return(cols)
 }
 
 
@@ -283,3 +283,37 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, dr
     return(BiocParallel::bpaggregate(df, by=list(rep(names(partitioning), lengths(partitioning))), FUN=FUN,  simplify=simplify, drop=T, BPPARAM = BPPARAM))
 }
 
+
+#' Ensure one-to-one mapping
+#'
+#' Ensure one-to-one mapping of the two specified columns in the data frame.
+#'
+#' First checks if every unique value in `name` corresponds with a unique value in `id`.
+#' If not, changes the disagreeing values in `name` by extending the label with the `ext` character and a number.
+#'
+#' @param df A data frame, containing the two provided columns `name` and `id`
+#' @param name A column of `df`. If no one-to-one mapping exists, the values of this column will be changed (by extending with `ext`)!
+#' @param id A column of df. This is the preferred place for identifier columns, as this column will not be touched in case of a disagreement.
+#' @param ext The extension character.
+#'
+#' @return A data frame, where one to one mapping for the two columns is ensured.
+#' @export
+one_to_one_mapping <- function(df, name, id, ext="_"){
+    assertthat::assert_that(is.data.frame(df))
+    assertthat::assert_that(all(c(name,id) %in% colnames(df)))
+    assertthat::assert_that(is(ext, "character"))
+
+    not_correct <- lapply(split(df[[id]], df[[name]]), unique)
+    not_correct <- not_correct[lengths(not_correct)!=1]
+
+    if(length(not_correct)>0){
+        lapply(not_correct, function(x)
+            lapply(seq(from = 2, along.with = x[-1]), function(i)
+                df[[name]][df[[id]]==x[[i]]] <<- paste0(df[[name]][df[[id]]==x[[i]]],ext,i)))
+        message("Changed ", sum(lengths(not_correct))-length(not_correct), " names.")
+        return(df)
+    }else{
+        message("No changes needed - already one to one mapping.")
+        return(df)
+    }
+}

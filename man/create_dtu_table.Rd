@@ -25,12 +25,15 @@ Names can be specified, which are used as the column names in the final output.}
 An extended \code{dturtle} object, including the added \code{dtu_table}.
 }
 \description{
-Summarize the results of the DTUrtle analysis to a gene-level data frame.
+Summarize the key results of the DTUrtle analysis to a gene-level data frame.
 }
 \details{
-This function provides an easy interface to summarize the main DTUrtle results toegther with user-defined meta data columns to a gene-level data frame.
+This function provides an easy interface to summarize the key DTUrtle results toegther with user-defined meta data columns to a gene-level data frame.
 }
 \seealso{
 \code{\link[=run_drimseq]{run_drimseq()}} and \code{\link[=posthoc_and_stager]{posthoc_and_stager()}} for DTU object creation. \code{\link[=plot_dtu_table]{plot_dtu_table()}} for table visualization.
+
+Other DTUrtle visualization: 
+\code{\link{plot_prop_bar}()}
 }
 \concept{DTUrtle visualization}

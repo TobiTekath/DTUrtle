@@ -268,7 +268,9 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     tx2gene <- rapply(tx2gene, as.character, classes="factor", how="replace")
     tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
     assertthat::assert_that(nrow(tx2gene)==nrow(counts))
+    message("Using tx2gene columns:\n\t",colnames(tx2gene)[[1]]," ---> 'feature_id'\n\t",colnames(tx2gene)[[2]]," ---> 'gene_id'")
     colnames(tx2gene)[c(1,2)] <- c("feature_id", "gene_id")
+    colnames(tx2gene) <- make.names(colnames(tx2gene), unique = T)
 
     if(is.null(cond_levels)){
         if(length(unique(pd[[cond_col]]))==2){
@@ -279,7 +281,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
         }
     }
     assertthat::assert_that(length(cond_levels)==2)
-    message("Comparing ", cond_levels[1], " vs ", cond_levels[2])
+    message("\nComparing ", cond_levels[1], " vs ", cond_levels[2])
 
     if(is.null(id_col)){
         samp <- data.frame("sample_id"=row.names(pd), "condition"=pd[[cond_col]], stringsAsFactors = F)
@@ -294,7 +296,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
         samp <- samp[!is.na(samp$condition),]
         counts <- counts[ , !(colnames(counts) %in% exclude)]
     }
-    message("Proceed with cells/samples: ",paste0(capture.output(table(samp$condition)), collapse = "\n"))
+    message("\nProceed with cells/samples: ",paste0(capture.output(table(samp$condition)), collapse = "\n"))
 
     #TODO: Reevaluate!
     message("\nFiltering...\n")
@@ -350,14 +352,14 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     tictoc::tic("Metadata")
     #carry over metadata
     if(carry_over_metadata&ncol(tx2gene)>2){
-        temp <- tx2gene[match(rownames(exp_in_tx), tx2gene$feature_id),]
-        temp <- temp[,!apply(temp,2,function(x) any(is.na(x)))]
-        if(nrow(temp)==nrow(exp_in_tx)&ncol(temp)>2){
-            exp_in_tx <- cbind(exp_in_tx, temp[,-c(1,2)])
-            add_to_gene_columns <- check_unique_by_partition(temp[,-c(1,2)], drim@counts@partitioning)
+        tx2gene <- tx2gene[match(rownames(exp_in_tx), tx2gene$feature_id),]
+        tx2gene <- tx2gene[,!apply(tx2gene,2,function(x) any(is.na(x)))]
+        if(nrow(tx2gene)==nrow(exp_in_tx)&ncol(tx2gene)>2){
+            exp_in_tx <- cbind(exp_in_tx, tx2gene[,-c(1,2)], stringsAsFactors = F)
+            add_to_gene_columns <- check_unique_by_partition(tx2gene[,-c(1,2)], drim@counts@partitioning)
             if(!is.null(add_to_gene_columns)){
-                temp <- get_by_partition(df = temp, columns =add_to_gene_columns, partitioning = drim@counts@partitioning, FUN=unique, BPPARAM = BPPARAM)
-                exp_in_gn <- cbind(exp_in_gn, temp[match(rownames(exp_in_gn), temp[[1]]),-c(1)])
+                tx2gene <- get_by_partition(df = tx2gene, columns =add_to_gene_columns, partitioning = drim@counts@partitioning, FUN=unique, BPPARAM = BPPARAM)
+                exp_in_gn <- cbind(exp_in_gn, tx2gene[match(rownames(exp_in_gn), tx2gene[[1]]),-c(1)], stringsAsFactors = F)
             }
         }
     }
@@ -378,6 +380,10 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 
     group <- factor(samp$condition, levels = cond_levels, ordered = T)
     tictoc::toc(log = T)
+
+    exp_in_gn <- rapply(exp_in_gn, as.character, classes="factor", how="replace")
+    exp_in_tx <- rapply(exp_in_tx, as.character, classes="factor", how="replace")
+
     return_obj <- list("meta_table_gene"=exp_in_gn, "meta_table_tx"=exp_in_tx,
                        "drim"=drim_test, "design_full"=design_full, "group"=group,
                        "used_filtering_options"=list("DRIM"=filter_opt_list), "tictoc"=tictoc::tic.log(format = T))
@@ -402,8 +408,8 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 #' @param ofdr Overall false discovery rate (OFDR) threshold.
 #' @param posthoc_filt Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or `FALSE` can be provided.
 #' @return An extended `dturtle` object. Additional slots include:
-#' - `DE_gene`: A character vector of all genes where the first stageR step was significant. Basically the significant genes, that showed signs of DTU.
-#' - `DE_tx` : A named character vector of transcripts where the second stageR step was significant. Basically the significant transcripts of the significant genes.
+#' - `sig_gene`: A character vector of all genes where the first stageR step was significant. Basically the significant genes, that showed signs of DTU.
+#' - `sig_tx` : A named character vector of transcripts where the second stageR step was significant. Basically the significant transcripts of the significant genes.
 #' - `FDR_table` : A data frame of the stage-wise adjusted p-values for all genes/transcripts. Might contain NA-values, as transcript level p-values are not avaible when the gene level test was not significant.
 #'
 #' @family DTUrtle
@@ -438,18 +444,18 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
     stageRObj <- stageR::stageRTx(pScreen = pscreen, pConfirmation = pconfirm, pScreenAdjusted = F, tx2gene = tx2gene)
     stageRObj <- stageR::stageWiseAdjustment(stageRObj, method = "dtu", alpha = ofdr)
     fdr_table <- stageR::getAdjustedPValues(stageRObj, order = F, onlySignificantGenes = F)
-    DE_gene <- unique(as.character(fdr_table$geneID[fdr_table$gene<ofdr]))
+    sig_gene <- unique(as.character(fdr_table$geneID[fdr_table$gene<ofdr]))
 
-    if(length(DE_gene)>0){
+    if(length(sig_gene)>0){
         temp <- fdr_table[fdr_table$gene<ofdr&fdr_table$transcript<ofdr,]
-        DE_tx <- setNames(as.character(temp$txID), temp$geneID)
-        message("Found ",length(DE_gene)," significant genes with ",length(DE_tx)," significant transcripts (OFDR: ",ofdr,")")
+        sig_tx <- setNames(as.character(temp$txID), temp$geneID)
+        message("Found ",length(sig_gene)," significant genes with ",length(sig_tx)," significant transcripts (OFDR: ",ofdr,")")
     }else{
-        DE_gene <- NULL
-        DE_tx <- NULL
+        sig_gene <- NULL
+        sig_tx <- NULL
         message("No gene passed the screening test. If applicable try to adjust the OFDR level.")
     }
-    return_obj <- append(list("DE_gene" = DE_gene, "DE_tx" = DE_tx,
+    return_obj <- append(list("sig_gene" = sig_gene, "sig_tx" = sig_tx,
                                        "FDR_table" = fdr_table), dturtle)
     return_obj$used_filtering_options$posthoc_stager <- list("ofdr" = ofdr,
                                        "posthoc"=ifelse(posthoc==F, 0, posthoc))
