@@ -2,15 +2,18 @@
 % Please edit documentation in R/visualization.R
 \name{plot_prop_bar}
 \alias{plot_prop_bar}
-\title{Title}
+\title{Visualize as barplot}
 \usage{
 plot_prop_bar(
   dturtle,
   genes = NULL,
   meta_gene_id = NULL,
   group_colors = NULL,
-  dash_color = "red",
-  savepath = NULL
+  fit_line_color = "red",
+  savepath = NULL,
+  filename_ext = "_barplot.png",
+  BPPARAM = BiocParallel::SerialParam(),
+  ...
 )
 }
 \arguments{
@@ -18,15 +21,32 @@ plot_prop_bar(
 
 \item{genes}{Character vector of genes to plot. If \code{NULL}, defaults to all found significant genes (\code{sig_genes}).}
 
-\item{savepath}{}
+\item{meta_gene_id}{Optionally specify the column name in \code{meta_table_gene}, which contains gene identifiers.}
+
+\item{group_colors}{Optionally specify the colours for the two sample groups in the plot. Must be a named vector, with the group names as names.}
+
+\item{fit_line_color}{Optionally specify the colour to use for the mean fit line.}
+
+\item{savepath}{If you want your files to be saved to disk, specify a savepath here. The directories will be created, if necessary.}
+
+\item{filename_ext}{Optionally specify a file name extension here, which also defines the save image format. The file name will be 'gene_name+extension'.}
+
+\item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
+
+\item{...}{Further parameters for image saving with ggsave. Can be used to specify plot dimensions, etc. See \code{\link[ggplot2:ggsave]{ggsave}} for more information.}
 }
 \value{
-
+A list of the created plots. Can be further processed if wanted.
 }
 \description{
-Title
+Visualize genes and it's transcript proportions in a barplot.
+}
+\details{
+Shows the transcripts proportional change per analysis group, together with the mean fit value via a horizontal line. Significant transcript's names are marked in red.
 }
 \seealso{
+\code{\link[=run_drimseq]{run_drimseq()}} and \code{\link[=posthoc_and_stager]{posthoc_and_stager()}} for DTU object creation. \code{\link[=create_dtu_table]{create_dtu_table()}} and \code{\link[=plot_dtu_table]{plot_dtu_table()}} for table visualization.
+
 Other DTUrtle visualization: 
 \code{\link{create_dtu_table}()}
 }

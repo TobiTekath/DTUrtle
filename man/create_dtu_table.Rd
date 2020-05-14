@@ -28,7 +28,7 @@ An extended \code{dturtle} object, including the added \code{dtu_table}.
 Summarize the key results of the DTUrtle analysis to a gene-level data frame.
 }
 \details{
-This function provides an easy interface to summarize the key DTUrtle results toegther with user-defined meta data columns to a gene-level data frame.
+This function provides an easy interface to summarize the key DTUrtle results together with user-defined meta data columns to a gene-level data frame.
 }
 \seealso{
 \code{\link[=run_drimseq]{run_drimseq()}} and \code{\link[=posthoc_and_stager]{posthoc_and_stager()}} for DTU object creation. \code{\link[=plot_dtu_table]{plot_dtu_table()}} for table visualization.

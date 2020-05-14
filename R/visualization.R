@@ -2,7 +2,7 @@
 #'
 #' Summarize the key results of the DTUrtle analysis to a gene-level data frame.
 #'
-#' This function provides an easy interface to summarize the key DTUrtle results toegther with user-defined meta data columns to a gene-level data frame.
+#' This function provides an easy interface to summarize the key DTUrtle results together with user-defined meta data columns to a gene-level data frame.
 #'
 #' @param dturtle Result object of `posthoc_and_stager()`. Must be of class `dturtle`.
 #' @param add_gene_metadata A list of columns of the object's `meta_table_gene`, the gene-level meta data table.
@@ -53,7 +53,7 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
       names(valid_cols)[names(valid_cols) == ""] <- unlist(valid_cols[names(valid_cols) == ""])
     }
     colnames(add_table) <- make.names(names(valid_cols))
-    dtu_table <- cbind(dtu_table, add_table)
+    dtu_table <- cbind(dtu_table, add_table, stringsAsFactors=F)
   }
 
   if(!is.null(add_tx_metadata)){
@@ -68,12 +68,11 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
     temp_table <- dturtle$meta_table_tx[dturtle$meta_table_tx$gene %in% dtu_table$geneID, c("gene",unlist(valid_cols)), drop=F]
     add_table <- lapply(dtu_table$geneID, function(gene){
       temp <- temp_table[temp_table$gene==gene,]
-      sapply(seq_along(funcs), function(i) funcs[[i]](temp[[i+1]]))
+      lapply(seq_along(funcs), function(i) funcs[[i]](temp[[i+1]]))
     })
     if(any(unlist(lapply(add_table, lengths))>1)){
       stop("One or multiple transcript-level summararizations did return more than one value. These were:\n\t", paste0(valid_cols[unique(unlist(lapply(lapply(add_table, lengths) ,function(x) which(x>1))))], collapse = "\n\t"))
     }
-
     add_table <- do.call(rbind.data.frame, add_table)
     assertthat::assert_that(nrow(add_table)==nrow(dtu_table))
     if(is.null(names(valid_cols))){
@@ -82,7 +81,7 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
       names(valid_cols)[names(valid_cols) == ""] <- unlist(valid_cols[names(valid_cols) == ""])
     }
     colnames(add_table) <- make.names(names(valid_cols))
-    dtu_table <- cbind(dtu_table, add_table)
+    dtu_table <- cbind(dtu_table, add_table, stringsAsFactors=F)
   }
 
   dtu_table <- rapply(dtu_table, as.character, classes="factor", how="replace")
@@ -340,27 +339,37 @@ plot_dtu_table <- function(dtu, txdf, title, folder, cores=1, image_folder="imag
 
 
 
-#' Title
+#' Visualize as barplot
+#'
+#' Visualize genes and it's transcript proportions in a barplot.
+#'
+#' Shows the transcripts proportional change per analysis group, together with the mean fit value via a horizontal line. Significant transcript's names are marked in red.
 #'
 #' @param dturtle Result object of `posthoc_and_stager()`. Must be of class `dturtle`.
 #' @param genes Character vector of genes to plot. If `NULL`, defaults to all found significant genes (`sig_genes`).
-#' @param meta_gene_id
-#' @param group_colors
-#' @param dash_color
-#' @param savepath
+#' @param meta_gene_id Optionally specify the column name in `meta_table_gene`, which contains gene identifiers.
+#' @param group_colors Optionally specify the colours for the two sample groups in the plot. Must be a named vector, with the group names as names.
+#' @param fit_line_color Optionally specify the colour to use for the mean fit line.
+#' @param savepath If you want your files to be saved to disk, specify a savepath here. The directories will be created, if necessary.
+#' @param filename_ext Optionally specify a file name extension here, which also defines the save image format. The file name will be 'gene_name+extension'.
+#' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
+#' @param ... Further parameters for image saving with ggsave. Can be used to specify plot dimensions, etc. See \code{\link[ggplot2:ggsave]{ggsave}} for more information.
 #'
-#' @return
+#' @return A list of the created plots. Can be further processed if wanted.
 #' @family DTUrtle visualization
 #' @export
+#' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
 #'
 #' @examples
-plot_prop_bar <- function(dturtle, genes=NULL, meta_gene_id=NULL, group_colors=NULL, dash_color="red", savepath=NULL){
+plot_prop_bar <- function(dturtle, genes=NULL, meta_gene_id=NULL, group_colors=NULL, fit_line_color="red", savepath=NULL, filename_ext="_barplot.png", BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is(dturtle,"dturtle"), msg = "The provided dturtle object is not of class 'dturtle'.")
   assertthat::assert_that(is.null(genes)||(is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
   assertthat::assert_that(is.null(meta_gene_id)||(is(meta_gene_id, "character")&&meta_gene_id %in% colnames(dturtle$meta_table_gene)), msg = "The provided meta_gene_id column could not be found or is of wrong format.")
   assertthat::assert_that(is.null(group_colors)||(is(group_colors, "list")&&!is.null(names(group_colors))), msg = "The provided group colors must be a named list or NULL.")
-  assertthat::assert_that(is.null(dash_color)||is(dash_color,"character"), msg = "The provided dash_color must be of type character or NULL.")
+  assertthat::assert_that(is.null(fit_line_color)||is(fit_line_color,"character"), msg = "The provided fit_line_color must be of type character or NULL.")
   assertthat::assert_that(is.null(savepath)||is(savepath,"character"), msg = "The provided savepath must be of type character or NULL.")
+  assertthat::assert_that(is(filename_ext, "character"), msg = "The provided savepath must be of type character." )
+  assertthat::assert_that(is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(length(dturtle$sig_gene)>0, msg = "The provided dturtle object does not contain any significant gene. Maybe try to rerun the pipeline with more relaxes thresholds.")
   assertthat::assert_that(!is.null(dturtle$meta_table_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
@@ -383,7 +392,11 @@ plot_prop_bar <- function(dturtle, genes=NULL, meta_gene_id=NULL, group_colors=N
     names(gene_ids) <- valid_genes
   }
 
-  plot_list <- lapply(valid_genes, function(gene){
+  if(!is.null(savepath) && !dir.exists(savepath)){
+      dir.create(file.path(savepath), recursive = T)
+    }
+
+  plot_list <- BiocParallel::bplapply(valid_genes, function(gene){
     counts_gene <- as.matrix(dturtle$drim@counts[[gene]])
     group <- dturtle$group
 
@@ -408,7 +421,8 @@ plot_prop_bar <- function(dturtle, genes=NULL, meta_gene_id=NULL, group_colors=N
     md <- dturtle$drim@samples
 
     proportions <- sweep(counts_gene, 2, colSums(counts_gene), "/")
-    proportions[is.nan(proportions)] <- NA
+    #Nan if counts are all 0 --> 0/0
+    proportions[is.nan(proportions)] <- 0
     prop_samp <- data.frame(feature_id = rownames(proportions), proportions, stringsAsFactors = F, check.names = F)
     prop_fit <- data.frame(feature_id = rownames(fit_full), fit_full, stringsAsFactors = F, check.names = F)
 
@@ -453,26 +467,25 @@ plot_prop_bar <- function(dturtle, genes=NULL, meta_gene_id=NULL, group_colors=N
     ggp <- ggplot2::ggplot() +
       ggplot2::geom_bar(data = prop_samp, ggplot2::aes_string(x = "feature_id", y = "proportion", group = "sample_id", fill = "group"),
                stat = "identity", position = ggplot2::position_dodge(width = 0.9)) + ggplot2::theme_bw() +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 25, vjust = 1, hjust=1, colour = text_colour), axis.text = ggplot2::element_text(size = 12),
+      suppressWarnings(ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 25, vjust = 1, hjust=1, colour = text_colour), axis.text = ggplot2::element_text(size = 12),
                      axis.title = ggplot2::element_text(size = 12, face = "bold"), plot.title = ggplot2::element_text(size = 12),
-                     legend.position = "right", legend.title = ggplot2::element_text(size = 12), legend.text = ggplot2::element_text(size = 12)) +
+                     legend.position = "right", legend.title = ggplot2::element_text(size = 12), legend.text = ggplot2::element_text(size = 12))) +
       ggplot2::scale_fill_manual(name = "Groups", values = group_colors, breaks = names(group_colors)) +
       ggplot2::labs(title = main, x = "Features", y = "Proportions")
 
-    if(!is.null(dash_color)){
+    if(!is.null(fit_line_color)){
       ggp <- ggp + ggplot2::geom_errorbar(data = prop_fit, ggplot2::aes_string(x = "feature_id", ymin = "proportion", ymax = "proportion", group = "sample_id"),
-                                 position = ggplot2::position_dodge(width = 0.9), size=0.5, linetype = "dashed", inherit.aes = F, width = 1, colour = dash_color)
+                                 position = ggplot2::position_dodge(width = 0.9), size=0.5, linetype = "solid", inherit.aes = F, width = 1, colour = fit_line_color)
     }
     if(!is.null(savepath)){
-      if(!dir.exists(savepath)){
-        dir.create(savepath)
-      }
-      ggplot2::ggsave(filename = paste0(savepath,make.names(gene),"_bar.png"), plot = ggp, ...)
+      ggplot2::ggsave(filename = file.path(savepath,paste0(make.names(gene),filename_ext)), plot = ggp, ...)
     }
-    return(setNames(list(ggp),gene))
-  })
-  return(plot_list)
+    return(ggp)
+  }, BPPARAM = BPPARAM)
+  return(setNames(plot_list, valid_genes))
 }
+
+
 
 plot_heat_per_gene <- function(gene_id, txdf, all_counts, mut, mut_genes, path){
     #gene <- gene_id

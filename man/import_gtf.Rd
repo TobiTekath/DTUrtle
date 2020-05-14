@@ -16,5 +16,5 @@ A data frame of the availble transcript level information (e.g. the tx2gene mapp
 Parse a gtf file and return a transcript level dataframe.
 }
 \examples{
-create_tx2gene("path_to/your_annotation_file.gtf")
+## import_gtf("path_to/your_annotation_file.gtf")
 }

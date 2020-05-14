@@ -3,7 +3,8 @@
 #' Import the quantification results of many RNAseq quantifiers, including 'alevin' for single-cell data.
 #' Most likely the first step in your DTUrtle analysis.
 #'
-#' Can perform multiple scaling schemes, defaults to scaling schemes appropriate for DTU analysis.
+#' Can perform multiple scaling schemes, defaults to scaling schemes appropriate for DTU analysis. For bulk data it is recommended to additionally specify a `tx2gene` data frame as parameter.
+#' This data frame must be a a two-column data frame linking transcript id (column 1) to gene id/name (column 2). This data frame is used to apply a DTU specific scaling scheme (dtuScaledTPM).
 #'
 #' @param files Vector of files to be imported. Optionally can be named to keep the samples names.
 #' @param type Type of the quantification data. All tools supported by tximport can be selected. If you have single-cell data, the use of `alevin` is proposed.
@@ -14,10 +15,10 @@
 #' - `'stringtie'`
 #' - `'sailfish'`
 #' - `'none'`
-#' @param ... Further parameters to the specific tximport call. See `tximport()` for available parameters.
+#' @param ... Further parameters to the specific tximport call. See \code{\link[tximport:tximport]{tximport}} for available parameters.
 #'
 #' @return - For bulk data: A combined count matrix for all specified samples.
-#' - For single-cell data (`type='alevin'`): A list of count matrices per sample. Should be combined and optionally added to a Seurat object with `combine_to_matrix()`.
+#' - For single-cell data (`type='alevin'`): A list of count matrices per sample. Should be combined and optionally added to a Seurat object with [combine_to_matrix()].
 #' @family DTUrtle
 #' @export
 #'
@@ -35,7 +36,6 @@ import_counts <- function(files, type, ...){
         if(hasArg("countsFromAbundance")){
             warning("\nImport of alevin files currently does not support using scaling methods.\nPlease note, that in tagged-end single-cell protocols (like 10X chromium) it is assumed\nthat there is no length effect in the fragment generation process - thus making a scaling unnecessary.")
         }
-
         for(i in files){
             return_obj <- append(return_obj, tximport::tximport(files = i, type = "alevin", ...)$counts)
         }
@@ -43,8 +43,8 @@ import_counts <- function(files, type, ...){
             names(return_obj) <- names(files)
         }
         return(return_obj)
-    }else{
 
+    }else{
         if(hasArg("countsFromAbundance")){
             if(!args$countsFromAbundance %in% c("dtuScaledTPM", "scaledTPM")){
             warning("It is recommended to use the 'countsFromAbundance' scaling schemes 'dtuScaledTPM' or 'scaledTPM',\nto correct for increased counts of longer transcripts.\nIf you are using a tagged-end protocol, the use 'no' is suggested.")
@@ -222,7 +222,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #' - `'bulk'`: Predefined strategy for bulk RNAseq data. (default)
 #' - `'sc'`: Predefined strategy for single-cell RNAseq data.
 #' - `'own'`: Can be used to specify a user-defined strategy via the `...` argument (using the parameters of `dmFilter()`).
-#' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for standard non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
+#' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
 #' @param force_dense If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying `TRUE`. Might reduce runtime, but massively increases memory usage. Only recommended if any problems with sparse calculations appear.
 #' @param carry_over_metadata Specify if compatible additional columns of `tx2gene` shall be carried over to the gene and transcript level `meta_table` in the results. Columns with `NA` values are not carried over.
 #' @param ... If `filtering_strategy='own'` specify the wished parameters of `dmFilter()` here.
@@ -258,7 +258,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     assertthat::assert_that(is(tx2gene, "data.frame"))
     assertthat::assert_that(is(pd, "data.frame"))
     assertthat::assert_that(ncol(tx2gene)>1)
-    assertthat::assert_that(cond_col %in% colnames(pd), msg = paste0("Could not find", cond_col, " in colnames of pd."))
+    assertthat::assert_that(cond_col %in% colnames(pd), msg = paste0("Could not find", cond_col, " in column names of pd."))
     assertthat::assert_that(filtering_strategy %in% c("bulk", "sc", "own"), msg = "Please select a valid filtering strategy ('bulk', 'sc' or 'own').")
     assertthat::assert_that(is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
     assertthat::assert_that(is.logical(force_dense))

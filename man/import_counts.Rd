@@ -20,12 +20,12 @@ import_counts(files, type, ...)
 \item \code{'none'}
 }}
 
-\item{...}{Further parameters to the specific tximport call. See \code{tximport()} for available parameters.}
+\item{...}{Further parameters to the specific tximport call. See \code{\link[tximport:tximport]{tximport}} for available parameters.}
 }
 \value{
 \itemize{
 \item For bulk data: A combined count matrix for all specified samples.
-\item For single-cell data (\code{type='alevin'}): A list of count matrices per sample. Should be combined and optionally added to a Seurat object with \code{combine_to_matrix()}.
+\item For single-cell data (\code{type='alevin'}): A list of count matrices per sample. Should be combined and optionally added to a Seurat object with \code{\link[=combine_to_matrix]{combine_to_matrix()}}.
 }
 }
 \description{
@@ -33,7 +33,8 @@ Import the quantification results of many RNAseq quantifiers, including 'alevin'
 Most likely the first step in your DTUrtle analysis.
 }
 \details{
-Can perform multiple scaling schemes, defaults to scaling schemes appropriate for DTU analysis.
+Can perform multiple scaling schemes, defaults to scaling schemes appropriate for DTU analysis. For bulk data it is recommended to additionally specify a \code{tx2gene} data frame as parameter.
+This data frame must be a a two-column data frame linking transcript id (column 1) to gene id/name (column 2). This data frame is used to apply a DTU specific scaling scheme (dtuScaledTPM).
 }
 \seealso{
 Other DTUrtle: 

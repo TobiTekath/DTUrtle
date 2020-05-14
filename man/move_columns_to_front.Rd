@@ -21,5 +21,5 @@ Reorder the columns of a data frame.
 Sets the desired \code{columns} of the dataframe \code{df} to the first columns. Does not change the order of the others.
 }
 \examples{
-move_columns_to_fron(df, c("new_first_column", "new_second_column"))
+## move_columns_to_fron(df, c("new_first_column", "new_second_column"))
 }

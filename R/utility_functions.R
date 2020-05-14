@@ -106,9 +106,9 @@ run_posthoc <- function(drim, filt){
 get_diff <- function(gID, dturtle){
     group <- dturtle$group
     y <- data.frame(row.names = rownames(dturtle$drim@fit_full[[gID]]))
-    y$a <- apply(dturtle$drim@fit_full[[gID]][, which(group==levels(group)[1])], 1, unique)
-    y$b <- apply(dturtle$drim@fit_full[[gID]][, which(group==levels(group)[2])], 1, unique)
-    y$diff <- y$a-y$b
+    y[levels(group)[1]] <- apply(dturtle$drim@fit_full[[gID]][, which(group==levels(group)[1])], 1, unique)
+    y[levels(group)[2]] <- apply(dturtle$drim@fit_full[[gID]][, which(group==levels(group)[2])], 1, unique)
+    y$diff <- y[[1]]-y[[2]]
     return(y)
 }
 
@@ -133,9 +133,10 @@ getmax <- function(gID, dturtle){
 #' @return A data frame of the availble transcript level information (e.g. the tx2gene mapping information)
 #' @export
 #'
-#' @examples create_tx2gene("path_to/your_annotation_file.gtf")
+#' @examples ## import_gtf("path_to/your_annotation_file.gtf")
 import_gtf <- function(gtf_file){
-    gtf_grange <- rtracklayer::readGFFAsGRanges("/data/sperm_test/alevin/gencode.v33.annotation.gtf")
+    assertthat::assert_that(file.exists(gtf_file))
+    gtf_grange <- rtracklayer::readGFFAsGRanges(gtf_file)
     df <- as.data.frame(gtf_grange[gtf_grange$type=="transcript"])
     return(df)
 }
@@ -153,7 +154,7 @@ import_gtf <- function(gtf_file){
 #' @return Data frame with reordered columns.
 #' @export
 #'
-#' @examples move_columns_to_fron(df, c("new_first_column", "new_second_column"))
+#' @examples ## move_columns_to_fron(df, c("new_first_column", "new_second_column"))
 move_columns_to_front <- function(df, columns){
     assertthat::assert_that(all(columns %in% colnames(df)), msg = "Could not find all provided column names in data frame.")
     col_order <- setdiff(colnames(df), columns)
