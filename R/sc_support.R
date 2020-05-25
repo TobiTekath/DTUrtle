@@ -1,8 +1,8 @@
-#' dmFilter for sparse matrix
+#' Filtering for sparse or dense matrix
 #'
-#' Perform dmFilter-like filtering for sparse matrices
+#' Perform dmFilter-like filtering for sparse or dense matrices
 #'
-#' Runtime optimised version, which can optionally be executed in parallel.
+#' Runtime optimised version of `DRIMSeq::dmFilter`, which can optionally be executed in parallel.
 #'
 #' @param counts Sparse count matrix.
 #' @param tx2gene Feature to gene mapping.
@@ -74,4 +74,35 @@ sparse_filter <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), 
     assertthat::assert_that(nrow(counts_new)>0, msg = "No Features left after filtering. Maybe try more relaxed filtering parameter.")
     message("Retain ",nrow(counts_new), " of ",nrow(counts)," features.\nRemoved ", nrow(counts)-nrow(counts_new), " features.")
     return(counts_new)
+}
+
+
+
+
+#' Read bustools output
+#'
+#' Read in result files for single-cell data quantified with kallisto and bustools.
+#'
+#' Adds cell barcodes and feature information to the sparseMatrix
+#'
+#' @param files Path to result folder of the bustools call
+#'
+#' @return sparseMatrix with cell barcodes and feature information
+readin_bustools <- function(files){
+    assertthat::assert_that(dir.exists(files), msg = paste0("Could not find directory '",files,"'. Please provide the bustools output directory as 'files'."))
+    mtx <- Sys.glob(paste0(files,"*.mtx"))
+    rownames <- Sys.glob(paste0(files,"*.barcodes.txt"))
+    colnames <- Sys.glob(paste0(files,"*.genes.txt"))
+    assertthat::assert_that(length(mtx)==1, msg = paste0("Could not find a .mtx file in '",files,"'. Please provide the bustools output directory as 'files'."))
+    assertthat::assert_that(length(rownames)==1, msg = paste0("Could not find a .barcodes.txt file in '",files,"', which provides cell ids. Please provide the bustools output directory as 'files'."))
+    assertthat::assert_that(length(colnames)==1, msg = paste0("Could not find a .genes.txt file in '",files,"', which provides feature information. Please provide the bustools output directory as 'files'."))
+    message("\tReading in Matrix.")
+    mtx <- Matrix::readMM(mtx)
+    message("\tAssigning dimnames.")
+    rownames <- scan(rownames, what = "character", quiet=T)
+    assertthat::assert_that(length(rownames)==nrow(mtx), msg = "Number of barcodes does not match to matrix.")
+    colnames <- scan(colnames, what = "character", quiet=T)
+    assertthat::assert_that(length(colnames)==ncol(mtx), msg = "Number of features does not match to matrix.")
+    dimnames(mtx) <- list(rownames, colnames)
+    return(as(mtx, "dgCMatrix"))
 }

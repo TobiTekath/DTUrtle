@@ -13,24 +13,24 @@ combine_to_matrix(
 )
 }
 \arguments{
-\item{tx_list}{List of sparse transcription count matrices, as returned by \code{import_counts()} for single-cell data.}
+\item{tx_list}{List of sparse transcription count matrices, as returned by \code{\link[=import_counts]{import_counts()}} for single-cell data.}
 
-\item{cell_extensions}{Optional list of cellname extensions that are added to the cellnames of one sample. The cellnames and the extension are separated by an underscore '_'.}
+\item{cell_extensions}{Optional list of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'.}
 
 \item{seurat_obj}{Optional seurat object, where the combined matrix is added as an assay. This has the advantage, that the cells are matched and subsetted if necessary. Currently only Seurat 3 objects are supported.}
 
-\item{tx2gene}{Optional tx2gene/metadata data frame, can only be used in conjunction with a seurat object. Metadata is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the \code{tx_list} objects must be used.}
+\item{tx2gene}{Optional tx2gene or metadata data frame, can only be used in conjunction with a seurat object. Metadata is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the \code{tx_list} objects must be used.}
 
 \item{assay_name}{If the combined matrix should be added to an existing Seurat object, the name of the assay can be specified here.}
 }
 \value{
-Either a combined sparse transcription count matrix or a seurat object which the  combined sparse transcription count matrix as an assay.
+Either a combined sparse transcription count matrix or a seurat object which the combined sparse transcription count matrix as an assay.
 }
 \description{
-Combine list of sparse transcription count matrices.
+Combine list of sparse transcription count matrices. Presumably coming from \code{\link[=import_counts]{import_counts()}} with single-cell data.
 }
 \details{
-Only needed when dealing with single-cell data. Adds a cellname extension if necessary.
+This function adds a cellname extension if necessary.
 Can optionally add the combined matrix to a existing Seurat object (keeping the cellname extension of the object and matching the cells).
 Also removes overall non expressed features.
 }

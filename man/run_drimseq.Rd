@@ -21,11 +21,11 @@ run_drimseq(
 \arguments{
 \item{counts}{Can be either:
 \enumerate{
-\item Data frame or matrix with feature counts, where the rows correspond to features (e.g. transcripts). One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in \code{id_col}).
-\item Seurat object with a transcription level assay as \code{active.assay} (most likely result object from \code{combine_to_matrix()})
+\item (sparse) matrix with feature counts, where the rows correspond to features (e.g. transcripts). One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in \code{id_col}).
+\item Seurat object with a transcription level assay as \code{active.assay} (most likely result object from \code{\link[=combine_to_matrix]{combine_to_matrix()}})
 }}
 
-\item{tx2gene}{Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in \code{counts} and \code{tx2gene} was provided in \code{combine_to_matrix()}, a vector of the colnames of the specific feature and gene identifierss is sufficient.}
+\item{tx2gene}{Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in \code{counts} and \code{tx2gene} was provided in \code{\link[=combine_to_matrix]{combine_to_matrix()}}, a vector of the colnames of the specific feature and gene identifierss is sufficient.}
 
 \item{pd}{Data frame with at least a column of sample/cell identifiers (specified in \code{id_col}) and the comparison group definition (specified in \code{cond_col}).}
 

@@ -4,22 +4,20 @@
 \alias{one_to_one_mapping}
 \title{Ensure one-to-one mapping}
 \usage{
-one_to_one_mapping(df, name, id, ext = "_")
+one_to_one_mapping(name, id, ext = "_")
 }
 \arguments{
-\item{df}{A data frame, containing the two provided columns \code{name} and \code{id}}
+\item{name}{A character vector. If no one-to-one mapping exists, the values of this vector will be changed (by extending with \code{ext})!}
 
-\item{name}{A column of \code{df}. If no one-to-one mapping exists, the values of this column will be changed (by extending with \code{ext})!}
-
-\item{id}{A column of df. This is the preferred place for identifier columns, as this column will not be touched in case of a disagreement.}
+\item{id}{A vector, preferably for identifiers. This column will not be touched in case of a disagreement.}
 
 \item{ext}{The extension character.}
 }
 \value{
-A data frame, where one to one mapping for the two columns is ensured.
+The vector \code{name}, where one to one mapping for the two vectors is ensured.
 }
 \description{
-Ensure one-to-one mapping of the two specified columns in the data frame.
+Ensure one-to-one mapping of the two specified vectors.
 }
 \details{
 First checks if every unique value in \code{name} corresponds with a unique value in \code{id}.

@@ -7,7 +7,7 @@
 posthoc_and_stager(dturtle, ofdr = 0.05, posthoc = 0.1)
 }
 \arguments{
-\item{dturtle}{Result object of \code{run_drimseq()}. Must be of class \code{dturtle}.}
+\item{dturtle}{Result object of \code{\link[=run_drimseq]{run_drimseq()}}. Must be of class \code{dturtle}.}
 
 \item{ofdr}{Overall false discovery rate (OFDR) threshold.}
 

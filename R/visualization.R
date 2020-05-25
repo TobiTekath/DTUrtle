@@ -361,14 +361,14 @@ plot_dtu_table <- function(dtu, txdf, title, folder, cores=1, image_folder="imag
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
 #'
 #' @examples
-plot_prop_bar <- function(dturtle, genes=NULL, meta_gene_id=NULL, group_colors=NULL, fit_line_color="red", savepath=NULL, filename_ext="_barplot.png", BPPARAM=BiocParallel::SerialParam(), ...){
+plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL, group_colors=NULL, fit_line_color="red", savepath=NULL, filename_ext="_barplot.png", BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is(dturtle,"dturtle"), msg = "The provided dturtle object is not of class 'dturtle'.")
   assertthat::assert_that(is.null(genes)||(is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
   assertthat::assert_that(is.null(meta_gene_id)||(is(meta_gene_id, "character")&&meta_gene_id %in% colnames(dturtle$meta_table_gene)), msg = "The provided meta_gene_id column could not be found or is of wrong format.")
   assertthat::assert_that(is.null(group_colors)||(is(group_colors, "list")&&!is.null(names(group_colors))), msg = "The provided group colors must be a named list or NULL.")
   assertthat::assert_that(is.null(fit_line_color)||is(fit_line_color,"character"), msg = "The provided fit_line_color must be of type character or NULL.")
   assertthat::assert_that(is.null(savepath)||is(savepath,"character"), msg = "The provided savepath must be of type character or NULL.")
-  assertthat::assert_that(is(filename_ext, "character"), msg = "The provided savepath must be of type character." )
+  assertthat::assert_that(is(filename_ext, "character"), msg = "The provided filename_ext must be of type character." )
   assertthat::assert_that(is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(length(dturtle$sig_gene)>0, msg = "The provided dturtle object does not contain any significant gene. Maybe try to rerun the pipeline with more relaxes thresholds.")
@@ -488,125 +488,157 @@ plot_prop_bar <- function(dturtle, genes=NULL, meta_gene_id=NULL, group_colors=N
 
 
 plot_heat_per_gene <- function(gene_id, txdf, all_counts, mut, mut_genes, path){
-    #gene <- gene_id
-    gene_name <- txdf$external_gene_name[match(gene_id, txdf$GENEID)]
-    temp_prop <- prop.table(as.matrix(all_counts[all_counts$gene_id==gene_id,-c(1,2)]), 2)
-    #divided by zero when absolute no expression -> 0
-    temp_prop[is.nan(temp_prop)] <- 0
+  #gene <- gene_id
+  gene_name <- txdf$external_gene_name[match(gene_id, txdf$GENEID)]
+  temp_prop <- prop.table(as.matrix(all_counts[all_counts$gene_id==gene_id,-c(1,2)]), 2)
+  #divided by zero when absolute no expression -> 0
+  temp_prop[is.nan(temp_prop)] <- 0
 
-    #replace tx names
-    labels <- txdf$external_transcript_name[match(rownames(temp_prop), txdf$TXNAME)]
-    tsl <- gsub("tsl", "", txdf$transcript_tsl[match(rownames(temp_prop), txdf$TXNAME)])
-    x_label <- paste0(labels, rep(" (", length(labels)), tsl, rep(")", length(labels)))
-    rownames(temp_prop) <- x_label
+  #replace tx names
+  labels <- txdf$external_transcript_name[match(rownames(temp_prop), txdf$TXNAME)]
+  tsl <- gsub("tsl", "", txdf$transcript_tsl[match(rownames(temp_prop), txdf$TXNAME)])
+  x_label <- paste0(labels, rep(" (", length(labels)), tsl, rep(")", length(labels)))
+  rownames(temp_prop) <- x_label
 
-    #first column must be ID column! is excluded.
-    rownames(mut) <- mut[[1]]
-    mut <- mut[-1]
-    mut <- subset(mut, select=mut_genes)
+  #first column must be ID column! is excluded.
+  rownames(mut) <- mut[[1]]
+  mut <- mut[-1]
+  mut <- subset(mut, select=mut_genes)
 
-    #hack colors
-    mut_changed <- as.data.frame(sapply(mut, function(x) ifelse(is.na(x), "NA", ifelse(x>0.75, "1", ifelse(x>0.5, "0.75", ifelse(x>0.25, "0.5", ifelse(x>0, "0.25","0")))))))
-    rownames(mut_changed) <- rownames(mut)
-    values.vector <- rep(list(c("1"="#FF0000FF","0.75"="#FF8000FF","0.5"="#FFFF00FF","0.25"="#FFFF80FF","0"="white","NA" = "grey")),  ncol(mut_changed))
-    col_mut <- as.list(setNames(values.vector, colnames(mut_changed)))
+  #hack colors
+  mut_changed <- as.data.frame(sapply(mut, function(x) ifelse(is.na(x), "NA", ifelse(x>0.75, "1", ifelse(x>0.5, "0.75", ifelse(x>0.25, "0.5", ifelse(x>0, "0.25","0")))))))
+  rownames(mut_changed) <- rownames(mut)
+  values.vector <- rep(list(c("1"="#FF0000FF","0.75"="#FF8000FF","0.5"="#FFFF00FF","0.25"="#FFFF80FF","0"="white","NA" = "grey")),  ncol(mut_changed))
+  col_mut <- as.list(setNames(values.vector, colnames(mut_changed)))
 
-    font_row <- ifelse(nrow(temp_prop)<6, 10, ifelse(nrow(temp_prop)<10, 8, ifelse(nrow(temp_prop)<15,6,ifelse(nrow(temp_prop)<20,4,2))))
+  font_row <- ifelse(nrow(temp_prop)<6, 10, ifelse(nrow(temp_prop)<10, 8, ifelse(nrow(temp_prop)<15,6,ifelse(nrow(temp_prop)<20,4,2))))
 
-    p <- pheatmap(temp_prop, annotation_col = mut_changed, treeheight_row = 0, treeheight_col = 15, annotation_colors = col_mut, border_color = NA,
-                  annotation_legend = T, fontsize_col = 2, fontsize_row = font_row, main = paste0(gene_name ," (",gene_id, ")"), silent = T)
+  p <- pheatmap(temp_prop, annotation_col = mut_changed, treeheight_row = 0, treeheight_col = 15, annotation_colors = col_mut, border_color = NA,
+                annotation_legend = T, fontsize_col = 2, fontsize_row = font_row, main = paste0(gene_name ," (",gene_id, ")"), silent = T)
 
-    n <- p$gtable$layout$z[p$gtable$layout$name == "annotation_legend"]
-    anno.grob <- p$gtable$grobs[[n]]
-    anno.grob$childrenOrder <- anno.grob$childrenOrder[1:3]
-    anno.grob$children[[1]]$label <- "VAF"
-    anno.grob$children <- anno.grob$children[1:3]
-    for(i in seq(1,length(anno.grob$children))){
-        anno.grob$children[[i]]$x <- anno.grob$children[[i]]$x - unit(0.3,"inches")
-        for(j in seq(1,length(anno.grob$children[[i]]$y))){
-            anno.grob$children[[i]]$y[j] <-  anno.grob$children[[i]]$y[j] + unit(0.4,"inches")
-        }
+  n <- p$gtable$layout$z[p$gtable$layout$name == "annotation_legend"]
+  anno.grob <- p$gtable$grobs[[n]]
+  anno.grob$childrenOrder <- anno.grob$childrenOrder[1:3]
+  anno.grob$children[[1]]$label <- "VAF"
+  anno.grob$children <- anno.grob$children[1:3]
+  for(i in seq(1,length(anno.grob$children))){
+    anno.grob$children[[i]]$x <- anno.grob$children[[i]]$x - unit(0.3,"inches")
+    for(j in seq(1,length(anno.grob$children[[i]]$y))){
+      anno.grob$children[[i]]$y[j] <-  anno.grob$children[[i]]$y[j] + unit(0.4,"inches")
     }
-    p$gtable$grobs[[n]] <- anno.grob
+  }
+  p$gtable$grobs[[n]] <- anno.grob
 
-    n <- p$gtable$layout$z[p$gtable$layout$name == "legend"]
-    legend.grob <- p$gtable$grobs[[n]]
-    legend.grob$children[[1]]$y <- legend.grob$children[[1]]$y - unit(1.3,"inches")
-    legend.grob$children[[2]]$y <- legend.grob$children[[2]]$y - unit(1.3,"inches")
-    legend.grob$children[[1]]$x <- legend.grob$children[[1]]$x + unit(0.15,"inches")
-    legend.grob$children[[2]]$x <- legend.grob$children[[2]]$x + unit(0.15,"inches")
-    leg_label <- textGrob("Proportion",x=legend.grob$children[[1]]$x,y=legend.grob$children[[1]]$y[length(legend.grob$children[[1]]$y)]+unit(0.15,"inches"),hjust=0,vjust=0,gp=gpar(fontsize=10,fontface="bold"))
-    legend.grob2 <- addGrob(legend.grob,leg_label)
+  n <- p$gtable$layout$z[p$gtable$layout$name == "legend"]
+  legend.grob <- p$gtable$grobs[[n]]
+  legend.grob$children[[1]]$y <- legend.grob$children[[1]]$y - unit(1.3,"inches")
+  legend.grob$children[[2]]$y <- legend.grob$children[[2]]$y - unit(1.3,"inches")
+  legend.grob$children[[1]]$x <- legend.grob$children[[1]]$x + unit(0.15,"inches")
+  legend.grob$children[[2]]$x <- legend.grob$children[[2]]$x + unit(0.15,"inches")
+  leg_label <- textGrob("Proportion",x=legend.grob$children[[1]]$x,y=legend.grob$children[[1]]$y[length(legend.grob$children[[1]]$y)]+unit(0.15,"inches"),hjust=0,vjust=0,gp=gpar(fontsize=10,fontface="bold"))
+  legend.grob2 <- addGrob(legend.grob,leg_label)
 
-    p$gtable$grobs[[n]] <- legend.grob2
-    ggplot2::ggsave(plot = p, filename = paste0(path,make.names(gene_name),"_mutmap.png"), dpi = 250)
+  p$gtable$grobs[[n]] <- legend.grob2
+  ggplot2::ggsave(plot = p, filename = paste0(path,make.names(gene_name),"_mutmap.png"), dpi = 250)
 
 }
 
 
-plot_transcripts_single <- function(dtu, gene_id, gtf_info, path, ideoTrack_list=ideoTracks, reduce_introns=F,
-                                    reduce_introns_fill="grey95", reduce_introns_min_size=50){
-    gene_info <- dtu$dtu_table[dtu_aml_mds$dtu_table$geneID==gene_id,]
-    tx_ids <- dtu$final_q$txID[dtu$final_q$geneID==gene_info$geneID]
-    sig_tx_ids <- dtu$final_q_tx$txID[dtu$final_q_tx$geneID==gene_info$geneID]
 
-    message(gene_id)
+#TODO: ... for saving params!
 
-    if(reduce_introns){
-        track_list <- list(ideoTrack_list[[gene_info$chromosome]])
-    }else{
-        track_list <- list(ideoTrack_list[[gene_info$chromosome]], GenomeAxisTrack())
+plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=NULL, reduce_introns=T,
+                                  reduce_introns_fill="grey95", reduce_introns_min_size=50, savepath=NULL, filename_ext="_transcripts.png", BPPARAM=BiocParallel::SerialParam(), ...){
+  assertthat::assert_that(is(dturtle,"dturtle"), msg = "The provided dturtle object is not of class 'dturtle'.")
+  assertthat::assert_that(is.null(genes)||(is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
+  assertthat::assert_that(is(gtf, "character") && file.exists(gtf) || is(gtf, "GRanges"), msg = "Invalid gtf filepath or object. Must be either a filepath to a gtf file or a previously created granges object.")
+  assertthat::assert_that(!missing(genome), msg = "Please specify a UCSC genome identifier in `genome` (e.g. 'hg38', 'mm10', 'danRer11', etc.). Can also be NULL to skip ideogram track generation.")
+  assertthat::assert_that(is.null(genome)||is(genome, "character") && length(genome)==1, msg = "The genome object must be a character vector or length 1 or NULL.")
+  assertthat::assert_that(is.null(one_to_one)||isTRUE(one_to_one)||(is(one_to_one, "character")&&length(one_to_one)==1), msg = "The one_to_one object must be a character vector of length 1, TRUE or NULL.")
+  assertthat::assert_that(is.logical(reduce_introns), msg = "The reduce_introns objects must be logical.")
+  assertthat::assert_that(is(reduce_introns_fill, "character")&&length(reduce_introns_fill)==1, msg = "The reduce_introns_fill objects must be a character vector of length 1")
+  assertthat::assert_that(is.null(savepath)||is(savepath,"character"), msg = "The provided savepath must be of type character or NULL.")
+  assertthat::assert_that(is(filename_ext, "character"), msg = "The provided filename_ext must be of type character." )
+  assertthat::assert_that(endsWith(filename_ext, "png")||endsWith(filename_ext, "pdf")||endsWith(filename_ext, "jpg")||endsWith(filename_ext, "jpeg"), msg = "The provided filename ending is not valid.")
+  assertthat::assert_that(is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
+  assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(length(dturtle$sig_gene)>0, msg = "The provided dturtle object does not contain any significant gene. Maybe try to rerun the pipeline with more relaxes thresholds.")
+  assertthat::assert_that(!is.null(dturtle$meta_table_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(!is.null(dturtle$drim), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(!is.null(dturtle$sig_tx), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+  assertthat::assert_that(!is.null(dturtle$group), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
+
+  if(!is(gtf, "GRanges")){
+    message("\nImporting gtf file from disk.")
+    gtf <- rtracklayer::import(gtf)
+  }
+
+  if(is.null(genes)){
+    genes <- dturtle$sig_gene
+  }
+
+  gtf_genes_column <- sapply(gtf@elementMetadata[,c("gene_id", "gene_name")], function(x) length(intersect(genes,x)))
+  gtf_tx_column <- sapply(gtf@elementMetadata[,c("transcript_id", "transcript_name")], function(x) length(intersect(dturtle$sig_tx,x)))
+  if(!any(gtf_genes_column>length(genes)*0.1)&!any(gtf_tx_column>length(dturtle$sig_tx)*0.1)){
+    stop("Could not find a matching gtf metadata column for the provided genes or used transcript identifiers.")
+  }
+  gtf_genes_column <- names(which.max(gtf_genes_column))
+  gtf_tx_column <- names(which.max(gtf_tx_column))
+
+  if(!is.null(one_to_one)){
+    one_to_one <- ifelse(isTRUE(one_to_one), formals(one_to_one_mapping)$ext, one_to_one)
+    suppressMessages(gtf@elementMetadata$gene_name <- one_to_one_mapping(name = gtf@elementMetadata$gene_name, id = gtf@elementMetadata$gene_id, ext = one_to_one))
+    suppressMessages(gtf@elementMetadata$transcript_name <- one_to_one_mapping(name = gtf@elementMetadata$transcript_name, id = gtf@elementMetadata$transcript_id, ext = one_to_one))
+  }
+
+  valid_genes <- genes[genes %in% gtf@elementMetadata[[gtf_genes_column]]&&genes %in% dturtle$drim@results_gene$gene_id]
+  message("Found gtf GRanges for ", length(valid_genes), " of ", length(genes), " provided genes.")
+  gtf <- gtf[GenomicRanges::elementMetadata(gtf)[,gtf_genes_column] %in% valid_genes]
+
+  if(!is.null(genome)){
+    message("\nFetching ideogram tracks ...")
+    GenomeInfoDb::seqlevelsStyle(gtf) <- "UCSC"
+    ideoTracks <- lapply(levels(gtf@seqnames), function(x) Gviz::IdeogramTrack(genome = genome, chromosome = x))
+    names(ideoTracks) <- levels(gtf@seqnames)
+  }
+
+  plot_list <- BiocParallel::bplapply(valid_genes, function(gene){
+
+    gene_gtf <- gtf[gtf@elementMetadata[[gtf_genes_column]]==gene,]
+    gene_info <- as.data.frame(gene_gtf[gene_gtf$type=="gene",])
+    tested_tx <- dturtle$FDR_table$txID[dturtle$FDR_table$geneID == gene & !is.na(dturtle$FDR_table$transcript)]
+    gtf_trans <- gene_gtf[gene_gtf@elementMetadata[[gtf_tx_column]] %in% tested_tx & !gene_gtf$type %in% c("transcript","gene")]
+
+    if(length(gtf_trans)==0){
+      message("Skipping ", gene, " --- no info to plot.")
+      return()
     }
+
+    sig_tx <- dturtle$sig_tx[tested_tx]
+    track_list <- list()
     grtrack_list <- c()
     track_annotation_list <- c()
 
-    #get actual transcript features
-    gtf_trans <- gtf_info[gtf_info$transcript_id %in% tx_ids & !gtf_info$type %in% c("transcript","gene")]
-    chrom <- unique(unlist(unname(seqnames(gtf_trans))))
-
-    #use any to catch not unique chrom values
-    if(any(gene_info$chromosome != chrom & gsub("chr","",gene_info$chromosome) != gsub("chr","",chrom))){
-        message("Two different chromosomes found: ",gene_info$geneName, " (", gene_id, ") - ", gene_info$chromosome, " and ", chrom)
-        return()
+    if(!is.null(genome)){
+      track_list <- append(track_list, ideoTracks[[gene_info$seqnames]])
     }
 
-    #reduce introns
     if(reduce_introns){
-        gtf_trans_reduced <- gtf_trans
-        gtf_trans_reduced$new_start <- start(gtf_trans_reduced)
-        regions_to_reduce <- gaps(gtf_trans)
-        #exclude first region, if transcript does not start on first base
-        if(start(regions_to_reduce)[1]==1){
-            regions_to_reduce <- regions_to_reduce[-1]
-        }
-        #compute reduced region size
-        min_region_size <- reduce_introns_min_size
-
-        #do not artificially inflate regions smaller than min_region_size
-        regions_to_reduce <- regions_to_reduce[width(regions_to_reduce)>min_region_size,]
-        regions_to_reduce$new_width <- sapply(ceiling(sqrt(width(regions_to_reduce))), FUN = function(x) max(min_region_size, x))
-        for(j in seq_along(regions_to_reduce)){
-            region <- regions_to_reduce[j]
-            gtf_trans_reduced[start(gtf_trans_reduced)>start(region),]$new_start <- gtf_trans_reduced[start(gtf_trans_reduced)>start(region),]$new_start-width(region)+region$new_width
-        }
-
-        start(gtf_trans) <- gtf_trans_reduced$new_start
-        end(gtf_trans) <- start(gtf_trans)+width(gtf_trans_reduced)-1
+      reduction_obj <- granges_reduce_introns(gtf_trans, reduce_introns_min_size)
+      gtf_trans <- reduction_obj$granges
+    }else{
+      track_list <- append(track_list, Gviz::GenomeAxisTrack())
     }
 
     #coordinate list of features
-    tx_ranges <- as.data.frame(ranges(gtf_trans))
+    tx_ranges <- as.data.frame(GenomicRanges::ranges(gtf_trans))
 
     #split granges by transcripts
-    gtf_trans <- split(gtf_trans, gtf_trans$transcript_id)
+    gtf_trans <- split(gtf_trans, gtf_trans@elementMetadata[[gtf_tx_column]])
     tx_ids <- names(gtf_trans)
 
     #fitted mean per group
-    group <- dtu$group
-    grouped_mean_df <- data.frame(row.names = rownames(dtu$drim@fit_full[[gene_info$geneID]]))
-    grouped_mean_df$a <- apply(dtu$drim@fit_full[[gene_info$geneID]][, which(group==levels(group)[1])], 1, unique)
-    grouped_mean_df$b <- apply(dtu$drim@fit_full[[gene_info$geneID]][, which(group==levels(group)[2])], 1, unique)
-    grouped_mean_df$diff <- grouped_mean_df$a-grouped_mean_df$b
+    grouped_mean_df <- get_diff(gene, dturtle)
     grouped_mean_df <- grouped_mean_df[tx_ids,]
 
     #order transcripts by fitted mean diff
@@ -614,57 +646,69 @@ plot_transcripts_single <- function(dtu, gene_id, gtf_info, path, ideoTrack_list
     tx_ids <- rownames(grouped_mean_df)[order(abs(grouped_mean_df$diff), decreasing = T)]
 
     for(tx_id in tx_ids){
-        gtf_tx <- gtf_trans[[tx_id]]
-        #exclude redundant exon information if UTR and CDS is available
-        if(all(c("CDS", "UTR") %in% unique(gtf_tx$type))){
-            gtf_tx <- gtf_tx[gtf_tx$type!="exon"]
-        }
-        grtrack <- GeneRegionTrack(gtf_tx, transcript = gtf_tx$transcript_id, feature = gtf_tx$type,
-                                   exon = gtf_tx$exon_id, gene = gtf_tx$gene_id, symbol = gtf_tx$transcript_name,
-                                   transcriptAnnotation="symbol", thinBoxFeature=c("UTR"), col=NULL,
-                                   name = ifelse(tx_id %in% sig_tx_ids, "Sig.", ""), rotation.title=0, cex.group=0.65)
+      gtf_tx <- gtf_trans[[tx_id]]
+      #exclude redundant exon information if UTR and CDS is available
+      if(all(c("CDS", "UTR") %in% unique(gtf_tx$type))){
+        gtf_tx <- gtf_tx[gtf_tx$type!="exon"]
+      }
+      grtrack <- Gviz::GeneRegionTrack(gtf_tx, transcript = gtf_tx$transcript_id, feature = gtf_tx$type,
+                                 exon = gtf_tx$exon_id, gene = gtf_tx$gene_id, symbol = gtf_tx$transcript_name,
+                                 transcriptAnnotation="symbol", thinBoxFeature=c("UTR"), col=NULL,
+                                 name = ifelse(tx_id %in% sig_tx, "Sig.", ""), rotation.title=0, cex.group=0.65)
 
+      tx_fitted_mean <- grouped_mean_df[tx_id,]$diff
 
-        tx_fitted_mean <- grouped_mean_df[tx_id,]$diff
+      anno_text_start <- ggplot2::unit(0.91,"npc")
+      grobs <- grid::grobTree(
+        grid::textGrob(label = ifelse(tx_fitted_mean>0, intToUtf8(11014), intToUtf8(11015)), name = "arrow",
+                 x = anno_text_start, gp=grid::gpar(fontsize=15, col=ifelse(tx_fitted_mean>0,"#7CAE00","#00BFC4"))),
+        grid::textGrob(label = paste0(" ",scales::percent(tx_fitted_mean, accuracy = .01)), name = "text",
+                 x = 2*grid::grobWidth("arrow") + anno_text_start, gp = grid::gpar(fontsize=10))
+      )
 
-        anno_text_start <- unit(0.91,"npc")
-        grobs <- grobTree(
-            textGrob(label = ifelse(tx_fitted_mean>0, intToUtf8(11014), intToUtf8(11015)), name = "arrow",
-                     x = anno_text_start, gp=gpar(fontsize=15, col=ifelse(tx_fitted_mean>0,"#7CAE00","#00BFC4"))),
-            textGrob(label = paste0(" ",scales::percent(tx_fitted_mean, accuracy = .01)), name = "text",
-                     x = 2*grobWidth("arrow") + anno_text_start, gp = gpar(fontsize=10))
-        )
+      track_annotation <- Gviz::CustomTrack(plottingFunction=function(GdObject, prepare, ...){ if(!prepare) grid::grid.draw(GdObject@variables$grobs); return(invisible(GdObject))}, variables = list(grobs=grobs))
+      overlay <- Gviz::OverlayTrack(trackList=list(grtrack, track_annotation))
 
-        track_annotation <- CustomTrack(plottingFunction=function(GdObject, prepare, ...){ if(!prepare) grid.draw(GdObject@variables$grobs); return(invisible(GdObject))}, variables = list(grobs=grobs))
-        overlay <- OverlayTrack(trackList=list(grtrack, track_annotation))
+      #overlay is not keeping background.title!
+      if(tx_id %in% sig_tx){
+        overlay@dp@pars$background.title <- "#F8766D"
+      }
 
-        #overlay is not keeping background.title!
-        if(tx_id %in% sig_tx_ids){
-            overlay@dp@pars$background.title <- "#F8766D"
-        }
-
-        track_annotation_list <- c(track_annotation_list, track_annotation)
-        grtrack_list <- c(grtrack_list, overlay)
+      track_annotation_list <- c(track_annotation_list, track_annotation)
+      grtrack_list <- c(grtrack_list, overlay)
     }
 
+    #highlight reduced intron segments
     if(reduce_introns){
-        #highlight reduced intron segments
-        new_intron_starts <- start(regions_to_reduce)-cumsum(c(0, width(regions_to_reduce)[-length(regions_to_reduce)]))+cumsum(c(0, regions_to_reduce$new_width[-length(regions_to_reduce)]))
-        if(length(new_intron_starts)>0){
-            grtrack_list <- HighlightTrack(trackList = grtrack_list, start = new_intron_starts,
-                                           width = regions_to_reduce$new_width, chromosome = chrom, fill = reduce_introns_fill,
-                                           col="white", inBackground=T)
-        }
+      new_intron_starts <- GenomicRanges::start(reduction_obj$reduced_regions)-cumsum(c(0, GenomicRanges::width(reduction_obj$reduced_regions)[-length(reduction_obj$reduced_regions)]))+cumsum(c(0, reduction_obj$reduced_regions$new_width[-length(reduction_obj$reduced_regions)]))
+      if(length(new_intron_starts)>0){
+        grtrack_list <- Gviz::HighlightTrack(trackList = grtrack_list, start = new_intron_starts,
+                                       width = reduction_obj$reduced_regions$new_width, chromosome = gene_info$seqnames, fill = reduce_introns_fill,
+                                       col="white", inBackground=T)
+      }
     }
 
     extension_front <- (max(tx_ranges$end)-min(tx_ranges$start))*max(nchar(gtf_tx$transcript_name))*0.01
     extension_back <- (max(tx_ranges$end)-min(tx_ranges$start))*0.15
 
-    png(filename =paste0(path, make.names(gene_info$geneName), "_txplot.png"), width = 10, height = 7, units = "in", res = 320)
-    plotTracks(append(track_list, grtrack_list), collapse=T, from = min(tx_ranges$start), to = max(tx_ranges$end),
+    if(!is.null(savepath)){
+      if(endsWith(filename_ext, ".png")){
+        png(filename =paste0(savepath, make.names(gene), filename_ext), width = 10, height = 7, units = "in", res = 300)
+      }else if(endsWith(filename_ext, ".pdf")){
+        pdf(filename =paste0(savepath, make.names(gene), filename_ext), width = 10, height = 7, units = "in", res = 320)
+      }else{
+        jpeg(filename =paste0(savepath, make.names(gene), filename_ext), width = 10, height = 7, units = "in", res = 320)
+      }
+    }
+    p <- Gviz::plotTracks(append(track_list, grtrack_list), collapse=T, from = min(tx_ranges$start), to = max(tx_ranges$end),
                extend.left = extension_front, extend.right = extension_back,
-               main = paste0(gene_info$geneName, " (", gene_info$geneID,") ---  ", dtu$cond_levels[1], " vs. ",dtu$cond_levels[2] ), cex.main = 1.3)
+               main = paste0(gene_info$gene_name, " (", gene_info$gene_id,") ---  ", levels(dturtle$group)[1], " vs. ",levels(dturtle$group)[2] ), cex.main = 1.3)
+    if(!is.null(savepath)){
     dev.off()
+    }
+    return(p)
+  }, BPPARAM = BPPARAM)
+  return(setNames(plot_list, valid_genes))
 }
 
 

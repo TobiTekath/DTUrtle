@@ -1,16 +1,19 @@
 #' Import quantification results
 #'
-#' Import the quantification results of many RNAseq quantifiers, including 'alevin' for single-cell data.
+#' Import the quantification results of many RNA-seq quantifiers, including `alevin` and `bustools` for single-cell data.
 #' Most likely the first step in your DTUrtle analysis.
 #'
 #' Can perform multiple scaling schemes, defaults to scaling schemes appropriate for DTU analysis. For bulk data it is recommended to additionally specify a `tx2gene` data frame as parameter.
 #' This data frame must be a a two-column data frame linking transcript id (column 1) to gene id/name (column 2). This data frame is used to apply a DTU specific scaling scheme (dtuScaledTPM).
+#' Please see [import_gtf()], [move_columns_to_front()] and [one_to_one_mapping()] to help with tx2gene creation.
+#' See also [combine_to_matrix()], when output is a list of single-cell runs.
 #'
 #' @param files Vector of files to be imported. Optionally can be named to keep the samples names.
-#' @param type Type of the quantification data. All tools supported by tximport can be selected. If you have single-cell data, the use of `alevin` is proposed.
+#' @param type Type of the quantification data. All tools supported by \code{\link[tximport:tximport]{tximport}} can be selected, additionally to the newly implemented `bustools` support for single-cell data. If you have single-cell data, the use of `alevin` or `bustools` is proposed.
 #' - `'salmon'`
 #' - `'alevin'`
 #' - `'kallisto'`
+#' - `'bustools'`
 #' - `'rsem'`
 #' - `'stringtie'`
 #' - `'sailfish'`
@@ -21,24 +24,29 @@
 #' - For single-cell data (`type='alevin'`): A list of count matrices per sample. Should be combined and optionally added to a Seurat object with [combine_to_matrix()].
 #' @family DTUrtle
 #' @export
+#' @seealso Please see [import_gtf()], [move_columns_to_front()] and [one_to_one_mapping()] to help with tx2gene creation. See also [combine_to_matrix()], when output is a list of single-cell runs.
 #'
 #' @examples
 import_counts <- function(files, type, ...){
+    assertthat::assert_that(type %in% c("salmon", "alevin", "kallisto", "bustools", "rsem", "stringtie", "sailfish", "none"))
     assertthat::assert_that(length(type)==1)
-    assertthat::assert_that(type %in% c("salmon", "alevin", "kallisto", "rsem", "stringtie", "sailfish", "none"))
     message("Reading in ", length(files), " ", type, " runs.")
 
     args=list(...)
 
-    if(type=="alevin"){
+    if(type=="alevin"||type=="bustools"){
         return_obj = list()
 
         if(hasArg("countsFromAbundance")){
-            warning("\nImport of alevin files currently does not support using scaling methods.\nPlease note, that in tagged-end single-cell protocols (like 10X chromium) it is assumed\nthat there is no length effect in the fragment generation process - thus making a scaling unnecessary.")
+            warning(paste0("\nImport of ", type," files currently does not support using scaling methods.\nPlease note, that in tagged-end single-cell protocols (like 10X chromium or SureCell) it is assumed\nthat there is no length effect in the fragment generation process - thus making a scaling unnecessary."))
         }
-        for(i in files){
-            return_obj <- append(return_obj, tximport::tximport(files = i, type = "alevin", ...)$counts)
+
+        if(type=="alevin"){
+            return_obj <- lapply(files, function(i) tximport::tximport(files = i, type = "alevin", ...)$counts)
+        }else{
+            return_obj <- lapply(files, function(i) readin_bustools(files = i))
         }
+
         if(!is.null(names(files))){
             names(return_obj) <- names(files)
         }
@@ -74,19 +82,19 @@ import_counts <- function(files, type, ...){
 
 #' Combine sparse matrices.
 #'
-#' Combine list of sparse transcription count matrices.
+#' Combine list of sparse transcription count matrices. Presumably coming from [import_counts()] with single-cell data.
 #'
-#' Only needed when dealing with single-cell data. Adds a cellname extension if necessary.
+#' This function adds a cellname extension if necessary.
 #' Can optionally add the combined matrix to a existing Seurat object (keeping the cellname extension of the object and matching the cells).
 #' Also removes overall non expressed features.
 #'
-#' @param tx_list List of sparse transcription count matrices, as returned by `import_counts()` for single-cell data.
-#' @param cell_extensions Optional list of cellname extensions that are added to the cellnames of one sample. The cellnames and the extension are separated by an underscore '_'.
+#' @param tx_list List of sparse transcription count matrices, as returned by [import_counts()] for single-cell data.
+#' @param cell_extensions Optional list of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'.
 #' @param seurat_obj Optional seurat object, where the combined matrix is added as an assay. This has the advantage, that the cells are matched and subsetted if necessary. Currently only Seurat 3 objects are supported.
-#' @param tx2gene Optional tx2gene/metadata data frame, can only be used in conjunction with a seurat object. Metadata is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the `tx_list` objects must be used.
+#' @param tx2gene Optional tx2gene or metadata data frame, can only be used in conjunction with a seurat object. Metadata is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the `tx_list` objects must be used.
 #' @param assay_name If the combined matrix should be added to an existing Seurat object, the name of the assay can be specified here.
 #'
-#' @return Either a combined sparse transcription count matrix or a seurat object which the  combined sparse transcription count matrix as an assay.
+#' @return Either a combined sparse transcription count matrix or a seurat object which the combined sparse transcription count matrix as an assay.
 #' @family DTUrtle
 #' @export
 #'
@@ -211,9 +219,9 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #' Run the main DRIMSeq pipeline, including generation of a design matrix, gene/feature filtering and running the statistical computations of DRIMSeq (`dmPrecision()`, `dmFit()` and `dmTest()`)
 #'
 #' @param counts Can be either:
-#' 1. Data frame or matrix with feature counts, where the rows correspond to features (e.g. transcripts). One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in `id_col`).
-#' 2. Seurat object with a transcription level assay as `active.assay` (most likely result object from `combine_to_matrix()`)
-#' @param tx2gene Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in `counts` and `tx2gene` was provided in `combine_to_matrix()`, a vector of the colnames of the specific feature and gene identifierss is sufficient.
+#' 1. (sparse) matrix with feature counts, where the rows correspond to features (e.g. transcripts). One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in `id_col`).
+#' 2. Seurat object with a transcription level assay as `active.assay` (most likely result object from [combine_to_matrix()])
+#' @param tx2gene Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in `counts` and `tx2gene` was provided in [combine_to_matrix()], a vector of the colnames of the specific feature and gene identifierss is sufficient.
 #' @param pd Data frame with at least a column of sample/cell identifiers (specified in `id_col`) and the comparison group definition (specified in `cond_col`).
 #' @param id_col Name of the column in `pd`, where unique sample/cell identifiers are stored. If `NULL` (default), use rownames of `pd`.
 #' @param cond_col Name of the column in `pd`, where the comparison groups are defined. If more than 2 levels/groups are present, the groups that should be used must be specified in `cond_levels`.
@@ -404,7 +412,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 #' The second step tries to identify on singular transcript level the significantly different transcripts.
 #'
 #'
-#' @param dturtle Result object of `run_drimseq()`. Must be of class `dturtle`.
+#' @param dturtle Result object of [run_drimseq()]. Must be of class `dturtle`.
 #' @param ofdr Overall false discovery rate (OFDR) threshold.
 #' @param posthoc_filt Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or `FALSE` can be provided.
 #' @return An extended `dturtle` object. Additional slots include:
@@ -444,17 +452,19 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
     stageRObj <- stageR::stageRTx(pScreen = pscreen, pConfirmation = pconfirm, pScreenAdjusted = F, tx2gene = tx2gene)
     stageRObj <- stageR::stageWiseAdjustment(stageRObj, method = "dtu", alpha = ofdr)
     fdr_table <- stageR::getAdjustedPValues(stageRObj, order = F, onlySignificantGenes = F)
-    sig_gene <- unique(as.character(fdr_table$geneID[fdr_table$gene<ofdr]))
+    fdr_table <- rapply(fdr_table, as.character, classes="factor", how="replace")
+    sig_gene <- unique(fdr_table$geneID[fdr_table$gene<ofdr])
 
     if(length(sig_gene)>0){
-        temp <- fdr_table[fdr_table$gene<ofdr&fdr_table$transcript<ofdr,]
-        sig_tx <- setNames(as.character(temp$txID), temp$geneID)
+        temp <- fdr_table[fdr_table$gene<ofdr&fdr_table$transcript<ofdr,,drop=F]
+        sig_tx <- setNames(temp$txID, temp$geneID)
         message("Found ",length(sig_gene)," significant genes with ",length(sig_tx)," significant transcripts (OFDR: ",ofdr,")")
     }else{
         sig_gene <- NULL
         sig_tx <- NULL
         message("No gene passed the screening test. If applicable try to adjust the OFDR level.")
     }
+
     return_obj <- append(list("sig_gene" = sig_gene, "sig_tx" = sig_tx,
                                        "FDR_table" = fdr_table), dturtle)
     return_obj$used_filtering_options$posthoc_stager <- list("ofdr" = ofdr,

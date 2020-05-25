@@ -136,7 +136,7 @@ getmax <- function(gID, dturtle){
 #' @examples ## import_gtf("path_to/your_annotation_file.gtf")
 import_gtf <- function(gtf_file){
     assertthat::assert_that(file.exists(gtf_file))
-    gtf_grange <- rtracklayer::readGFFAsGRanges(gtf_file)
+    gtf_grange <- rtracklayer::import(gtf_file)
     df <- as.data.frame(gtf_grange[gtf_grange$type=="transcript"])
     return(df)
 }
@@ -287,34 +287,69 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, dr
 
 #' Ensure one-to-one mapping
 #'
-#' Ensure one-to-one mapping of the two specified columns in the data frame.
+#' Ensure one-to-one mapping of the two specified vectors.
 #'
 #' First checks if every unique value in `name` corresponds with a unique value in `id`.
 #' If not, changes the disagreeing values in `name` by extending the label with the `ext` character and a number.
 #'
-#' @param df A data frame, containing the two provided columns `name` and `id`
-#' @param name A column of `df`. If no one-to-one mapping exists, the values of this column will be changed (by extending with `ext`)!
-#' @param id A column of df. This is the preferred place for identifier columns, as this column will not be touched in case of a disagreement.
+#' @param name A character vector. If no one-to-one mapping exists, the values of this vector will be changed (by extending with `ext`)!
+#' @param id A vector, preferably for identifiers. This column will not be touched in case of a disagreement.
 #' @param ext The extension character.
 #'
-#' @return A data frame, where one to one mapping for the two columns is ensured.
+#' @return The vector `name`, where one to one mapping for the two vectors is ensured.
 #' @export
-one_to_one_mapping <- function(df, name, id, ext="_"){
-    assertthat::assert_that(is.data.frame(df))
-    assertthat::assert_that(all(c(name,id) %in% colnames(df)))
-    assertthat::assert_that(is(ext, "character"))
+one_to_one_mapping <- function(name, id, ext="_"){
+    assertthat::assert_that(length(name)==length(id)&length(id)>0)
+    assertthat::assert_that(is(name, "character"))
+    assertthat::assert_that(is(ext, "character")&&length(ext)==1)
 
-    not_correct <- lapply(split(df[[id]], df[[name]]), unique)
+    not_correct <- lapply(split(id, name), unique)
     not_correct <- not_correct[lengths(not_correct)!=1]
 
     if(length(not_correct)>0){
         lapply(not_correct, function(x)
             lapply(seq(from = 2, along.with = x[-1]), function(i)
-                df[[name]][df[[id]]==x[[i]]] <<- paste0(df[[name]][df[[id]]==x[[i]]],ext,i)))
+                name[id==x[[i]]] <<- paste0(name[id==x[[i]]],ext,i)))
         message("Changed ", sum(lengths(not_correct))-length(not_correct), " names.")
-        return(df)
+        return(name)
     }else{
-        message("No changes needed - already one to one mapping.")
-        return(df)
+        message("No changes needed -> already one to one mapping.")
+        return(name)
     }
+}
+
+#' Reduce introns in granges
+#'
+#' Reduces length of introns to 'min_intron_size' in the provided granges.
+#'
+#' Reduces the size of introns to the square root of the length, but not lower than 'min_intron_size'.
+#'
+#' @param granges A granges object that shall be altered.
+#' @param min_intron_size The minimal intro length, that shall be retained.
+#'
+#' @return A list containing:
+#' - `granges`: The granges object with reduced introns.
+#' - `reduced_regions`: A granges object with the ranges of the reduced intron regions and their new size.
+#' @export
+granges_reduce_introns <- function(granges, min_intron_size){
+    assertthat::assert_that(is(granges, "GenomicRanges"))
+    assertthat::assert_that(assertthat::is.count(min_intron_size))
+    granges_reduced <- granges
+    granges_reduced$new_start <- GenomicRanges::start(granges_reduced)
+    regions_to_reduce <- GenomicRanges::gaps(granges)
+    #exclude first region, if transcript does not start on first base
+    if(GenomicRanges::start(regions_to_reduce)[1]==1){
+        regions_to_reduce <- regions_to_reduce[-1]
+    }
+    #compute reduced region size
+    #do not artificially inflate regions smaller than min_intron_size
+    regions_to_reduce <- regions_to_reduce[GenomicRanges::width(regions_to_reduce)>min_intron_size,]
+    regions_to_reduce$new_width <- sapply(ceiling(sqrt(GenomicRanges::width(regions_to_reduce))), FUN = function(x) max(min_intron_size, x))
+    for(j in seq_along(regions_to_reduce)){
+        x <- regions_to_reduce[j]
+        granges_reduced[GenomicRanges::start(granges_reduced)>GenomicRanges::start(x),]$new_start <- granges_reduced[GenomicRanges::start(granges_reduced)>GenomicRanges::start(x),]$new_start-GenomicRanges::width(x)+x$new_width
+    }
+    GenomicRanges::start(granges) <- granges_reduced$new_start
+    GenomicRanges::end(granges) <- GenomicRanges::start(granges)+GenomicRanges::width(granges_reduced)-1
+    return(list("granges" = granges, "reduced_regions" = regions_to_reduce))
 }

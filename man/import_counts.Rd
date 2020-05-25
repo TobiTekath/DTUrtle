@@ -9,11 +9,12 @@ import_counts(files, type, ...)
 \arguments{
 \item{files}{Vector of files to be imported. Optionally can be named to keep the samples names.}
 
-\item{type}{Type of the quantification data. All tools supported by tximport can be selected. If you have single-cell data, the use of \code{alevin} is proposed.
+\item{type}{Type of the quantification data. All tools supported by \code{\link[tximport:tximport]{tximport}} can be selected, additionally to the newly implemented \code{bustools} support for single-cell data. If you have single-cell data, the use of \code{alevin} or \code{bustools} is proposed.
 \itemize{
 \item \code{'salmon'}
 \item \code{'alevin'}
 \item \code{'kallisto'}
+\item \code{'bustools'}
 \item \code{'rsem'}
 \item \code{'stringtie'}
 \item \code{'sailfish'}
@@ -29,14 +30,18 @@ import_counts(files, type, ...)
 }
 }
 \description{
-Import the quantification results of many RNAseq quantifiers, including 'alevin' for single-cell data.
+Import the quantification results of many RNA-seq quantifiers, including \code{alevin} and \code{bustools} for single-cell data.
 Most likely the first step in your DTUrtle analysis.
 }
 \details{
 Can perform multiple scaling schemes, defaults to scaling schemes appropriate for DTU analysis. For bulk data it is recommended to additionally specify a \code{tx2gene} data frame as parameter.
 This data frame must be a a two-column data frame linking transcript id (column 1) to gene id/name (column 2). This data frame is used to apply a DTU specific scaling scheme (dtuScaledTPM).
+Please see \code{\link[=import_gtf]{import_gtf()}}, \code{\link[=move_columns_to_front]{move_columns_to_front()}} and \code{\link[=one_to_one_mapping]{one_to_one_mapping()}} to help with tx2gene creation.
+See also \code{\link[=combine_to_matrix]{combine_to_matrix()}}, when output is a list of single-cell runs.
 }
 \seealso{
+Please see \code{\link[=import_gtf]{import_gtf()}}, \code{\link[=move_columns_to_front]{move_columns_to_front()}} and \code{\link[=one_to_one_mapping]{one_to_one_mapping()}} to help with tx2gene creation. See also \code{\link[=combine_to_matrix]{combine_to_matrix()}}, when output is a list of single-cell runs.
+
 Other DTUrtle: 
 \code{\link{combine_to_matrix}()},
 \code{\link{posthoc_and_stager}()},
