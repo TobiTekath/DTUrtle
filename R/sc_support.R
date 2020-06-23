@@ -2,7 +2,7 @@
 #'
 #' Perform dmFilter-like filtering for sparse or dense matrices
 #'
-#' Runtime optimised version of `DRIMSeq::dmFilter`, which can optionally be executed in parallel.
+#' Runtime optimised version of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter()}}, which can optionally be executed in parallel.
 #'
 #' @param counts Sparse count matrix.
 #' @param tx2gene Feature to gene mapping.
@@ -45,7 +45,7 @@ sparse_filter <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), 
             return(NULL)
 
         temp <- expr_features[, samps2keep, drop = FALSE]
-        prop <- sweep(temp, 2, Matrix::colSums(temp), "/")
+        prop <- temp %*% Matrix::diag(1/Matrix::colSums(temp))
 
         ### features with min proportion
         row_index <- Matrix::rowSums(prop >= min_feature_prop) >= min_samps_feature_prop
@@ -104,5 +104,5 @@ readin_bustools <- function(files){
     colnames <- scan(colnames, what = "character", quiet=T)
     assertthat::assert_that(length(colnames)==ncol(mtx), msg = "Number of features does not match to matrix.")
     dimnames(mtx) <- list(rownames, colnames)
-    return(as(mtx, "dgCMatrix"))
+    return(as(Matrix::t(mtx), "dgCMatrix"))
 }

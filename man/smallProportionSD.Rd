@@ -2,16 +2,18 @@
 % Please edit documentation in R/utility_functions.R
 \name{smallProportionSD}
 \alias{smallProportionSD}
-\title{Filter out}
+\title{Filter out results, whose standard deviation of proportional ratios is below the filter value.}
 \usage{
-smallProportionSD(d, filter)
+smallProportionSD(drim, filter)
 }
 \arguments{
-\item{filter}{}
+\item{drim}{Results object of DRIMSeq statistical computations}
+
+\item{filter}{A filter threshold, stating the minimal standard deviation to keep.}
 }
 \value{
-
+A boolean vector, stating the elements to dismiss (==True).
 }
 \description{
-Filter out
+Filter out results, whose standard deviation of proportional ratios is below the filter value.
 }

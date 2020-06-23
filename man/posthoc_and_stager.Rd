@@ -11,7 +11,7 @@ posthoc_and_stager(dturtle, ofdr = 0.05, posthoc = 0.1)
 
 \item{ofdr}{Overall false discovery rate (OFDR) threshold.}
 
-\item{posthoc_filt}{Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or \code{FALSE} can be provided.}
+\item{posthoc}{Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or \code{FALSE} can be provided.}
 }
 \value{
 An extended \code{dturtle} object. Additional slots include:

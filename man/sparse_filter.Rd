@@ -50,5 +50,5 @@ Filtered sparse matrix
 Perform dmFilter-like filtering for sparse or dense matrices
 }
 \details{
-Runtime optimised version of \code{DRIMSeq::dmFilter}, which can optionally be executed in parallel.
+Runtime optimised version of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter()}}, which can optionally be executed in parallel.
 }

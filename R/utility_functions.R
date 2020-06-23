@@ -7,27 +7,23 @@ no_na <- function(x){
     return(ifelse(is.na(x), 1, x))
 }
 
-#TODO: test
-#Not working for sparse! Need grouped row sums like rowsums
-#' Filter out
+#' Filter out results, whose standard deviation of proportional ratios is below the filter value.
 #'
-#' @param d
-#' @param filter
+#' @param drim Results object of DRIMSeq statistical computations
+#' @param filter A filter threshold, stating the minimal standard deviation to keep.
 #'
-#' @return
-smallProportionSD <- function(d, filter) {
-    browser()
-    d <- sparseDRIMSeq::counts(d)
-    cts <- as.matrix(d[,!colnames(d) %in% c("gene_id", "feature_id")])
-    gene.cts <- rowsum(cts, d$gene_id)
-    total.cts <- gene.cts[match(d$gene_id, rownames(gene.cts)),]
-    props <- cts/total.cts
-    #propSD <- sqrt(matrixStats::rowVars(props))
-
-    #directly call SD?
-    propSD <- sqrt(apply(props,1,var))
-
-    return(propSD < filter)
+#' @return A boolean vector, stating the elements to dismiss (==True).
+smallProportionSD <- function(drim, filter) {
+    cts <- drim@counts@unlistData
+    part <- drim@counts@partitioning
+    dismiss <- unlist(lapply(X=part, FUN=function(x){
+        temp <- cts[x,]
+        prop <- temp %*% Matrix::diag(1/Matrix::colSums(temp))
+        prop_sd <- prop-Matrix::rowMeans(prop)
+        prop_sd <- sqrt(Matrix::rowSums(prop_sd*prop_sd)/(ncol(prop_sd)-1))
+        return(prop_sd < filter)
+        }))
+    return(dismiss)
 }
 
 #' Merge two or more sparse matrices.
@@ -93,7 +89,7 @@ run_posthoc <- function(drim, filt){
     filt <- smallProportionSD(drim, filt)
     res_txp_filt$pvalue[filt] <- 1
     res_txp_filt$adj_pvalue[filt] <- 1
-    message("Posthoc filtered ", sum(filt, na.rm = TRUE), " transcripts")
+    message("Posthoc filtered ", sum(filt, na.rm = T), " features.")
     return(res_txp_filt)
 }
 
@@ -285,6 +281,95 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, dr
 }
 
 
+
+#' Summarize matrix to gene level
+#'
+#' Summarize a transcript level matrix to gene level.
+#'
+#' Can be used with sparse or dense expression matrices
+#'
+#' @param mtx A (sparse) expression matrix on transcript / feature level
+#' @param tx2gene A data frame, mapping the `mtx` rownames (first column) to genes (second column).
+#' @inheritParams Matrix.utils::aggregate.Matrix
+#'
+#' @return A summarised (sparse) matrix
+#' @export
+summarize_to_gene <- function(mtx, tx2gene, fun="sum"){
+    assertthat::assert_that(is(mtx, "matrix")||is(mtx, "sparseMatrix"))
+    assertthat::assert_that(is.data.frame(tx2gene))
+    assertthat::assert_that(all(rownames(mtx) %in% tx2gene[[1]]))
+
+    tx2gene <- tx2gene[match(rownames(mtx), tx2gene[[1]]),]
+
+    if(is(mtx, "sparseMatrix")){
+        return(Matrix.utils::aggregate.Matrix(x = mtx, groupings = tx2gene[[2]], fun = fun))
+    }else{
+        return(as.matrix(Matrix.utils::aggregate.Matrix(x = mtx, groupings = tx2gene[[2]], fun = fun)))
+    }
+
+}
+
+
+
+
+
+#' Actual computation of proportion matrices
+#'
+#' @param mtx A (sparse) transcript-level matrix
+#' @param partitioning A DRIMSeq partitioning list, specifying which transcripts belong to which genes.
+#'
+#' @return A (sparse) matrix of transcript proportions
+prop_matrix <- function(mtx, partitioning=NULL){
+    assertthat::assert_that(is(mtx, "matrix")||is(mtx, "sparseMatrix"))
+    assertthat::assert_that(is(partitioning, "list")||is.null(partitioning))
+
+    if(!is.null(partitioning)){
+        if(sum(lengths(partitioning))!=nrow(mtx)){
+            part_df <- data.frame("gene"=rep(names(partitioning),lengths(partitioning)), "tx"=unlist(sapply(partitioning, FUN = names)), stringsAsFactors = F)
+            part_df <- part_df[match(rownames(mtx), part_df$tx),]
+            partitioning <- split(part_df$tx,part_df$gene)
+        }
+        mat_list <- sapply(X=partitioning, FUN=function(x){
+            temp <- mtx[x,]
+            return(temp %*% Matrix::diag(1/Matrix::colSums(temp)))
+        })
+        return(do.call(rbind,mat_list))
+
+    }else{
+        return(mtx %*% Matrix::diag(1/Matrix::colSums(mtx)))
+    }
+}
+
+
+#' Compute proportion matrix
+#'
+#' Compute a matrix of transcript proportions per gene. Either a (sparse) count matrix or a `dturtle` object can be provided.
+#'
+#' If a `dturtle` object is provided, a list of genes the data shall be subsetted to can optionally be given.
+#'
+#' @param obj (sparse) matrix or `dturtle` object.
+#' @param genes Specify the genes to subset the data to, if a `dturtle` object is provided.
+#'
+#' @return A (sparse) matrix of transcript proportions
+#' @export
+#'
+#' @examples
+get_proportion_matrix <- function(obj,genes=NULL){
+    assertthat::assert_that(is(obj, "matrix")||is(obj, "sparseMatrix")||is(obj, "dturtle"), msg = "obj must be a (sparse) matrix or of class 'dturtle'.")
+    assertthat::assert_that(is.null(genes)||(is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
+    if(is(obj, "matrix")||is(obj, "sparseMatrix")){
+        return(prop_matrix(obj))
+    }else{
+        assertthat::assert_that(!is.null(obj$drim), msg="obj does not contain DRIMSeq results.")
+        if(!is.null(genes)){
+            return(prop_matrix(do.call(rbind,obj$drim@counts@unlistData[genes,]), partitioning = obj$drim@counts@partitioning))
+        }else{
+            return(prop_matrix(obj$drim@counts@unlistData, partitioning = obj$drim@counts@partitioning))
+        }
+
+    }
+}
+
 #' Ensure one-to-one mapping
 #'
 #' Ensure one-to-one mapping of the two specified vectors.
@@ -299,7 +384,7 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, dr
 #' @return The vector `name`, where one to one mapping for the two vectors is ensured.
 #' @export
 one_to_one_mapping <- function(name, id, ext="_"){
-    assertthat::assert_that(length(name)==length(id)&length(id)>0)
+    assertthat::assert_that(length(name)==length(id)&&length(id)>0)
     assertthat::assert_that(is(name, "character"))
     assertthat::assert_that(is(ext, "character")&&length(ext)==1)
 

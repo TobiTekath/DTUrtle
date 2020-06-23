@@ -11,7 +11,7 @@ create_dtu_table(
 )
 }
 \arguments{
-\item{dturtle}{Result object of \code{posthoc_and_stager()}. Must be of class \code{dturtle}.}
+\item{dturtle}{\code{dturtle} result object of \code{posthoc_and_stager()}.}
 
 \item{add_gene_metadata}{A list of columns of the object's \code{meta_table_gene}, the gene-level meta data table.
 Names can be specified, which are used as the column names in the final output.}

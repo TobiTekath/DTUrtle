@@ -13,7 +13,7 @@ run_drimseq(
   cond_levels = NULL,
   filtering_strategy = "bulk",
   BPPARAM = BiocParallel::SerialParam(),
-  force_dense = F,
+  force_dense = T,
   carry_over_metadata = T,
   ...
 )
@@ -27,11 +27,11 @@ run_drimseq(
 
 \item{tx2gene}{Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in \code{counts} and \code{tx2gene} was provided in \code{\link[=combine_to_matrix]{combine_to_matrix()}}, a vector of the colnames of the specific feature and gene identifierss is sufficient.}
 
-\item{pd}{Data frame with at least a column of sample/cell identifiers (specified in \code{id_col}) and the comparison group definition (specified in \code{cond_col}).}
+\item{pd}{Data frame with at least a column of sample/cell identifiers (rownames or specified in \code{id_col}) and the comparison group definition (specified in \code{cond_col}).}
 
 \item{id_col}{Name of the column in \code{pd}, where unique sample/cell identifiers are stored. If \code{NULL} (default), use rownames of \code{pd}.}
 
-\item{cond_col}{Name of the column in \code{pd}, where the comparison groups are defined. If more than 2 levels/groups are present, the groups that should be used must be specified in \code{cond_levels}.}
+\item{cond_col}{Name of the column in \code{pd}, where the comparison groups/conditions are defined. If more than 2 levels/groups are present, the groups that should be used must be specified in \code{cond_levels}.}
 
 \item{cond_levels}{Define two levels/groups of \code{cond_col}, that should be compared. The order of the levels states the comparison formula (i.e. \code{cond_col[1]-cond_col[2]}).}
 
@@ -44,7 +44,7 @@ run_drimseq(
 
 \item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
 
-\item{force_dense}{If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying \code{TRUE}. Might reduce runtime, but massively increases memory usage. Only recommended if any problems with sparse calculations appear.}
+\item{force_dense}{If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying \code{TRUE}. Increases memory usage, but also reduces runtime drastically (currently).}
 
 \item{carry_over_metadata}{Specify if compatible additional columns of \code{tx2gene} shall be carried over to the gene and transcript level \code{meta_table} in the results. Columns with \code{NA} values are not carried over.}
 
@@ -53,8 +53,9 @@ run_drimseq(
 \value{
 \code{dturtle} object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
 \itemize{
-\item \code{meta_table_gene}: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0. Can be used to add gene level metainformation for plotting.
-\item \code{meta_table_tx}: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0. Can be used to add transcript level metainformation for plotting.
+\item \code{meta_table_gene}: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0. Can be used to add gene level meta-information for plotting.
+\item \code{meta_table_tx}: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0. Can be used to add transcript level meta-information for plotting.
+\item \code{meta_table_sample}: Data frame of the provided sample level information (\code{pd}). Can be used to add sample level meta-information for plotting.
 \item \code{drim}: The results of the DRIMSeq statistical computations (\code{dmTest()}).
 \item \code{design}: The design matrix generated from the specified \code{pd} columns.
 \item \code{group}: Vector which sample/cell belongs to which comparison group.

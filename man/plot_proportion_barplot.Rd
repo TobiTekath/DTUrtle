@@ -17,11 +17,11 @@ plot_proportion_barplot(
 )
 }
 \arguments{
-\item{dturtle}{Result object of \code{posthoc_and_stager()}. Must be of class \code{dturtle}.}
+\item{dturtle}{\code{dturtle} result object of \code{posthoc_and_stager()}.}
 
 \item{genes}{Character vector of genes to plot. If \code{NULL}, defaults to all found significant genes (\code{sig_genes}).}
 
-\item{meta_gene_id}{Optionally specify the column name in \code{meta_table_gene}, which contains gene identifiers.}
+\item{meta_gene_id}{Optionally specify the column name in \code{meta_table_gene}, which contains real gene identifiers or gene names.}
 
 \item{group_colors}{Optionally specify the colours for the two sample groups in the plot. Must be a named vector, with the group names as names.}
 

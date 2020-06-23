@@ -30,6 +30,7 @@
 import_counts <- function(files, type, ...){
     assertthat::assert_that(type %in% c("salmon", "alevin", "kallisto", "bustools", "rsem", "stringtie", "sailfish", "none"))
     assertthat::assert_that(length(type)==1)
+    assertthat::assert_that(length(files)>=1)
     message("Reading in ", length(files), " ", type, " runs.")
 
     args=list(...)
@@ -42,6 +43,7 @@ import_counts <- function(files, type, ...){
         }
 
         if(type=="alevin"){
+            assertthat::assert_that(all(basename(files) == "quants_mat.gz"), msg = "Expecting 'files' to point to 'quants_mat.gz' file in a directory 'alevin'\n  also containing 'quants_mat_rows.txt' and 'quant_mat_cols.txt'.\n  Please re-run alevin preserving output structure.")
             return_obj <- lapply(files, function(i) tximport::tximport(files = i, type = "alevin", ...)$counts)
         }else{
             return_obj <- lapply(files, function(i) readin_bustools(files = i))
@@ -211,6 +213,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
     }
 }
 
+#TODO: Carry over sample_pd if Seurat
 #TODO: Specify predefined strategies!
 #' Main DRIMSeq results
 #'
@@ -222,22 +225,23 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #' 1. (sparse) matrix with feature counts, where the rows correspond to features (e.g. transcripts). One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in `id_col`).
 #' 2. Seurat object with a transcription level assay as `active.assay` (most likely result object from [combine_to_matrix()])
 #' @param tx2gene Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in `counts` and `tx2gene` was provided in [combine_to_matrix()], a vector of the colnames of the specific feature and gene identifierss is sufficient.
-#' @param pd Data frame with at least a column of sample/cell identifiers (specified in `id_col`) and the comparison group definition (specified in `cond_col`).
+#' @param pd Data frame with at least a column of sample/cell identifiers (rownames or specified in `id_col`) and the comparison group definition (specified in `cond_col`).
 #' @param id_col Name of the column in `pd`, where unique sample/cell identifiers are stored. If `NULL` (default), use rownames of `pd`.
-#' @param cond_col Name of the column in `pd`, where the comparison groups are defined. If more than 2 levels/groups are present, the groups that should be used must be specified in `cond_levels`.
+#' @param cond_col Name of the column in `pd`, where the comparison groups/conditions are defined. If more than 2 levels/groups are present, the groups that should be used must be specified in `cond_levels`.
 #' @param cond_levels Define two levels/groups of `cond_col`, that should be compared. The order of the levels states the comparison formula (i.e. `cond_col[1]-cond_col[2]`).
 #' @param filtering_strategy Define the filtering strategy to reduce and noise and increase statistical power.
 #' - `'bulk'`: Predefined strategy for bulk RNAseq data. (default)
 #' - `'sc'`: Predefined strategy for single-cell RNAseq data.
 #' - `'own'`: Can be used to specify a user-defined strategy via the `...` argument (using the parameters of `dmFilter()`).
 #' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
-#' @param force_dense If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying `TRUE`. Might reduce runtime, but massively increases memory usage. Only recommended if any problems with sparse calculations appear.
+#' @param force_dense If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying `TRUE`. Increases memory usage, but also reduces runtime drastically (currently).
 #' @param carry_over_metadata Specify if compatible additional columns of `tx2gene` shall be carried over to the gene and transcript level `meta_table` in the results. Columns with `NA` values are not carried over.
 #' @param ... If `filtering_strategy='own'` specify the wished parameters of `dmFilter()` here.
 #'
 #' @return `dturtle` object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
-#' - `meta_table_gene`: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0. Can be used to add gene level metainformation for plotting.
-#' - `meta_table_tx`: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0. Can be used to add transcript level metainformation for plotting.
+#' - `meta_table_gene`: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0. Can be used to add gene level meta-information for plotting.
+#' - `meta_table_tx`: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0. Can be used to add transcript level meta-information for plotting.
+#' - `meta_table_sample`: Data frame of the provided sample level information (`pd`). Can be used to add sample level meta-information for plotting.
 #' - `drim`: The results of the DRIMSeq statistical computations (`dmTest()`).
 #' - `design`: The design matrix generated from the specified `pd` columns.
 #' - `group`: Vector which sample/cell belongs to which comparison group.
@@ -247,9 +251,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #' @export
 #'
 #' @examples
-run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", BPPARAM=BiocParallel::SerialParam(), force_dense=F, carry_over_metadata=T, ...){
-    tictoc::tic("Total time")
-    tictoc::tic("Preprocess")
+run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", BPPARAM=BiocParallel::SerialParam(), force_dense=T, carry_over_metadata=T, ...){
     if(is(counts, "Seurat")){
         assertthat::assert_that(require("Seurat", character.only = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
         assertthat::assert_that(packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
@@ -281,14 +283,9 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     colnames(tx2gene) <- make.names(colnames(tx2gene), unique = T)
 
     if(is.null(cond_levels)){
-        if(length(unique(pd[[cond_col]]))==2){
             cond_levels <- unique(pd[[cond_col]])
-        }
-        else{
-            stop("More than two levels found in 'cond_col'. Please specify the two levels you want to compare in 'cond_levels'.")
-        }
     }
-    assertthat::assert_that(length(cond_levels)==2)
+    assertthat::assert_that(length(cond_levels)==2, msg = "More than two levels found in 'cond_col'. Please specify the two levels you want to compare in 'cond_levels'.")
     message("\nComparing ", cond_levels[1], " vs ", cond_levels[2])
 
     if(is.null(id_col)){
@@ -334,9 +331,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     own={
         filter_opt_list <- modifyList(filter_opt_list, list(...))
     })
-    tictoc::tic("Filter")
     counts <- do.call(sparse_filter, args = c(list("counts" = counts, "tx2gene" = tx2gene, "BPPARAM" = BPPARAM), filter_opt_list), quote=TRUE)
-    tictoc::toc(log = T)
     tx2gene <- tx2gene[match(rownames(counts), tx2gene$feature_id),]
 
     if(is(counts, 'sparseMatrix')&force_dense){
@@ -353,11 +348,8 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     }
 
     drim <- sparseDRIMSeq::sparse_dmDSdata(tx2gene = tx2gene, counts = counts, samples = samp)
-    tictoc::tic("Ratios")
     exp_in_tx <- ratio_expression_in(drim, "tx", BPPARAM=BPPARAM)
     exp_in_gn <- ratio_expression_in(drim, "gene", BPPARAM=BPPARAM)
-    tictoc::toc(log = T)
-    tictoc::tic("Metadata")
     #carry over metadata
     if(carry_over_metadata&ncol(tx2gene)>2){
         tx2gene <- tx2gene[match(rownames(exp_in_tx), tx2gene$feature_id),]
@@ -371,28 +363,19 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
             }
         }
     }
-    tictoc::toc(log = T)
     design_full <- model.matrix(~condition, data=samp)
 
-    tictoc::toc(log = T)
     message("\nPerforming statistical tests...\n")
-    tictoc::tic("Precision")
     drim_test <- sparseDRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, add_uniform=T)
-    tictoc::toc(log = T)
-    tictoc::tic("Fit")
     drim_test <- sparseDRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=T)
-    tictoc::toc(log = T)
-    tictoc::tic("Test")
     drim_test <- sparseDRIMSeq::dmTest(drim_test, coef=colnames(design_full)[2], BPPARAM=BPPARAM)
-    tictoc::toc(log = T)
 
     group <- factor(samp$condition, levels = cond_levels, ordered = T)
-    tictoc::toc(log = T)
 
     exp_in_gn <- rapply(exp_in_gn, as.character, classes="factor", how="replace")
     exp_in_tx <- rapply(exp_in_tx, as.character, classes="factor", how="replace")
 
-    return_obj <- list("meta_table_gene"=exp_in_gn, "meta_table_tx"=exp_in_tx,
+    return_obj <- list("meta_table_gene"=exp_in_gn, "meta_table_tx"=exp_in_tx, "meta_table_sample"=samp,
                        "drim"=drim_test, "design_full"=design_full, "group"=group,
                        "used_filtering_options"=list("DRIM"=filter_opt_list), "tictoc"=tictoc::tic.log(format = T))
     class(return_obj) <- append("dturtle", class(return_obj))
@@ -401,7 +384,6 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 
 
 #TODO: implement Noise - IQR filtering
-#TODO: Posthoc!
 
 #' Posthoc filtering and two-staged statistical tests
 #'
@@ -414,7 +396,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 #'
 #' @param dturtle Result object of [run_drimseq()]. Must be of class `dturtle`.
 #' @param ofdr Overall false discovery rate (OFDR) threshold.
-#' @param posthoc_filt Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or `FALSE` can be provided.
+#' @param posthoc Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or `FALSE` can be provided.
 #' @return An extended `dturtle` object. Additional slots include:
 #' - `sig_gene`: A character vector of all genes where the first stageR step was significant. Basically the significant genes, that showed signs of DTU.
 #' - `sig_tx` : A named character vector of transcripts where the second stageR step was significant. Basically the significant transcripts of the significant genes.
@@ -426,19 +408,16 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 #'
 #' @examples
 posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
-    assertthat::assert_that(is(dturtle,"dturtle"), msg = "The provided dturtle object is not of class 'dturtle'.")
-    if(posthoc!=F){
-        assertthat::assert_that(0<=posthoc & posthoc<=1, msg = "The provided 'posthoc' parameter is invalid. Must be a number between [0,1] or FALSE.")
-    }else{
-        assertthat::assert_that(posthoc==F, msg = "The provided 'posthoc' parameter is invalid. Must be a number between [0,1] or FALSE.")
-    }
+    assertthat::assert_that(!is.null(dturtle$drim), msg = "The provided dturtle object does not contain all the needed information. Have you run 'run_drimseq()'?")
+    assertthat::assert_that((is.numeric(posthoc)&0<=posthoc & posthoc<=1)||isFALSE(posthoc), msg = "The provided 'posthoc' parameter is invalid. Must be a number between [0,1] or FALSE.")
     assertthat::assert_that(0<=ofdr & ofdr<=1, msg = "The provided 'ofdr' parameter is invalid. Must be a number between [0,1].")
 
-    res <- sparseDRIMSeq::results(dturtle$drim)
-    res_txp <- sparseDRIMSeq::results(dturtle$drim, level="feature")
 
-    if(posthoc!=F|posthoc>0){
+    res <- sparseDRIMSeq::results(dturtle$drim)
+    if(posthoc!=F||posthoc>0){
         res_txp <- run_posthoc(dturtle$drim, posthoc)
+    }else{
+        res_txp <- sparseDRIMSeq::results(dturtle$drim, level="feature")
     }
 
     res$pvalue <- no_na(res$pvalue)
