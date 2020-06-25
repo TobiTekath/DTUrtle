@@ -27,16 +27,39 @@ plot_proportion_barplot(
 
 \item{fit_line_color}{Optionally specify the colour to use for the mean fit line.}
 
-\item{savepath}{If you want your files to be saved to disk, specify a savepath here. The directories will be created, if necessary.}
+\item{savepath}{If you want your files to be saved to disk, specify a save path here. The directories will be created if necessary.}
 
 \item{filename_ext}{Optionally specify a file name extension here, which also defines the save image format. The file name will be 'gene_name+extension'.}
 
 \item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
 
-\item{...}{Further parameters for image saving with ggsave. Can be used to specify plot dimensions, etc. See \code{\link[ggplot2:ggsave]{ggsave}} for more information.}
+\item{...}{
+  Arguments passed on to \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
+  \describe{
+    \item{\code{filename}}{File name to create on disk.}
+    \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
+    \item{\code{device}}{Device to use. Can either be a device function
+(e.g. \code{\link[=png]{png()}}), or one of "eps", "ps", "tex" (pictex),
+"pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only).}
+    \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
+are combined to create the fully qualified file name. Defaults to the
+working directory.}
+    \item{\code{scale}}{Multiplicative scaling factor.}
+    \item{\code{width}}{Plot size in \code{units} ("in", "cm", or "mm").
+If not supplied, uses the size of current graphics device.}
+    \item{\code{height}}{Plot size in \code{units} ("in", "cm", or "mm").
+If not supplied, uses the size of current graphics device.}
+    \item{\code{units}}{Plot size in \code{units} ("in", "cm", or "mm").
+If not supplied, uses the size of current graphics device.}
+    \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
+"print" (300), or "screen" (72). Applies only to raster output types.}
+    \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave} will not
+save images larger than 50x50 inches, to prevent the common error of
+specifying dimensions in pixels.}
+  }}
 }
 \value{
-A list of the created plots. Can be further processed if wanted.
+If no \code{savepath} is provided, returns a list of the created plots for further processing.
 }
 \description{
 Visualize genes and it's transcript proportions in a barplot.
@@ -48,6 +71,8 @@ Shows the transcripts proportional change per analysis group, together with the 
 \code{\link[=run_drimseq]{run_drimseq()}} and \code{\link[=posthoc_and_stager]{posthoc_and_stager()}} for DTU object creation. \code{\link[=create_dtu_table]{create_dtu_table()}} and \code{\link[=plot_dtu_table]{plot_dtu_table()}} for table visualization.
 
 Other DTUrtle visualization: 
-\code{\link{create_dtu_table}()}
+\code{\link{create_dtu_table}()},
+\code{\link{plot_proportion_pheatmap}()},
+\code{\link{plot_transcripts_view}()}
 }
 \concept{DTUrtle visualization}

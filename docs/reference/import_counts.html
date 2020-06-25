@@ -80,13 +80,22 @@ Most likely the first step in your DTUrtle analysis." />
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+  <a href="../reference/index.html">Functions and data</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
      
+    <span class="caret"></span>
   </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/mkin.html">Vignette human bulk RNA-seq</a>
+    </li>
+  </ul>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../news/index.html">News</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -138,7 +147,75 @@ Most likely the first step in your DTUrtle analysis.</p>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Further parameters to the specific tximport call. See <code><a href='https://rdrr.io/pkg/tximport/man/tximport.html'>tximport</a></code> for available parameters.</p></td>
+      <td><p>Arguments passed on to <code><a href='https://rdrr.io/pkg/tximport/man/tximport.html'>tximport::tximport</a></code></p><dl'>
+    <dt><code>txIn</code></dt><dd><p>logical, whether the incoming files are transcript level (default TRUE)</p></dd>
+    <dt><code>txOut</code></dt><dd><p>logical, whether the function should just output
+transcript-level (default FALSE)</p></dd>
+    <dt><code>countsFromAbundance</code></dt><dd><p>character, either "no" (default), "scaledTPM",
+"lengthScaledTPM", or "dtuScaledTPM".
+Whether to generate estimated counts using abundance estimates:
+<ul>
+<li><p>scaled up to library size (scaledTPM),</p></li>
+<li><p>scaled using the average transcript length over samples
+        and then the library size (lengthScaledTPM), or</p></li>
+<li><p>scaled using the median transcript length among isoforms of a gene,
+        and then the library size (dtuScaledTPM).</p></li>
+</ul>
+dtuScaledTPM is designed for DTU analysis in combination with <code>txOut=TRUE</code>,
+and it requires specifing a <code>tx2gene</code> data.frame.
+dtuScaledTPM works such that within a gene, values from all samples and
+all transcripts get scaled by the same fixed median transcript length.
+If using scaledTPM, lengthScaledTPM, or geneLengthScaledTPM, 
+the counts are no longer correlated across samples with transcript length,
+and so the length offset matrix should not be used.</p></dd>
+    <dt><code>tx2gene</code></dt><dd><p>a two-column data.frame linking transcript id (column 1)
+to gene id (column 2).
+the column names are not relevant, but this column order must be used. 
+this argument is required for gene-level summarization for methods
+that provides transcript-level estimates only
+(kallisto, Salmon, Sailfish)</p></dd>
+    <dt><code>varReduce</code></dt><dd><p>whether to reduce per-sample inferential replicates
+information into a matrix of sample variances <code>variance</code> (default FALSE).
+alevin computes inferential variance by default for bootstrap
+inferential replicates, so this argument is ignored/not necessary</p></dd>
+    <dt><code>dropInfReps</code></dt><dd><p>whether to skip reading in inferential replicates
+(default FALSE). For alevin, <code>tximport</code> will still read in the
+inferential variance matrix if it exists</p></dd>
+    <dt><code>infRepStat</code></dt><dd><p>a function to re-compute counts and abundances from the
+inferential replicates, e.g. <code><a href='https://rdrr.io/pkg/matrixStats/man/rowMedians.html'>matrixStats::rowMedians</a></code> to re-compute counts 
+as the median of the inferential replicates. The order of operations is:
+first counts are re-computed, then abundances are re-computed.
+Following this, if <code>countsFromAbundance</code> is not "no",
+<code>tximport</code> will again re-compute counts from the re-computed abundances.
+<code>infRepStat</code> should operate on rows of a matrix. (default is NULL)</p></dd>
+    <dt><code>ignoreTxVersion</code></dt><dd><p>logical, whether to split the tx id on the '.' character
+to remove version information to facilitate matching with the tx id in <code>tx2gene</code>
+(default FALSE)</p></dd>
+    <dt><code>ignoreAfterBar</code></dt><dd><p>logical, whether to split the tx id on the '|' character
+to facilitate matching with the tx id in <code>tx2gene</code> (default FALSE)</p></dd>
+    <dt><code>geneIdCol</code></dt><dd><p>name of column with gene id. if missing, the <code>tx2gene</code> argument can be used</p></dd>
+    <dt><code>txIdCol</code></dt><dd><p>name of column with tx id</p></dd>
+    <dt><code>abundanceCol</code></dt><dd><p>name of column with abundances (e.g. TPM or FPKM)</p></dd>
+    <dt><code>countsCol</code></dt><dd><p>name of column with estimated counts</p></dd>
+    <dt><code>lengthCol</code></dt><dd><p>name of column with feature length information</p></dd>
+    <dt><code>importer</code></dt><dd><p>a function used to read in the files</p></dd>
+    <dt><code>existenceOptional</code></dt><dd><p>logical, should tximport not check if files exist before attempting
+import (default FALSE, meaning files must exist according to <code>file.exists</code>)</p></dd>
+    <dt><code>sparse</code></dt><dd><p>logical, whether to try to import data sparsely (default is FALSE).
+Initial implementation for <code>txOut=TRUE</code>, <code>countsFromAbundance="no"</code>
+or <code>"scaledTPM"</code>, no inferential replicates. Only counts matrix
+is returned (and abundance matrix if using <code>"scaledTPM"</code>)</p></dd>
+    <dt><code>sparseThreshold</code></dt><dd><p>the minimum threshold for including a count as a
+non-zero count during sparse import (default is 1)</p></dd>
+    <dt><code>readLength</code></dt><dd><p>numeric, the read length used to calculate counts from
+StringTie's output of coverage. Default value (from StringTie) is 75.
+The formula used to calculate counts is:
+<code>cov * transcript length / read length</code></p></dd>
+    <dt><code>forceSlow</code></dt><dd><p>logical, argument used for testing. Will force the use of
+the slower R code for importing alevin, even if <code>fishpond</code>
+library is installed. Default is FALSE</p></dd>
+  
+</dl></td>
     </tr>
     </table>
 
@@ -175,7 +252,7 @@ See also <code><a href='combine_to_matrix.html'>combine_to_matrix()</a></code>, 
 
       <footer>
       <div class="copyright">
-  <p>Developed by The package maintainer.</p>
+  <p>Developed by <a href='https://hesselberthlab.org'>Tobias Tekath</a>.</p>
 </div>
 
 <div class="pkgdown">

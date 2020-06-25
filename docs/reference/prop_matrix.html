@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Reorder columns — move_columns_to_front • DTUrtle</title>
+<title>Actual computation of proportion matrices — prop_matrix • DTUrtle</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Reorder columns — move_columns_to_front" />
-<meta property="og:description" content="Reorder the columns of a data frame." />
+<meta property="og:title" content="Actual computation of proportion matrices — prop_matrix" />
+<meta property="og:description" content="Actual computation of proportion matrices" />
 
 
 
@@ -112,40 +112,34 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Reorder columns</h1>
+    <h1>Actual computation of proportion matrices</h1>
     
-    <div class="hidden name"><code>move_columns_to_front.Rd</code></div>
+    <div class="hidden name"><code>prop_matrix.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Reorder the columns of a data frame.</p>
+    <p>Actual computation of proportion matrices</p>
     </div>
 
-    <pre class="usage"><span class='fu'>move_columns_to_front</span>(<span class='no'>df</span>, <span class='no'>columns</span>)</pre>
+    <pre class="usage"><span class='fu'>prop_matrix</span>(<span class='no'>mtx</span>, <span class='kw'>partitioning</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>df</th>
-      <td><p>The data frame that shall be reordered.</p></td>
+      <th>mtx</th>
+      <td><p>A (sparse) transcript-level matrix</p></td>
     </tr>
     <tr>
-      <th>columns</th>
-      <td><p>One or multiple column names that should be moved to the front of the dataframe. Order is kept.</p></td>
+      <th>partitioning</th>
+      <td><p>A DRIMSeq partitioning list, specifying which transcripts belong to which genes.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Data frame with reordered columns.</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <p>A (sparse) matrix of transcript proportions</p>
 
-    <p>Sets the desired <code>columns</code> of the dataframe <code>df</code> to the first columns. Does not change the order of the others.</p>
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'>## move_columns_to_fron(df, c("new_first_column", "new_second_column"))
-</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

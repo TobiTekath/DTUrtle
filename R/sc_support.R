@@ -14,7 +14,7 @@ sparse_filter <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), 
                           min_gene_expr = 0, min_samps_feature_expr = 0, min_feature_expr = 0,
                           min_samps_feature_prop = 0, min_feature_prop = 0,
                           run_gene_twice=FALSE){
-    assertthat::assert_that(is(counts, "matrix")|is(counts, "sparseMatrix"))
+    assertthat::assert_that(methods::is(counts, "matrix")||methods::is(counts, "sparseMatrix"))
     counts <- counts[Matrix::rowSums(counts)>0,]
     tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
     #genes with at least two transcripts
@@ -104,5 +104,5 @@ readin_bustools <- function(files){
     colnames <- scan(colnames, what = "character", quiet=T)
     assertthat::assert_that(length(colnames)==ncol(mtx), msg = "Number of features does not match to matrix.")
     dimnames(mtx) <- list(rownames, colnames)
-    return(as(Matrix::t(mtx), "dgCMatrix"))
+    return(methods::as(Matrix::t(mtx), "dgCMatrix"))
 }

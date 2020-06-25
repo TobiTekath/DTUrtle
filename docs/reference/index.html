@@ -78,13 +78,22 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+  <a href="../reference/index.html">Functions and data</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
      
+    <span class="caret"></span>
   </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/mkin.html">Vignette human bulk RNA-seq</a>
+    </li>
+  </ul>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../news/index.html">News</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -116,8 +125,8 @@
     <tbody>
       <tr>
         <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
+          <h2 id="section-main-functions" class="hasAnchor"><a href="#section-main-functions" class="anchor"></a>Main functions</h2>
+          <p class="section-desc"><p>Basic pipeline</p></p>
         </th>
       </tr>
       
@@ -128,123 +137,9 @@
       <tr>
         
         <td>
-          <p><code><a href="check_unique_by_partition.html">check_unique_by_partition()</a></code> </p>
-        </td>
-        <td><p>Check if data frame columns agree with partitioning</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="combine_to_matrix.html">combine_to_matrix()</a></code> </p>
-        </td>
-        <td><p>Combine sparse matrices.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="create_dtu_table.html">create_dtu_table()</a></code> </p>
-        </td>
-        <td><p>Summarize DTUrtle results</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="get_by_partition.html">get_by_partition()</a></code> </p>
-        </td>
-        <td><p>Aggregate data frame by partitions</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="get_diff.html">get_diff()</a></code> </p>
-        </td>
-        <td><p>Get the transcript-wise proportion differnces of the specified gene</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="getmax.html">getmax()</a></code> </p>
-        </td>
-        <td><p>Return the maximal absolute difference for all transcripts of the procvided gene</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="granges_reduce_introns.html">granges_reduce_introns()</a></code> </p>
-        </td>
-        <td><p>Reduce introns in granges</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="import_counts.html">import_counts()</a></code> </p>
         </td>
         <td><p>Import quantification results</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="import_gtf.html">import_gtf()</a></code> </p>
-        </td>
-        <td><p>Parse a gtf file and return a transcript level dataframe.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="merge_sparse.html">merge_sparse()</a></code> </p>
-        </td>
-        <td><p>Merge two or more sparse matrices.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="move_columns_to_front.html">move_columns_to_front()</a></code> </p>
-        </td>
-        <td><p>Reorder columns</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="no_na.html">no_na()</a></code> </p>
-        </td>
-        <td><p>Replaces NA values by 1.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="one_to_one_mapping.html">one_to_one_mapping()</a></code> </p>
-        </td>
-        <td><p>Ensure one-to-one mapping</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_dtu_table.html">plot_dtu_table()</a></code> </p>
-        </td>
-        <td><p>Title</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_proportion_barplot.html">plot_proportion_barplot()</a></code> </p>
-        </td>
-        <td><p>Visualize as barplot</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_transcripts_view.html">plot_transcripts_view()</a></code> </p>
-        </td>
-        <td><p>Title</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="posthoc_and_stager.html">posthoc_and_stager()</a></code> </p>
-        </td>
-        <td><p>Posthoc filtering and two-staged statistical tests</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="ratio_expression_in.html">ratio_expression_in()</a></code> </p>
-        </td>
-        <td><p>Ratio of expressing samples</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="readin_bustools.html">readin_bustools()</a></code> </p>
-        </td>
-        <td><p>Read bustools output</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="rm_version.html">rm_version()</a></code> </p>
-        </td>
-        <td><p>Remove ensembl version number</p></td>
       </tr><tr>
         
         <td>
@@ -254,33 +149,46 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="run_posthoc.html">run_posthoc()</a></code> </p>
+          <p><code><a href="posthoc_and_stager.html">posthoc_and_stager()</a></code> </p>
         </td>
-        <td><p>Posthoc filtering</p></td>
+        <td><p>Posthoc filtering and two-staged statistical tests</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-visualization-functions" class="hasAnchor"><a href="#section-visualization-functions" class="anchor"></a>Visualization functions</h2>
+          <p class="section-desc"><p>Aggregate and visualize results</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="create_dtu_table.html">create_dtu_table()</a></code> </p>
+        </td>
+        <td><p>Summarize DTUrtle results</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="seurat_add_tx2gene.html">seurat_add_tx2gene()</a></code> </p>
+          <p><code><a href="plot_proportion_barplot.html">plot_proportion_barplot()</a></code> </p>
         </td>
-        <td><p>Add tx2gene</p></td>
+        <td><p>Visualize as barplot</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="smallProportionSD.html">smallProportionSD()</a></code> </p>
+          <p><code><a href="plot_proportion_pheatmap.html">plot_proportion_pheatmap()</a></code> </p>
         </td>
-        <td><p>Filter out</p></td>
+        <td><p>Visualize as extended heatmap</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="sparse_filter.html">sparse_filter()</a></code> </p>
+          <p><code><a href="plot_transcripts_view.html">plot_transcripts_view()</a></code> </p>
         </td>
-        <td><p>Filtering for sparse or dense matrix</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="summarize_to_gene.html">summarize_to_gene()</a></code> </p>
-        </td>
-        <td><p>Summarize matrix to gene level</p></td>
+        <td><p>Visualize transcripts on genomic scale</p></td>
       </tr>
     </tbody>
     </table>
@@ -296,7 +204,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by The package maintainer.</p>
+  <p>Developed by <a href='https://hesselberthlab.org'>Tobias Tekath</a>.</p>
 </div>
 
 <div class="pkgdown">

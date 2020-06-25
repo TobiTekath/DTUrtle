@@ -7,7 +7,7 @@
 no_na(x)
 }
 \arguments{
-\item{x}{Vector of values (i.e. pvalues).}
+\item{x}{Vector of values (e.g. pvalues).}
 }
 \value{
 Vector of values with NAs replaced.

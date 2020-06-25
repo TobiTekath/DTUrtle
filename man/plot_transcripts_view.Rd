@@ -2,7 +2,7 @@
 % Please edit documentation in R/visualization.R
 \name{plot_transcripts_view}
 \alias{plot_transcripts_view}
-\title{Title}
+\title{Visualize transcripts on genomic scale}
 \usage{
 plot_transcripts_view(
   dturtle,
@@ -13,6 +13,9 @@ plot_transcripts_view(
   reduce_introns = T,
   reduce_introns_fill = "grey95",
   reduce_introns_min_size = 50,
+  fontsize_vec = c(10, 1.1, 0.6),
+  arrow_colors = c("#7CAE00", "#00BFC4"),
+  extension_factors = c(0.01, 0.15),
   savepath = NULL,
   filename_ext = "_transcripts.png",
   BPPARAM = BiocParallel::SerialParam(),
@@ -20,11 +23,52 @@ plot_transcripts_view(
 )
 }
 \arguments{
-\item{...}{}
+\item{dturtle}{\code{dturtle} result object of \code{posthoc_and_stager()}.}
+
+\item{genes}{Character vector of genes to plot. If \code{NULL}, defaults to all found significant genes (\code{sig_genes}).}
+
+\item{gtf}{Either path to a \code{gtf/gff} file which will be read or a \code{granges} object of a already read in \code{gtf/gff} file. See \code{\link[rtracklayer:import]{rtracklayer::import}} for more information. The tx2gene data frame of \code{\link[=import_gtf]{import_gtf()}} is \strong{not} sufficient.}
+
+\item{genome}{The genome on which to create the ideogram tracks. This has to be a valid \verb{UCSC genome identifier} (e.g. 'hg38', 'mm10', 'danRer11', etc.). Can also be NULL to skip ideogram track generation.}
+
+\item{one_to_one}{Specify \code{TRUE}, if one_to_one mapping of gene/transcript identifiers with their respective names was enforced before (with \code{\link[=one_to_one_mapping]{one_to_one_mapping()}}). If a non default extension character (\code{ext}) has been used, please specify the used extension character.}
+
+\item{reduce_introns}{Logical if intron ranges shall be shrunken down, highlighting the exonic structure.}
+
+\item{reduce_introns_fill}{Optionally specify the background color of ranges where introns have been reduced.}
+
+\item{reduce_introns_min_size}{Specify the minimal size introns are reduced to (in bp).}
+
+\item{fontsize_vec}{Vector of fontsizes to use. The first value is the side annotation text fontsize (in pt), the second the cex factor for the title, the third the cex factor for the feature names.}
+
+\item{arrow_colors}{Specify the colors of the arrows indicating the direction of proportional changes. The first color string is for a positive change, the second for a negative one.}
+
+\item{extension_factors}{Advanced: Specify the extension factors to extend the plotted genomic range. The first value if for the extension of the front (left) side, the second for the back (right).}
+
+\item{savepath}{If you want your files to be saved to disk, specify a save path here. The directories will be created if necessary.}
+
+\item{filename_ext}{Optionally specify a file name extension here, which also defines the save image format. The file name will be 'gene_name+extension'.}
+
+\item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
+
+\item{...}{Arguments passed down to \code{\link[grDevices:png]{png}} or \code{\link[grDevices:cairo_pdf]{cairo_pdf}} or \code{\link[grDevices:pdf]{pdf}} or \code{\link[grDevices:jpeg]{jpeg}}, depending on \code{filename_ext} ending and capabilities (cairo_pdf or pdf).}
 }
 \value{
-
+If no \code{savepath} is provided, returns a list of the created plots for further processing.
 }
 \description{
-Title
+Visualize exon-intron structure of transcripts on genomic scale.
 }
+\details{
+Reduced intron length is computed by taking the square root, but is not less than the specified \code{reduce_introns_min_size} length.
+If less \code{GRanges} are found than expected, try setting \code{one_to_one} to \code{TRUE} or the used extension character.
+}
+\seealso{
+\code{\link[=run_drimseq]{run_drimseq()}} and \code{\link[=posthoc_and_stager]{posthoc_and_stager()}} for DTU object creation. \code{\link[=create_dtu_table]{create_dtu_table()}} and \code{\link[=plot_dtu_table]{plot_dtu_table()}} for table visualization.
+
+Other DTUrtle visualization: 
+\code{\link{create_dtu_table}()},
+\code{\link{plot_proportion_barplot}()},
+\code{\link{plot_proportion_pheatmap}()}
+}
+\concept{DTUrtle visualization}

@@ -48,7 +48,7 @@ run_drimseq(
 
 \item{carry_over_metadata}{Specify if compatible additional columns of \code{tx2gene} shall be carried over to the gene and transcript level \code{meta_table} in the results. Columns with \code{NA} values are not carried over.}
 
-\item{...}{If \code{filtering_strategy='own'} specify the wished parameters of \code{dmFilter()} here.}
+\item{...}{If \code{filtering_strategy='own'} specify the wished parameters of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter}} here.}
 }
 \value{
 \code{dturtle} object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:

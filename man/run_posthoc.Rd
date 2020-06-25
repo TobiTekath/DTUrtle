@@ -7,7 +7,9 @@
 run_posthoc(drim, filt)
 }
 \arguments{
-\item{filt}{Threshold}
+\item{drim}{Result object of DRIMSeq statistical tests.}
+
+\item{filt}{Threshold to filter by.}
 }
 \value{
 A filtered \code{sparseDRIMSeq::results()} data frame.

@@ -79,13 +79,22 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+  <a href="../reference/index.html">Functions and data</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
      
+    <span class="caret"></span>
   </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/mkin.html">Vignette human bulk RNA-seq</a>
+    </li>
+  </ul>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../news/index.html">News</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -121,7 +130,7 @@
   <span class='kw'>cond_levels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>filtering_strategy</span> <span class='kw'>=</span> <span class='st'>"bulk"</span>,
   <span class='kw'>BPPARAM</span> <span class='kw'>=</span> <span class='kw pkg'>BiocParallel</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html'>SerialParam</a></span>(),
-  <span class='kw'>force_dense</span> <span class='kw'>=</span> <span class='no'>F</span>,
+  <span class='kw'>force_dense</span> <span class='kw'>=</span> <span class='no'>T</span>,
   <span class='kw'>carry_over_metadata</span> <span class='kw'>=</span> <span class='no'>T</span>,
   <span class='no'>...</span>
 )</pre>
@@ -170,7 +179,7 @@
     </tr>
     <tr>
       <th>force_dense</th>
-      <td><p>If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying <code>TRUE</code>. Might reduce runtime, but massively increases memory usage. Only recommended if any problems with sparse calculations appear.</p></td>
+      <td><p>If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying <code>TRUE</code>. Increases memory usage, but also reduces runtime drastically (currently).</p></td>
     </tr>
     <tr>
       <th>carry_over_metadata</th>
@@ -178,7 +187,7 @@
     </tr>
     <tr>
       <th>...</th>
-      <td><p>If <code>filtering_strategy='own'</code> specify the wished parameters of <code>dmFilter()</code> here.</p></td>
+      <td><p>If <code>filtering_strategy='own'</code> specify the wished parameters of <code><a href='https://rdrr.io/pkg/sparseDRIMSeq/man/dmFilter.html'>dmFilter</a></code> here.</p></td>
     </tr>
     </table>
 
@@ -215,7 +224,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by The package maintainer.</p>
+  <p>Developed by <a href='https://hesselberthlab.org'>Tobias Tekath</a>.</p>
 </div>
 
 <div class="pkgdown">

@@ -1,1 +1,44 @@
-destination: docs
+url: https://pkgdown.r-lib.org
+
+title: DTUrtle
+
+template:
+  bootswatch: spacelab
+
+authors:
+  Tobias Tekath:
+    href: https://hesselberthlab.org
+
+
+development:
+  mode: auto
+
+
+reference:
+  - title: Main functions
+    desc:  Basic pipeline
+    contents:
+      - import_counts
+      - run_drimseq
+      - posthoc_and_stager
+
+  - title: Visualization functions
+    desc: Aggregate and visualize results
+    contents:
+      - create_dtu_table
+      - plot_proportion_barplot
+      - plot_proportion_pheatmap
+      - plot_transcripts_view
+
+navbar:
+  title: ~
+  type: default
+  left:
+    - text: Functions and data
+      href: reference/index.html
+    - text: Articles
+      menu:
+      - text: Vignette human bulk RNA-seq
+        href: articles/mkin.html
+    - text: News
+      href: news/index.html

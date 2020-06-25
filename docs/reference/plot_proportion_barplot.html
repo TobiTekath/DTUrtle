@@ -79,13 +79,22 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+  <a href="../reference/index.html">Functions and data</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
      
+    <span class="caret"></span>
   </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/mkin.html">Vignette human bulk RNA-seq</a>
+    </li>
+  </ul>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../news/index.html">News</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -137,7 +146,7 @@
     </tr>
     <tr>
       <th>meta_gene_id</th>
-      <td><p>Optionally specify the column name in <code>meta_table_gene</code>, which contains gene identifiers.</p></td>
+      <td><p>Optionally specify the column name in <code>meta_table_gene</code>, which contains real gene identifiers or gene names.</p></td>
     </tr>
     <tr>
       <th>group_colors</th>
@@ -149,7 +158,7 @@
     </tr>
     <tr>
       <th>savepath</th>
-      <td><p>If you want your files to be saved to disk, specify a savepath here. The directories will be created, if necessary.</p></td>
+      <td><p>If you want your files to be saved to disk, specify a save path here. The directories will be created if necessary.</p></td>
     </tr>
     <tr>
       <th>filename_ext</th>
@@ -161,13 +170,35 @@
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Further parameters for image saving with ggsave. Can be used to specify plot dimensions, etc. See <code><a href='https://ggplot2.tidyverse.org/reference/ggsave.html'>ggsave</a></code> for more information.</p></td>
+      <td><p>Arguments passed on to <code><a href='https://ggplot2.tidyverse.org/reference/ggsave.html'>ggplot2::ggsave</a></code></p><dl'>
+    <dt><code>filename</code></dt><dd><p>File name to create on disk.</p></dd>
+    <dt><code>plot</code></dt><dd><p>Plot to save, defaults to last plot displayed.</p></dd>
+    <dt><code>device</code></dt><dd><p>Device to use. Can either be a device function
+(e.g. <code><a href='https://rdrr.io/r/grDevices/png.html'>png()</a></code>), or one of "eps", "ps", "tex" (pictex),
+"pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only).</p></dd>
+    <dt><code>path</code></dt><dd><p>Path of the directory to save plot to: <code>path</code> and <code>filename</code>
+are combined to create the fully qualified file name. Defaults to the
+working directory.</p></dd>
+    <dt><code>scale</code></dt><dd><p>Multiplicative scaling factor.</p></dd>
+    <dt><code>width</code></dt><dd><p>Plot size in <code>units</code> ("in", "cm", or "mm").
+If not supplied, uses the size of current graphics device.</p></dd>
+    <dt><code>height</code></dt><dd><p>Plot size in <code>units</code> ("in", "cm", or "mm").
+If not supplied, uses the size of current graphics device.</p></dd>
+    <dt><code>units</code></dt><dd><p>Plot size in <code>units</code> ("in", "cm", or "mm").
+If not supplied, uses the size of current graphics device.</p></dd>
+    <dt><code>dpi</code></dt><dd><p>Plot resolution. Also accepts a string input: "retina" (320),
+"print" (300), or "screen" (72). Applies only to raster output types.</p></dd>
+    <dt><code>limitsize</code></dt><dd><p>When <code>TRUE</code> (the default), <code>ggsave</code> will not
+save images larger than 50x50 inches, to prevent the common error of
+specifying dimensions in pixels.</p></dd>
+  
+</dl></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A list of the created plots. Can be further processed if wanted.</p>
+    <p>If no <code>savepath</code> is provided, returns a list of the created plots for further processing.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Shows the transcripts proportional change per analysis group, together with the mean fit value via a horizontal line. Significant transcript's names are marked in red.</p>
@@ -175,7 +206,9 @@
 
     <div class='dont-index'><p><code><a href='run_drimseq.html'>run_drimseq()</a></code> and <code><a href='posthoc_and_stager.html'>posthoc_and_stager()</a></code> for DTU object creation. <code><a href='create_dtu_table.html'>create_dtu_table()</a></code> and <code><a href='plot_dtu_table.html'>plot_dtu_table()</a></code> for table visualization.</p>
 <p>Other DTUrtle visualization: 
-<code><a href='create_dtu_table.html'>create_dtu_table</a>()</code></p></div>
+<code><a href='create_dtu_table.html'>create_dtu_table</a>()</code>,
+<code><a href='plot_proportion_pheatmap.html'>plot_proportion_pheatmap</a>()</code>,
+<code><a href='plot_transcripts_view.html'>plot_transcripts_view</a>()</code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -188,7 +221,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by The package maintainer.</p>
+  <p>Developed by <a href='https://hesselberthlab.org'>Tobias Tekath</a>.</p>
 </div>
 
 <div class="pkgdown">

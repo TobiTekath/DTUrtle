@@ -2,13 +2,13 @@ Package: DTUrtle
 Type: Package
 Title: Differential Transcript Usage analysis
 Version: 0.1.0
-Author: Tobias Tekath
-Maintainer: Tobias Tekath <tobias.tekath@wwu.de>
+Authors@R: person(given = "Tobias", family = "Tekath", role = c("aut", "cre"), email = "tobias.tekath@gmail.com") 
 Description: Easily perform Differential Transcript Usage (DTU) analysis for bulk or single-cell RNAseq data. Needs transcript level counts.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.4.0)
-Imports: Matrix, tximport, sparseDRIMSeq, stageR, rtracklayer, formattable, DT, Gviz, assertthat, scales, ggplot2, reshape2, BiocParallel, Matrix.utils, pheatmap
+Imports: Matrix, tximport, sparseDRIMSeq, stageR, rtracklayer, formattable, DT, Gviz, assertthat, scales, ggplot2, reshape2, BiocParallel, Matrix.utils, pheatmap, methods, GenomicRanges 
+Suggests: GenomeInfoDb, Seurat (>= 3.0.0)
 RoxygenNote: 7.1.0
 Roxygen: list(markdown = TRUE)

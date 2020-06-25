@@ -79,13 +79,22 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+  <a href="../reference/index.html">Functions and data</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
      
+    <span class="caret"></span>
   </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/mkin.html">Vignette human bulk RNA-seq</a>
+    </li>
+  </ul>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../news/index.html">News</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -112,7 +121,7 @@
     <p>Summarize a transcript level matrix to gene level.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>summarize_to_gene</span>(<span class='no'>mtx</span>, <span class='no'>tx2gene</span>, <span class='kw'>fun</span> <span class='kw'>=</span> <span class='st'>"sum"</span>)</pre>
+    <pre class="usage"><span class='fu'>summarize_to_gene</span>(<span class='no'>mtx</span>, <span class='no'>tx2gene</span>, <span class='kw'>fun</span> <span class='kw'>=</span> <span class='st'>"sum"</span>, <span class='kw'>genes</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -130,6 +139,10 @@
       <td><p>character string specifying the name of aggregation function to be
 applied to all columns in data.  Currently "sum", "count", and "mean"
 are supported.</p></td>
+    </tr>
+    <tr>
+      <th>genes</th>
+      <td><p>Optionally only summarize specific genes.</p></td>
     </tr>
     </table>
 
@@ -151,7 +164,7 @@ are supported.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by The package maintainer.</p>
+  <p>Developed by <a href='https://hesselberthlab.org'>Tobias Tekath</a>.</p>
 </div>
 
 <div class="pkgdown">

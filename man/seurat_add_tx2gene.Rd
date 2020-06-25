@@ -7,7 +7,9 @@
 seurat_add_tx2gene(seurat_obj, tx2gene)
 }
 \arguments{
-\item{tx2gene}{}
+\item{seurat_obj}{Object of class Seurat}
+
+\item{tx2gene}{A tx2gene dataframe, mapping identifiers}
 }
 \value{
 Seurat object with added data.

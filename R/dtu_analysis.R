@@ -18,7 +18,9 @@
 #' - `'stringtie'`
 #' - `'sailfish'`
 #' - `'none'`
-#' @param ... Further parameters to the specific tximport call. See \code{\link[tximport:tximport]{tximport}} for available parameters.
+#'
+#' @inheritDotParams tximport::tximport -files -type
+#'
 #'
 #' @return - For bulk data: A combined count matrix for all specified samples.
 #' - For single-cell data (`type='alevin'`): A list of count matrices per sample. Should be combined and optionally added to a Seurat object with [combine_to_matrix()].
@@ -38,7 +40,7 @@ import_counts <- function(files, type, ...){
     if(type=="alevin"||type=="bustools"){
         return_obj = list()
 
-        if(hasArg("countsFromAbundance")){
+        if(methods::hasArg("countsFromAbundance")){
             warning(paste0("\nImport of ", type," files currently does not support using scaling methods.\nPlease note, that in tagged-end single-cell protocols (like 10X chromium or SureCell) it is assumed\nthat there is no length effect in the fragment generation process - thus making a scaling unnecessary."))
         }
 
@@ -55,12 +57,12 @@ import_counts <- function(files, type, ...){
         return(return_obj)
 
     }else{
-        if(hasArg("countsFromAbundance")){
+        if(methods::hasArg("countsFromAbundance")){
             if(!args$countsFromAbundance %in% c("dtuScaledTPM", "scaledTPM")){
             warning("It is recommended to use the 'countsFromAbundance' scaling schemes 'dtuScaledTPM' or 'scaledTPM',\nto correct for increased counts of longer transcripts.\nIf you are using a tagged-end protocol, the use 'no' is suggested.")
             }
         }else{
-            if(hasArg("tx2gene")){
+            if(methods::hasArg("tx2gene")){
                 message("Using 'dtuScaledTPM' for 'countsFromAbundance'.")
                 args$countsFromAbundance <- "dtuScaledTPM"
             }else{
@@ -68,7 +70,7 @@ import_counts <- function(files, type, ...){
                 args$countsFromAbundance <- "scaledTPM"
             }
         }
-        if(hasArg(txOut)){
+        if(methods::hasArg("txOut")){
             if(args$txOut==F){
                 warning("Unless you exactly know what you are doing it is not recommended to set txOut to FALSE.\nDownstream analysis may fail!")
             }
@@ -105,8 +107,8 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 
     if(!is.null(seurat_obj)){
         assertthat::assert_that(require("Seurat", character.only = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
-        assertthat::assert_that(packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
-        assertthat::assert_that(is(seurat_obj, "Seurat"), msg = "The provided 'seurat_obj' is not of class Seurat.")
+        assertthat::assert_that(utils::packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
+        assertthat::assert_that(methods::is(seurat_obj, "Seurat"), msg = "The provided 'seurat_obj' is not of class Seurat.")
         assertthat::assert_that(seurat_obj@version>="3.0.0", msg = "The provided 'seurat_obj' is not a Seurat 3 object. Currently only Seurat 3 objects are supported.")
         assertthat::assert_that(assertthat::is.string(assay_name))
     }
@@ -115,7 +117,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
         tx_list <- list(tx_list)
     }
 
-    if(!all(as.logical(lapply(tx_list, FUN = function(x) is(x, 'sparseMatrix'))))){
+    if(!all(as.logical(lapply(tx_list, FUN = function(x) methods::is(x, 'sparseMatrix'))))){
         stop("Your 'tx_list' object contains non sparseMatrix elements.")
     }
 
@@ -130,7 +132,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
     dup <- any(duplicated(unlist(lapply(tx_list, FUN = colnames))))
 
     if(!is.null(seurat_obj)){
-        extensions_in_seur <- sum(grepl(pattern = "_", x = Cells(seurat_obj), fixed = T))>length(Cells(seurat_obj))*0.1
+        extensions_in_seur <- sum(grepl(pattern = "_", x = Seurat::Cells(seurat_obj), fixed = T))>length(Seurat::Cells(seurat_obj))*0.1
         if(!extensions_in_seur&dup){
             stop("Found no Seurat cellname extension but not unique cellnames. Make your cellnames unique or extend the cellnames in your Seurat object.")
         }
@@ -139,7 +141,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
             if(!is.null(cell_extensions)){
                 warning("Discarding provided cellname extensions and using Seurat object ones.")
             }
-            cell_extensions <- paste0("_", unique(stringi::stri_split_fixed(str= Cells(seurat_obj), pattern = "_", n = 2, simplify = T)[,2]))
+            cell_extensions <- paste0("_", unique(stringi::stri_split_fixed(str= Seurat::Cells(seurat_obj), pattern = "_", n = 2, simplify = T)[,2]))
             if(length(cell_extensions)!=length(names(tx_list))){
                 stop("Could not 1:1 map seurat cellname extensions and tx file list.\n",
                      "Try subsetting the seurat object if you do not want to provide tx information for all samples.")
@@ -179,9 +181,9 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
     tx_list <- merge_sparse(tx_list)
 
     if(!is.null(seurat_obj)){
-        common_cells <- intersect(Cells(seurat_obj), colnames(tx_list))
-        uniq_cells <- setdiff(colnames(tx_list), Cells(seurat_obj))
-        extra_seurat_cells <- setdiff(Cells(seurat_obj), colnames(tx_list))
+        common_cells <- intersect(Seurat::Cells(seurat_obj), colnames(tx_list))
+        uniq_cells <- setdiff(colnames(tx_list), Seurat::Cells(seurat_obj))
+        extra_seurat_cells <- setdiff(Seurat::Cells(seurat_obj), colnames(tx_list))
         message("Of ", ncol(tx_list), " cells, ", length(common_cells), " (", round(length(common_cells)/ncol(tx_list)*100), "%) could be found in the provided seurat object.")
         message(length(uniq_cells), " (",  round(length(uniq_cells)/ncol(tx_list)*100),"%) are unique to the transcriptomic files.")
         message("The seurat object contains ", length(extra_seurat_cells), " additional cells.")
@@ -200,7 +202,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 
     if(!is.null(seurat_obj)){
         message("Adding assay '",assay_name,"'")
-        seurat_obj[[assay_name]] <- CreateAssayObject(counts=tx_list)
+        seurat_obj[[assay_name]] <- Seurat::CreateAssayObject(counts=tx_list)
         seurat_obj@active.assay <- assay_name
 
         if(!is.null(tx2gene)){
@@ -236,7 +238,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
 #' @param force_dense If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying `TRUE`. Increases memory usage, but also reduces runtime drastically (currently).
 #' @param carry_over_metadata Specify if compatible additional columns of `tx2gene` shall be carried over to the gene and transcript level `meta_table` in the results. Columns with `NA` values are not carried over.
-#' @param ... If `filtering_strategy='own'` specify the wished parameters of `dmFilter()` here.
+#' @param ... If `filtering_strategy='own'` specify the wished parameters of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter}} here.
 #'
 #' @return `dturtle` object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
 #' - `meta_table_gene`: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0. Can be used to add gene level meta-information for plotting.
@@ -252,9 +254,9 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #'
 #' @examples
 run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", BPPARAM=BiocParallel::SerialParam(), force_dense=T, carry_over_metadata=T, ...){
-    if(is(counts, "Seurat")){
+    if(methods::is(counts, "Seurat")){
         assertthat::assert_that(require("Seurat", character.only = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
-        assertthat::assert_that(packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
+        assertthat::assert_that(utils::packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
         assertthat::assert_that(counts@version>="3.0.0", msg = "The provided 'counts' is not a Seurat 3 object. Currently only Seurat 3 objects are supported.")
         if(is.vector(tx2gene)){
             meta_df <- counts[[counts@active.assay]]@meta.features
@@ -262,15 +264,15 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
             assertthat::assert_that(all(tx2gene %in% colnames(meta_df)), msg = "Not all provided 'tx2gene' colnames are present in the feature-level meta data.")
             tx2gene <-  counts[[counts@active.assay]]@meta.features[,tx2gene]
         }
-        counts <- GetAssayData(counts)
+        counts <- Seurat::GetAssayData(counts)
     }
-    assertthat::assert_that(is(counts, "matrix")|is(counts, "sparseMatrix"))
-    assertthat::assert_that(is(tx2gene, "data.frame"))
-    assertthat::assert_that(is(pd, "data.frame"))
+    assertthat::assert_that(methods::is(counts, "matrix")|methods::is(counts, "sparseMatrix"))
+    assertthat::assert_that(methods::is(tx2gene, "data.frame"))
+    assertthat::assert_that(methods::is(pd, "data.frame"))
     assertthat::assert_that(ncol(tx2gene)>1)
     assertthat::assert_that(cond_col %in% colnames(pd), msg = paste0("Could not find", cond_col, " in column names of pd."))
     assertthat::assert_that(filtering_strategy %in% c("bulk", "sc", "own"), msg = "Please select a valid filtering strategy ('bulk', 'sc' or 'own').")
-    assertthat::assert_that(is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
+    assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
     assertthat::assert_that(is.logical(force_dense))
     assertthat::assert_that(is.logical(carry_over_metadata))
     assertthat::assert_that(all(rownames(counts) %in% tx2gene[[1]]), msg = "Not all rownames of the counts are present in the first tx2gene column. You may want to reorder the tx2gene columns with 'move_columns_to_front()'.")
@@ -301,7 +303,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
         samp <- samp[!is.na(samp$condition),]
         counts <- counts[ , !(colnames(counts) %in% exclude)]
     }
-    message("\nProceed with cells/samples: ",paste0(capture.output(table(samp$condition)), collapse = "\n"))
+    message("\nProceed with cells/samples: ",paste0(utils::capture.output(table(samp$condition)), collapse = "\n"))
 
     #TODO: Reevaluate!
     message("\nFiltering...\n")
@@ -314,12 +316,12 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     switch(filtering_strategy,
     sc={
 
-        filter_opt_list <- modifyList(filter_opt_list, list("min_samps_feature_prop" = smallest_group,
+        filter_opt_list <- utils::modifyList(filter_opt_list, list("min_samps_feature_prop" = smallest_group,
                                       "min_feature_prop" = 0.1, "run_gene_twice" = T))
     },
     bulk={
 
-        filter_opt_list <- modifyList(filter_opt_list,
+        filter_opt_list <- utils::modifyList(filter_opt_list,
                                       list("min_samps_feature_expr" = smallest_group,
                                            "min_feature_expr" = 1,
                                            "min_samps_gene_expr" = total_sample,
@@ -329,12 +331,12 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 
     },
     own={
-        filter_opt_list <- modifyList(filter_opt_list, list(...))
+        filter_opt_list <- utils::modifyList(filter_opt_list, list(...))
     })
     counts <- do.call(sparse_filter, args = c(list("counts" = counts, "tx2gene" = tx2gene, "BPPARAM" = BPPARAM), filter_opt_list), quote=TRUE)
     tx2gene <- tx2gene[match(rownames(counts), tx2gene$feature_id),]
 
-    if(is(counts, 'sparseMatrix')&force_dense){
+    if(methods::is(counts, 'sparseMatrix')&force_dense){
         counts <- tryCatch(
             {
                 as.matrix(counts)
@@ -363,9 +365,10 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
             }
         }
     }
-    design_full <- model.matrix(~condition, data=samp)
+    design_full <- stats::model.matrix(~condition, data=samp)
 
     message("\nPerforming statistical tests...\n")
+    BiocParallel::bpprogressbar(BPPARAM) <- T
     drim_test <- sparseDRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, add_uniform=T)
     drim_test <- sparseDRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=T)
     drim_test <- sparseDRIMSeq::dmTest(drim_test, coef=colnames(design_full)[2], BPPARAM=BPPARAM)
@@ -377,7 +380,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 
     return_obj <- list("meta_table_gene"=exp_in_gn, "meta_table_tx"=exp_in_tx, "meta_table_sample"=samp,
                        "drim"=drim_test, "design_full"=design_full, "group"=group,
-                       "used_filtering_options"=list("DRIM"=filter_opt_list), "tictoc"=tictoc::tic.log(format = T))
+                       "used_filtering_options"=list("DRIM"=filter_opt_list))
     class(return_obj) <- append("dturtle", class(return_obj))
     return(return_obj)
 }
@@ -436,7 +439,7 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
 
     if(length(sig_gene)>0){
         temp <- fdr_table[fdr_table$gene<ofdr&fdr_table$transcript<ofdr,,drop=F]
-        sig_tx <- setNames(temp$txID, temp$geneID)
+        sig_tx <- stats::setNames(temp$txID, temp$geneID)
         message("Found ",length(sig_gene)," significant genes with ",length(sig_tx)," significant transcripts (OFDR: ",ofdr,")")
     }else{
         sig_gene <- NULL

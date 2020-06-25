@@ -1,6 +1,6 @@
 #' Replaces NA values by 1.
 #'
-#' @param x Vector of values (i.e. pvalues).
+#' @param x Vector of values (e.g. pvalues).
 #'
 #' @return Vector of values with NAs replaced.
 no_na <- function(x){
@@ -16,15 +16,12 @@ no_na <- function(x){
 smallProportionSD <- function(drim, filter) {
     cts <- drim@counts@unlistData
     part <- drim@counts@partitioning
-    dismiss <- unlist(lapply(X=part, FUN=function(x){
-        temp <- cts[x,]
-        prop <- temp %*% Matrix::diag(1/Matrix::colSums(temp))
-        prop_sd <- prop-Matrix::rowMeans(prop)
-        prop_sd <- sqrt(Matrix::rowSums(prop_sd*prop_sd)/(ncol(prop_sd)-1))
-        return(prop_sd < filter)
-        }))
-    return(dismiss)
+    prop <- prop_matrix(cts,part)
+    prop_sd <- prop-Matrix::rowMeans(prop, na.rm = T)
+    prop_sd <- sqrt(Matrix::rowSums(prop_sd*prop_sd, na.rm = T)/(ncol(prop_sd)-1))
+    return(prop_sd < filter)
 }
+
 
 #' Merge two or more sparse matrices.
 #'
@@ -61,8 +58,8 @@ merge_sparse <- function(tx_mat) {
 #'
 #' Add a data frame as feature level metadata to the Seurat active assay.
 #'
-#' @param seurat_obj
-#' @param tx2gene
+#' @param seurat_obj Object of class Seurat
+#' @param tx2gene A tx2gene dataframe, mapping identifiers
 #'
 #' @return Seurat object with added data.
 seurat_add_tx2gene <- function(seurat_obj, tx2gene){
@@ -80,8 +77,8 @@ seurat_add_tx2gene <- function(seurat_obj, tx2gene){
 #' Perform posthoc filtering.
 #'
 #' Sets pvalue and adjusted pvalue of 'filtered' elements to 1.
-#' @param drim
-#' @param filt Threshold
+#' @param drim Result object of DRIMSeq statistical tests.
+#' @param filt Threshold to filter by.
 #'
 #' @return A filtered `sparseDRIMSeq::results()` data frame.
 run_posthoc <- function(drim, filt){
@@ -272,7 +269,7 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, dr
     assertthat::assert_that(is.data.frame(df))
     assertthat::assert_that(is.list(partitioning))
     assertthat::assert_that(is.function(FUN))
-    assertthat::assert_that(is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
+    assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
     if(!is.null(columns)){
         assertthat::assert_that(all(columns %in% colnames(df)))
         df <- df[,columns]
@@ -291,17 +288,23 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, dr
 #' @param mtx A (sparse) expression matrix on transcript / feature level
 #' @param tx2gene A data frame, mapping the `mtx` rownames (first column) to genes (second column).
 #' @inheritParams Matrix.utils::aggregate.Matrix
+#' @param genes Optionally only summarize specific genes.
 #'
 #' @return A summarised (sparse) matrix
 #' @export
-summarize_to_gene <- function(mtx, tx2gene, fun="sum"){
-    assertthat::assert_that(is(mtx, "matrix")||is(mtx, "sparseMatrix"))
+summarize_to_gene <- function(mtx, tx2gene, fun="sum", genes=NULL){
+    assertthat::assert_that(methods::is(mtx, "matrix")||methods::is(mtx, "sparseMatrix"))
     assertthat::assert_that(is.data.frame(tx2gene))
     assertthat::assert_that(all(rownames(mtx) %in% tx2gene[[1]]))
+    assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0))
+
+    if(!is.null(genes)){
+        mtx <- mtx[rownames(mtx) %in% tx2gene[[1]][tx2gene[[2]] %in% genes],,drop=F]
+    }
 
     tx2gene <- tx2gene[match(rownames(mtx), tx2gene[[1]]),]
 
-    if(is(mtx, "sparseMatrix")){
+    if(methods::is(mtx, "sparseMatrix")){
         return(Matrix.utils::aggregate.Matrix(x = mtx, groupings = tx2gene[[2]], fun = fun))
     }else{
         return(as.matrix(Matrix.utils::aggregate.Matrix(x = mtx, groupings = tx2gene[[2]], fun = fun)))
@@ -320,23 +323,28 @@ summarize_to_gene <- function(mtx, tx2gene, fun="sum"){
 #'
 #' @return A (sparse) matrix of transcript proportions
 prop_matrix <- function(mtx, partitioning=NULL){
-    assertthat::assert_that(is(mtx, "matrix")||is(mtx, "sparseMatrix"))
-    assertthat::assert_that(is(partitioning, "list")||is.null(partitioning))
+    assertthat::assert_that(methods::is(mtx, "matrix")||methods::is(mtx, "sparseMatrix"))
+    assertthat::assert_that(methods::is(partitioning, "list")||is.null(partitioning))
 
     if(!is.null(partitioning)){
         if(sum(lengths(partitioning))!=nrow(mtx)){
-            part_df <- data.frame("gene"=rep(names(partitioning),lengths(partitioning)), "tx"=unlist(sapply(partitioning, FUN = names)), stringsAsFactors = F)
-            part_df <- part_df[match(rownames(mtx), part_df$tx),]
-            partitioning <- split(part_df$tx,part_df$gene)
+            part_df <- partitioning_to_dataframe(partitioning)
+            part <- part_df[match(rownames(mtx), part_df$tx),]$gene
+        }else{
+            part <- rep(names(partitioning), lengths(partitioning))
         }
-        mat_list <- sapply(X=partitioning, FUN=function(x){
-            temp <- mtx[x,]
-            return(temp %*% Matrix::diag(1/Matrix::colSums(temp)))
-        })
-        return(do.call(rbind,mat_list))
+        col_sums <- Matrix.utils::aggregate.Matrix(x = mtx, groupings = part, fun = "sum")
+        col_sums <- col_sums[match(part, rownames(col_sums)),]
+        if(methods::is(mtx, "sparseMatrix")){
+            return(mtx*(1/col_sums))
+        }else{
+            return(as.matrix(mtx*(1/col_sums)))
+        }
 
     }else{
-        return(mtx %*% Matrix::diag(1/Matrix::colSums(mtx)))
+        res <- mtx %*% Matrix::diag(1/Matrix::colSums(mtx))
+        colnames(res) <- colnames(mtx)
+        return(res)
     }
 }
 
@@ -355,20 +363,35 @@ prop_matrix <- function(mtx, partitioning=NULL){
 #'
 #' @examples
 get_proportion_matrix <- function(obj,genes=NULL){
-    assertthat::assert_that(is(obj, "matrix")||is(obj, "sparseMatrix")||is(obj, "dturtle"), msg = "obj must be a (sparse) matrix or of class 'dturtle'.")
-    assertthat::assert_that(is.null(genes)||(is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
-    if(is(obj, "matrix")||is(obj, "sparseMatrix")){
+    assertthat::assert_that(methods::is(obj, "matrix")||methods::is(obj, "sparseMatrix")||methods::is(obj, "dturtle"), msg = "obj must be a (sparse) matrix or of class 'dturtle'.")
+    assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
+    if(methods::is(obj, "matrix")||methods::is(obj, "sparseMatrix")){
         return(prop_matrix(obj))
     }else{
         assertthat::assert_that(!is.null(obj$drim), msg="obj does not contain DRIMSeq results.")
         if(!is.null(genes)){
-            return(prop_matrix(do.call(rbind,obj$drim@counts@unlistData[genes,]), partitioning = obj$drim@counts@partitioning))
+            genes <- unlist(lapply(obj$drim@counts@partitioning[genes], FUN = names))
+            return(prop_matrix(obj$drim@counts@unlistData[genes,,drop=F], partitioning = obj$drim@counts@partitioning))
         }else{
             return(prop_matrix(obj$drim@counts@unlistData, partitioning = obj$drim@counts@partitioning))
         }
-
     }
 }
+
+
+#' Convert a partitioning list to a data frame.
+#'
+#' @param partitioning The partitioning that shall converted
+#'
+#' @return A data frame with two columns, `tx` and `gene`.
+#'
+#' @examples
+partitioning_to_dataframe <- function(partitioning){
+    assertthat::assert_that(methods::is(partitioning, "list"))
+    return(data.frame("tx"=unlist(sapply(partitioning, FUN = names)), "gene"=rep(names(partitioning),lengths(partitioning)), row.names = NULL, stringsAsFactors = F))
+}
+
+
 
 #' Ensure one-to-one mapping
 #'
@@ -385,16 +408,18 @@ get_proportion_matrix <- function(obj,genes=NULL){
 #' @export
 one_to_one_mapping <- function(name, id, ext="_"){
     assertthat::assert_that(length(name)==length(id)&&length(id)>0)
-    assertthat::assert_that(is(name, "character"))
-    assertthat::assert_that(is(ext, "character")&&length(ext)==1)
+    assertthat::assert_that(methods::is(name, "character"))
+    assertthat::assert_that(methods::is(ext, "character")&&length(ext)==1)
 
     not_correct <- lapply(split(id, name), unique)
     not_correct <- not_correct[lengths(not_correct)!=1]
 
     if(length(not_correct)>0){
-        lapply(not_correct, function(x)
-            lapply(seq(from = 2, along.with = x[-1]), function(i)
-                name[id==x[[i]]] <<- paste0(name[id==x[[i]]],ext,i)))
+        lapply(not_correct, function(x){
+            lapply(seq(from = 2, along.with = x[-1]), function(i){
+                name[id==x[[i]]] <<- paste0(name[id==x[[i]]],ext,i)
+            })
+        })
         message("Changed ", sum(lengths(not_correct))-length(not_correct), " names.")
         return(name)
     }else{
@@ -417,7 +442,7 @@ one_to_one_mapping <- function(name, id, ext="_"){
 #' - `reduced_regions`: A granges object with the ranges of the reduced intron regions and their new size.
 #' @export
 granges_reduce_introns <- function(granges, min_intron_size){
-    assertthat::assert_that(is(granges, "GenomicRanges"))
+    assertthat::assert_that(methods::is(granges, "GenomicRanges"))
     assertthat::assert_that(assertthat::is.count(min_intron_size))
     granges_reduced <- granges
     granges_reduced$new_start <- GenomicRanges::start(granges_reduced)

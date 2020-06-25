@@ -4,7 +4,7 @@
 \alias{summarize_to_gene}
 \title{Summarize matrix to gene level}
 \usage{
-summarize_to_gene(mtx, tx2gene, fun = "sum")
+summarize_to_gene(mtx, tx2gene, fun = "sum", genes = NULL)
 }
 \arguments{
 \item{mtx}{A (sparse) expression matrix on transcript / feature level}
@@ -14,6 +14,8 @@ summarize_to_gene(mtx, tx2gene, fun = "sum")
 \item{fun}{character string specifying the name of aggregation function to be
 applied to all columns in data.  Currently "sum", "count", and "mean"
 are supported.}
+
+\item{genes}{Optionally only summarize specific genes.}
 }
 \value{
 A summarised (sparse) matrix

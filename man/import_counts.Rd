@@ -21,7 +21,76 @@ import_counts(files, type, ...)
 \item \code{'none'}
 }}
 
-\item{...}{Further parameters to the specific tximport call. See \code{\link[tximport:tximport]{tximport}} for available parameters.}
+\item{...}{
+  Arguments passed on to \code{\link[tximport:tximport]{tximport::tximport}}
+  \describe{
+    \item{\code{txIn}}{logical, whether the incoming files are transcript level (default TRUE)}
+    \item{\code{txOut}}{logical, whether the function should just output
+transcript-level (default FALSE)}
+    \item{\code{countsFromAbundance}}{character, either "no" (default), "scaledTPM",
+"lengthScaledTPM", or "dtuScaledTPM".
+Whether to generate estimated counts using abundance estimates:
+\itemize{
+  \item scaled up to library size (scaledTPM),
+  \item scaled using the average transcript length over samples
+        and then the library size (lengthScaledTPM), or
+  \item scaled using the median transcript length among isoforms of a gene,
+        and then the library size (dtuScaledTPM). 
+}
+dtuScaledTPM is designed for DTU analysis in combination with \code{txOut=TRUE},
+and it requires specifing a \code{tx2gene} data.frame.
+dtuScaledTPM works such that within a gene, values from all samples and
+all transcripts get scaled by the same fixed median transcript length.
+If using scaledTPM, lengthScaledTPM, or geneLengthScaledTPM, 
+the counts are no longer correlated across samples with transcript length,
+and so the length offset matrix should not be used.}
+    \item{\code{tx2gene}}{a two-column data.frame linking transcript id (column 1)
+to gene id (column 2).
+the column names are not relevant, but this column order must be used. 
+this argument is required for gene-level summarization for methods
+that provides transcript-level estimates only
+(kallisto, Salmon, Sailfish)}
+    \item{\code{varReduce}}{whether to reduce per-sample inferential replicates
+information into a matrix of sample variances \code{variance} (default FALSE).
+alevin computes inferential variance by default for bootstrap
+inferential replicates, so this argument is ignored/not necessary}
+    \item{\code{dropInfReps}}{whether to skip reading in inferential replicates
+(default FALSE). For alevin, \code{tximport} will still read in the
+inferential variance matrix if it exists}
+    \item{\code{infRepStat}}{a function to re-compute counts and abundances from the
+inferential replicates, e.g. \code{matrixStats::rowMedians} to re-compute counts 
+as the median of the inferential replicates. The order of operations is:
+first counts are re-computed, then abundances are re-computed.
+Following this, if \code{countsFromAbundance} is not "no",
+\code{tximport} will again re-compute counts from the re-computed abundances.
+\code{infRepStat} should operate on rows of a matrix. (default is NULL)}
+    \item{\code{ignoreTxVersion}}{logical, whether to split the tx id on the '.' character
+to remove version information to facilitate matching with the tx id in \code{tx2gene}
+(default FALSE)}
+    \item{\code{ignoreAfterBar}}{logical, whether to split the tx id on the '|' character
+to facilitate matching with the tx id in \code{tx2gene} (default FALSE)}
+    \item{\code{geneIdCol}}{name of column with gene id. if missing, the \code{tx2gene} argument can be used}
+    \item{\code{txIdCol}}{name of column with tx id}
+    \item{\code{abundanceCol}}{name of column with abundances (e.g. TPM or FPKM)}
+    \item{\code{countsCol}}{name of column with estimated counts}
+    \item{\code{lengthCol}}{name of column with feature length information}
+    \item{\code{importer}}{a function used to read in the files}
+    \item{\code{existenceOptional}}{logical, should tximport not check if files exist before attempting
+import (default FALSE, meaning files must exist according to \code{file.exists})}
+    \item{\code{sparse}}{logical, whether to try to import data sparsely (default is FALSE).
+Initial implementation for \code{txOut=TRUE}, \code{countsFromAbundance="no"}
+or \code{"scaledTPM"}, no inferential replicates. Only counts matrix
+is returned (and abundance matrix if using \code{"scaledTPM"})}
+    \item{\code{sparseThreshold}}{the minimum threshold for including a count as a
+non-zero count during sparse import (default is 1)}
+    \item{\code{readLength}}{numeric, the read length used to calculate counts from
+StringTie's output of coverage. Default value (from StringTie) is 75.
+The formula used to calculate counts is:
+\code{cov * transcript length / read length}}
+    \item{\code{forceSlow}}{logical, argument used for testing. Will force the use of
+the slower R code for importing alevin, even if \code{fishpond}
+library is installed. Default is FALSE}
+  }}
 }
 \value{
 \itemize{

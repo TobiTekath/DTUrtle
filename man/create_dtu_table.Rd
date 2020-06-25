@@ -34,6 +34,8 @@ This function provides an easy interface to summarize the key DTUrtle results to
 \code{\link[=run_drimseq]{run_drimseq()}} and \code{\link[=posthoc_and_stager]{posthoc_and_stager()}} for DTU object creation. \code{\link[=plot_dtu_table]{plot_dtu_table()}} for table visualization.
 
 Other DTUrtle visualization: 
-\code{\link{plot_proportion_barplot}()}
+\code{\link{plot_proportion_barplot}()},
+\code{\link{plot_proportion_pheatmap}()},
+\code{\link{plot_transcripts_view}()}
 }
 \concept{DTUrtle visualization}
