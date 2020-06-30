@@ -38,7 +38,7 @@ navbar:
       href: reference/index.html
     - text: Articles
       menu:
-      - text: Vignette human bulk RNA-seq
-        href: articles/mkin.html
+      - text: Vignette human single-cell RNA-seq preprocessing
+        href: articles/Hoffman_human_single-cell_preprocess.html
     - text: News
       href: news/index.html
