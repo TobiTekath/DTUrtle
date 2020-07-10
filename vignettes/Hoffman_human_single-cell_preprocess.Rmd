@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
+  %\VignetteBuilder{knitr}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -51,7 +52,7 @@ split -l 1215291200 --numeric-suffixes=1 --additional-suffix=.fastq.gz sc_EtOH.f
 split -l 1394785580 --numeric-suffixes=1 --additional-suffix=.fastq.gz sc_Dex2hr.fastq sc_Dex2hr_
 ```
 
-Another drawback of the concatenation of the files for the upload is, that the read names do not match between the samples. We also can overcome this with the following *bash* commands:
+Another drawback of the concatenation of the files is, that the read names do not match between the samples. We also can overcome this with the following *bash* commands:
 
 ```{bash eval=FALSE}
 #create files with matching names
@@ -70,7 +71,12 @@ rm sc_EtOH.fastq.gz
 rm sc_Dex2hr.fastq.gz
 ```
 
-There should be four packed *FASTQ*-files present in the folder, two per sample.
+Now there should be four packed *FASTQ*-files present in the folder, two per sample.
+
+
+### Determing valid cellular barcodes
+As with most single-cell data, the first real anaylsis step is the determination of valid cellular barcodes. As the Illumina SureCell 3' protocol was used, the R1 reads only contain barcode and UMI information.
+
 
 
 

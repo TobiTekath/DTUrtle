@@ -54,7 +54,7 @@ plot_transcripts_view(
 \item{...}{Arguments passed down to \code{\link[grDevices:png]{png}} or \code{\link[grDevices:cairo_pdf]{cairo_pdf}} or \code{\link[grDevices:pdf]{pdf}} or \code{\link[grDevices:jpeg]{jpeg}}, depending on \code{filename_ext} ending and capabilities (cairo_pdf or pdf).}
 }
 \value{
-If no \code{savepath} is provided, returns a list of the created plots for further processing.
+Returns list of saved plots, for adding to the DTU table. If no \code{savepath} is provided, returns a list of the created plots for further processing.
 }
 \description{
 Visualize exon-intron structure of transcripts on genomic scale.

@@ -1,4 +1,4 @@
-url: https://pkgdown.r-lib.org
+url: https://tobitekath.github.io/DTUrtle
 
 title: DTUrtle
 
@@ -6,18 +6,16 @@ template:
   bootswatch: spacelab
 
 authors:
-  Tobias Tekath:
-    href: https://hesselberthlab.org
-
+  Tobias Tekath
 
 development:
   mode: auto
-
 
 reference:
   - title: Main functions
     desc:  Basic pipeline
     contents:
+      - import_gtf
       - import_counts
       - run_drimseq
       - posthoc_and_stager
@@ -29,6 +27,16 @@ reference:
       - plot_proportion_barplot
       - plot_proportion_pheatmap
       - plot_transcripts_view
+
+  - title: Utility functions
+    desc: Help with data prcessing
+    contents:
+      - get_by_partition
+      - get_proportion_matrix
+      - move_columns_to_front
+      - one_to_one_mapping
+      - rm_version
+      - summarize_to_gene
 
 navbar:
   title: ~

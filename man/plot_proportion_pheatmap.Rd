@@ -127,7 +127,7 @@ calculated so that the plot would fit there, unless specified otherwise.}
   }}
 }
 \value{
-If no \code{savepath} is provided, returns a list of the created plots for further processing.
+Returns list of saved plots, for adding to the DTU table. If no \code{savepath} is provided, returns a list of the created plots for further processing.
 }
 \description{
 Visualize the transcript proportions and additional annotation in a heatmap.

@@ -59,7 +59,7 @@ specifying dimensions in pixels.}
   }}
 }
 \value{
-If no \code{savepath} is provided, returns a list of the created plots for further processing.
+Returns list of saved plots, for adding to the DTU table. If no \code{savepath} is provided, returns a list of the created plots for further processing.
 }
 \description{
 Visualize genes and it's transcript proportions in a barplot.

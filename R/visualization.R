@@ -4,7 +4,7 @@
 #'
 #' This function provides an easy interface to summarize the key DTUrtle results together with user-defined meta data columns to a gene-level data frame.
 #'
-#' @param dturtle `dturtle` result object of `posthoc_and_stager()`.
+#' @param dturtle `dturtle` result object of [posthoc_and_stager()].
 #' @param add_gene_metadata A list of columns of the object's `meta_table_gene`, the gene-level meta data table.
 #' Names can be specified, which are used as the column names in the final output.
 #' @param add_tx_metadata A list of tuples for the object's `meta_table_tx`, the transcript-level meta data table.
@@ -16,8 +16,6 @@
 #' @family DTUrtle visualization
 #' @export
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [plot_dtu_table()] for table visualization.
-#'
-#' @examples
 create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="exp_in"), add_tx_metadata = list("max_pct_tx_expr"=c("exp_in", max))){
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(!is.null(dturtle$sig_tx), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
@@ -42,7 +40,7 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
     if(length(valid_cols) != length(add_gene_metadata)){
       message("\nCould not find the following columns in 'meta_table_gene':\n\t", paste0(setdiff(add_gene_metadata, valid_cols), collapse = "\n\t"))
     }
-    add_table <- dturtle$meta_table_gene[match(dtu_table$geneID, dturtle$meta_table_gene$gene), unlist(valid_cols)]
+    add_table <- dturtle$meta_table_gene[match(dtu_table$geneID, dturtle$meta_table_gene$gene), unlist(valid_cols), drop=F]
     if(is.null(names(valid_cols))){
       names(valid_cols) <- make.names(unlist(valid_cols))
     }else{
@@ -81,7 +79,7 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
   }
 
   dtu_table <- rapply(dtu_table, as.character, classes="factor", how="replace")
-  dtu_table <- dtu_table[order(abs(dtu_table[[max_delta_col]]), decreasing = T),]
+  dtu_table <- dtu_table[order(abs(dtu_table[[max_delta_col]]), decreasing = T),, drop=F]
 
   return_obj <- append(list("dtu_table"=dtu_table), dturtle)
   class(return_obj) <- append("dturtle", class(return_obj))
@@ -89,248 +87,241 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
 }
 
 
-
-#' Title
+#' Plot a DTU table to HTML and image
 #'
-#' @param dtu
-#' @param txdf
-#' @param title
-#' @param folder
-#' @param cores
-#' @param image_folder
-#' @param dtu_table_image
-#' @param include_bar
-#' @param include_heat
-#' @param include_txplot
-#' @param heat_all_counts
-#' @param heat_mut
-#' @param heat_draw_genes
-#' @param txplot_reduce_introns
-#' @param txplot_reduce_introns_fill
+#' Creates a enhanced HTML representation of a DTU table. The table can be (color) formatted individually by providing `column_formatters`.
 #'
-#' @return
+#' The table can optionally also be saved as an image ('.png'), by specifying the wanted number of rows to create_table_image.
+#'
+#' @param dturtle `dturtle` result object of [create_dtu_table()].
+#' @param columns Optinally subset the existing `dtu_table` of the dturtle object to the columns specified here.
+#' @param column_formatters Named list of column_formatters, specifying a formatter function for every column that shall be formatted.
+#' The formatter functions are either from this package like [table_percentage_bar()], [table_pval_tile()] or from \code{\link[formattable]{formattable}}.
+#' @param order_by One or multiple columns to order the table by. Must be a vector of column names, descending order can be achived by prepending a `-` (e.g. `c("-my_col_name")`).
+#' @param num_digits Number of digits, numerical columns shall be formatted to. Can be a single number to apply to all numerical columns, or a number for each numerical column (in their order).
+#' @param num_digits_format Digit format string, as in \code{\link[base:formatC]{formatC}}. These format string are used in numerical columns formatting if `num_digits` is provided.
+#'  Can be a single format string to apply same format to all numerical columns, or a format string for each numerical column (in their order).
+#' @param savepath Specify save path, if the HTML table shall be saved to disk. The same path is used to create a table image, if `create_table_image` is not `FALSE`. The directories will be created if necessary.
+#' @param create_table_image Set number of table rows for optionally saving a image represantation of the subsetted HTML table. Utilizes the package `webshot` or `webshot2`.
+#' @inheritDotParams formattable::format_table
+#'
+#' @return A datatables object, if no savepath is provided.
 #' @export
-#'
-#' @examples
-plot_dtu_table <- function(dtu, txdf, title, folder, cores=1, image_folder="images/",
-                           dtu_table_image = F, include_bar=F, include_heat=F, include_txplot=F,
-                           heat_all_counts=all_counts_dtu, heat_mut=mut_table, heat_draw_genes=anno_genes,
-                           txplot_reduce_introns=F, txplot_reduce_introns_fill = "grey95") {
+plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), order_by=NULL, num_digits=NULL, num_digits_format=NULL, savepath=NULL, create_table_image=F, ...) {
+  assertthat::assert_that(!is.null(dturtle$dtu_table), msg = "The provided dturtle object does not contain the needed dtu_table. Have you run 'create_dtu_table()'?")
+  assertthat::assert_that(!is.null(dturtle$group), msg = "The provided dturtle object does not contain all the needed information. Have you run 'create_dtu_table()'?")
+  assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'create_dtu_table()'?")
+  assertthat::assert_that(!is.null(dturtle$sig_tx), msg = "The provided dturtle object does not contain all the needed information. Have you run 'create_dtu_table()'?")
+  assertthat::assert_that(is.null(columns)||is.character(columns), msg = "The columns object must be a character vector or NULL.")
+  assertthat::assert_that(is.list(column_formatters)&&length(names(column_formatters))==length(column_formatters), msg = "The column_formatters object must be a named list.")
+  assertthat::assert_that(is.null(order_by)||(is.character(order_by)&&length(order_by)>0), msg = "The order_by object must be a non-empty character vector or NULL.")
+  assertthat::assert_that(is.null(num_digits)||is.numeric(num_digits), msg = "The num_digits object must be a numeric vector or NULL.")
+  assertthat::assert_that(is.null(num_digits_format)||is.character(num_digits_format), msg = "The num_digits object must be a character vector or NULL.")
+  assertthat::assert_that(is.null(savepath)||(is.character(savepath)&&length(savepath)==1), msg = "The savepath object must be a character vector of length 1 or NULL.")
+  assertthat::assert_that(isFALSE(create_table_image)||assertthat::is.count(create_table_image), msg = "The create_table_image object must be a positive number or FALSE.")
 
-    delta_col <- paste0("max(",dtu$cond_levels[1], "-",dtu$cond_levels[2],")")
+  if(!is.null(column_formatters)){
+    assertthat::assert_that(all(sapply(column_formatters , function(x) "formatter" %in% class(x))), msg = "At least one provided column_formatter is not a function of class 'formatter'.")
+  }
+  if(is.null(columns)){
+    columns <- colnames(dturtle$dtu_table)
+  }else{
+    assertthat::assert_that(all(columns %in% colnames(dturtle$dtu_table)))
+  }
+  dtu_table <- dturtle$dtu_table[,columns,drop=F]
 
-    if(!dir.exists(folder)){
-        dir.create(folder)
+  if(!is.null(order_by)){
+    assertthat::assert_that(all(lapply(gsub("^-", "", order_by), FUN = function(x) x %in% colnames(dtu_table))), msg = "Invalid `order_by` names provided.")
+    neg_signum_vec <- startsWith(order_by,"-")
+    order_col_list <- with(dtu_table, mget(gsub("^-", "", order_by)))
+    order_col_list <- stats::setNames(lapply(seq_along(order_col_list), function(i){
+      if(neg_signum_vec[i]){
+        return(-xtfrm(order_col_list[[i]]))
+      }else{
+        return(xtfrm(order_col_list[[i]]))
+      }
+    }), names(order_col_list))
+    dtu_table <- dtu_table[with(dtu_table, do.call(order, order_col_list)),,drop=F]
+  }
+
+  if(!is.null(num_digits)){
+    cols_to_change <- which(sapply(dtu_table, is.numeric))
+    cols_to_change <- cols_to_change[!names(cols_to_change) %in% names(column_formatters)]
+    if(is.null(num_digits_format)){
+      num_digits_format <- formals(formattable::digits)$format
     }
+    if(length(cols_to_change)>0){
+      if(length(num_digits)==1){
+        num_digits = rep(num_digits, length(cols_to_change))
+      }else if(length(num_digits!=length(cols_to_change))){
+        stop("Got less/more values for 'num_digits' than expected. Expected one or ",
+             length(cols_to_change), " values for columns: \n\t", paste0(names(cols_to_change), collapse = "\n\t"))
+      }
 
-    if(include_bar | include_heat | include_txplot){
-        image_out_folder <- paste0(folder,image_folder)
-        if(!dir.exists(image_out_folder)){
-            dir.create(image_out_folder)
-        }
+      if(length(num_digits_format)==1){
+        num_digits_format = rep(num_digits_format, length(cols_to_change))
+      }else if(length(num_digits_format!=length(cols_to_change))){
+        stop("Got less/more values for 'num_digits_format' than expected. Expected one or ",
+             length(cols_to_change), " values for columns: \n\t", paste0(names(cols_to_change), collapse = "\n\t"))
+      }
+      dtu_table[cols_to_change] <- lapply(seq_along(cols_to_change), FUN=function(i){
+        return(formattable::digits(x=dtu_table[[names(cols_to_change)[i]]], digits = num_digits[i], format = num_digits_format[i], drop0trailing = T))
+      })
     }
+  }
 
-    if(include_bar){
-        message("Creating Barplots using ", cores, " cores!")
-        if(cores>1){
-            cl <- makeForkCluster(cores, outfile="")
-            registerDoParallel(cl)
-            foreach(i=seq_along(dtu$dtu_table$geneID)) %dopar% {
-                suppressMessages(suppressWarnings(plotProp_bar(dtu, gene_id = dtu$dtu_table$geneID[i], path = image_out_folder)))
-            }
-            stopCluster(cl)
-        } else {
-            for(i in seq_along(dtu$dtu_table$geneID)){
-                suppressMessages(suppressWarnings(plotProp_bar(dtu, gene_id = dtu$dtu_table$geneID[i], path = image_out_folder)))
-            }
-        }
-        dtu$dtu_table$Barplot <- paste0("<a href='",image_folder,make.names(dtu$dtu_table$geneName),"_bar.png' target='_blank'>Link</a>")
+  #default arguments for formattable
+  args <- list(x=dtu_table, align = rep("c", ncol(dtu_table)), formatters = column_formatters, row.names = F)
+  args <- utils::modifyList(args, list(...))
+  dtu_formattable <- do.call(formattable::formattable, c(args))
+
+  logo_uri <- knitr::image_uri(dturtle_logo())
+  tbl_title <- paste0("DTU: ", paste0(levels(dturtle$group), collapse = " vs. "),
+                      " (", sum(dturtle$group == levels(dturtle$group)[1]), " vs.
+                      ", sum(dturtle$group == levels(dturtle$group)[2]) ,")")
+  header_string <- paste0("<div class='header'>",
+    sprintf("<img src=\"%s\" />", logo_uri),
+    "<h2 align='center'>",
+    tbl_title,
+    "</h2>",
+    "<h4 align='center'>Significant differential genes: ",
+    length(dturtle$sig_gene),"<br>Significant differential transcripts: ",
+    length(dturtle$sig_tx),
+    "</h4></div>")
+
+  container <- htmltools::withTags(table(DT::tableHeader(dtu_formattable)))
+  container <- paste0(header_string,container)
+
+  ### adds spurious whitespace to character columns?
+  temp_table <- utils::type.convert(data.frame(formattable:::render_html_matrix.formattable(dtu_formattable), stringsAsFactors = F), as.is=T)
+  #remove trailing whitespaces from characters
+  cols_to_change <- which(sapply(temp_table, is.character))
+  temp_table[cols_to_change] <- lapply(temp_table[cols_to_change], function(x) trimws(x, which="right"))
+  #link existing plots
+  cols_to_change <- cols_to_change[sapply(cols_to_change, function(x) any(file.exists(temp_table[[x]])))]
+  if(length(cols_to_change)>0){
+    temp_table[cols_to_change] <- lapply(temp_table[cols_to_change], function(col){
+      sapply(col, function(path){
+        if(file.exists(path)){
+          return(paste0("<a href='",path,"' target='_blank'>Link</a>"))
+        }else{
+          return("")
+        }})})
+  }
+
+  #TODO: test datatables columns.data
+  dtable <- DT::datatable(temp_table, escape = FALSE, filter='top', rownames = F,
+                          extensions = 'Buttons', width = "90%",
+                          container = container, options = list(
+                        dom = "lBfrtip", orderClasses = T, buttons = list(list(
+                          extend = 'collection', buttons = c('csv', 'excel'),
+                          text = 'Download')),
+                        autoWidth = TRUE, pageLength = min(25, nrow(temp_table)),
+                        lengthMenu = unique(c(seq(from = min(25,nrow(temp_table)), to = min(100,nrow(temp_table)), by = 25), nrow(temp_table))),
+                        columnDefs = list(list(
+                          targets = "_all",
+                          render = htmlwidgets::JS(
+                            "function(data, type, row, meta) {
+                              if (type == 'display') {
+                                return data;
+                              } else if (type == 'filter' || type == 'type'){
+                                var new_dat = String(data).replace(/<.*?>/g, '').replace(/%/g, '')
+                                if(new_dat !== '' && !isNaN(Number(new_dat))){
+                                  console.log(data);
+                                  console.log(type);
+                                  console.log(new_dat);
+                                  return Number(new_dat);
+                                }else{
+                                  return new_dat;
+                                }
+                              } else if (type == 'sort'){
+                                var new_dat = String(data).replace(/<.*?>/g, '').replace(/%/g, '')
+                                if(new_dat !== '' && !isNaN(Number(new_dat))){
+                                  return Math.abs(Number(new_dat));
+                                }else{
+                                return new_dat;
+                                }
+                              }
+                            }"))),
+                        initComplete = htmlwidgets::JS(
+                          "function(settings, json) {",
+                            "function addStyleString(str) {",
+                              "var node = document.createElement('style');",
+                              "node.innerHTML = str",
+                              "document.body.appendChild(node);",
+                            "}",
+                            "addStyleString('td { padding: 5px 7px !important; max-width: 200px; text-align: center;}');",
+                            "addStyleString('.datatables { margin-left: auto; margin-right: auto;}');",
+                            "addStyleString('.dt-buttons { margin-left: 50px;}');",
+                            "addStyleString('.header img { position: absolute; height: 75px}');",
+                            "addStyleString('.header h2 { font-weight: 900;}');",
+                            "addStyleString('body { font-size: 120%;}');",
+                          "}")))
+
+  if(is.null(savepath)){
+    return(dtable)
+  }else{
+    if(!dir.exists(dirname(savepath))){
+      dir.create(file.path(dirname(savepath)), recursive = T)
     }
-
-    if(include_heat){
-        message("Creating Mutmaps using ", cores, " cores!")
-        if(cores>1){
-            cl <- makeForkCluster(cores, outfile="")
-            registerDoParallel(cl)
-            foreach(i=seq_along(dtu$dtu_table$geneID)) %dopar% {
-                suppressMessages(suppressWarnings(plot_heat_per_gene(dtu$dtu_table$geneID[i], txdf, heat_all_counts, heat_mut, heat_draw_genes, path = image_out_folder)))
-            }
-            stopCluster(cl)
-        } else {
-            for(i in seq_along(dtu$dtu_table$geneID)){
-                suppressMessages(suppressWarnings(plot_heat_per_gene(dtu$dtu_table$geneID[i], txdf, heat_all_counts, heat_mut, heat_draw_genes, path = image_out_folder)))
-            }
-        }
-
-        dtu$dtu_table$Mutmaps <- paste0("<a href='",image_folder,dtu$dtu_table$geneName,"_mutmap.png' target='_blank'>Link</a>")
-    }
-
-    if(include_txplot){
-
-        options(ucscChromosomeNames=FALSE)
-
-
-        gtf_info <- rtracklayer::import("gencode.v29lift37.annotation.gtf")
-        gtf_info$gene_id <- gencode_rm_version(gtf_info$gene_id)
-        gtf_info$transcript_id <- gencode_rm_version(gtf_info$transcript_id)
-
-        #get all necessary ideogram tracks
-        chromosomes_in_dtu <- unique(dtu$dtu_table$chromosome)
-        ideoTracks <- lapply(chromosomes_in_dtu, function(x) IdeogramTrack(genome="hg38", chromosome = paste0("chr",x)))
-        names(ideoTracks) <- chromosomes_in_dtu
-
-        message("Creating Txplots using ", cores, " cores!")
-        if(cores>1){
-            cl <- makeForkCluster(cores, outfile="")
-            registerDoParallel(cl)
-            foreach(i=seq_along(dtu$dtu_table$geneID)) %dopar% {
-                plot_transcripts_single(dtu, dtu$dtu_table$geneID[i], gtf_info[gtf_info$gene_id==dtu$dtu_table$geneID[i],], path = image_out_folder, reduce_introns = txplot_reduce_introns, reduce_introns_fill = txplot_reduce_introns_fill)
-            }
-            stopCluster(cl)
-        } else {
-            for(i in seq_along(dtu$dtu_table$geneID)){
-                plot_transcripts_single(dtu, dtu$dtu_table$geneID[i], gtf_info[gtf_info$gene_id==dtu$dtu_table$geneID[i],], path = image_out_folder, reduce_introns = txplot_reduce_introns, reduce_introns_fill = txplot_reduce_introns_fill)
-            }
-        }
-
-        dtu$dtu_table$Txplot <- paste0("<a href='",image_folder,make.names(dtu$dtu_table$geneName),"_txplot.png' target='_blank'>Link</a>")
-
-    }
-
-
-    # create table ------------------------------------------------------------
-
-
-
-    dtu$dtu_table$geneID <- NULL
-    dtu$dtu_table$min_tx_qval[dtu$dtu_table$min_tx_qval == 0] <- 1e-30
-
-    dtu$dtu_table <- dtu$dtu_table[order(abs(dtu$dtu_table[[delta_col]]), decreasing = T), ]
-    x <- dtu$dtu_table
-
-
-
-
-
-    message("Creating table")
-
-    collist <- list(
-        "gene_qval" = pval_tile("white", "orange", T, digits = 3),
-        "min_tx_qval" = pval_tile("white", "orange", T, digits = 3),
-        "n_tx" = color_tile('white', "lightblue", T),
-        "n_sig_tx" = color_tile('white', "lightblue", T))
-    collist[[delta_col]] <- my_bar('lightgreen', "#FF9999", 2)
-
-    tbl_title <- paste0(": ",paste0(dtu$cond_levels, collapse = " vs. "), " (", sum(dtu$drim@samples$condition==dtu$cond_levels[1]), " vs. ", sum(dtu$drim@samples$condition==dtu$cond_levels[2]) ,")")
-    header_string <- paste0(
-        "<h2 align='center'>DTU",
-        tbl_title,
-        "</h2>",
-        "<h4 align='center'>Significant differential genes: ",
-        nrow(dtu$dtu_table),"<br>Significant differential transcripts: ",
-        sum(dtu$dtu_table$n_sig_tx),
-        "</h4>")
-
-
-    y <- formattable(
-        x,
-        align = c("c", "c", "c", "c", "c", "c", "c", "l"),
-        collist,
-        row.names = F
-    )
-
-
-
-    sketch = htmltools::withTags(table(tableHeader(x)))
-    sketch <- paste0(
-        header_string,
-        sketch
-    )
-
-    z <-
-        formattable::as.datatable(
-            y,
-            escape = FALSE,
-            filter = 'top',
-            rownames = F,
-            extensions = 'Buttons',
-            width = "90%",
-            container = sketch,
-            options = list(
-                dom = "lBfrtip",
-                orderClasses = T,
-                buttons = list(list(
-                    extend = 'collection',
-                    buttons = c('csv', 'excel'),
-                    text = 'Download'
-                )),
-                autoWidth = TRUE,
-                pageLength = 20,
-                lengthMenu = c(20, 50, 100),
-                order = list(list(6, 'desc')),
-                columnDefs = list(list(
-                    targets = 6,
-                    render = JS(
-                        "function(data, type, row, meta) {
-            if (type == 'display' || type == 'filter') {
-            return data;
-            } else {
-            return Math.abs(Number(data.replace(/<.*?>/g, '').replace(/%/g, '')));
-            }
-}"
-                    )
-                )),
-                initComplete = JS(
-                    "function(settings, json) {",
-                    "function addStyleString(str) {",
-                    "var node = document.createElement('style');",
-                    "node.innerHTML = str",
-                    "document.body.appendChild(node);",
-                    "}",
-                    "addStyleString('td { padding: 5px 7px !important; max-width: 200px; text-align: center;}');",
-                    "addStyleString('.datatables { margin-left: auto; margin-right: auto;}');",
-                    "addStyleString('.dt-buttons { margin-left: 50px;}');",
-                    "addStyleString('h2 { font-weight: 900;}');",
-                    "addStyleString('body { font-size: 120%;}');",
-                    "}"
-                )
-            )
-        )
-    #bug in save widget!
+    ### bug in saveWidget
     old_wd <- getwd()
-    setwd(folder)
-    DT::saveWidget(z, file = paste0(gsub(" ","_",title),"_table",".html"), selfcontained = T)
-    setwd(old_wd)
+    tryCatch({
+      setwd(file.path(dirname(savepath)))
+      DT::saveWidget(dtable, file = paste0(basename(savepath),ifelse(endsWith(basename(savepath),".html"),"",".html")), selfcontained = T)
+    }, finally={
+      setwd(old_wd)
+    })
+  }
 
-    if (dtu_table_image == T) {
-        x <- head(x, n=10)
-        #get rid of image columns
-        x <- x[,1:(ncol(x)-sum(include_heat,include_bar))]
-        y <- format_table(
-            x,
-            align = c("c", "c", "c", "c", "c", "c", "c", "l"),
-            collist,
-            row.names = F
-        )
-
-
-
-        write(paste0(html_header, header_string , y),
-              paste0(folder, "temp.html"))
-        webshot(
-            paste0(folder, "temp.html"),
-            paste0(folder, gsub(" ","_",title), "_table.png"),
-            zoom = 4,
-            vwidth = 1920,
-            vheight = 1080)
-        file.remove(paste0(folder, "temp.html"))
-        #trim webshot
-        image_write(image_trim(image_read(paste0(folder, gsub(" ","_",title), "_table.png"))),path = paste0(folder, gsub(" ","_",title), "_table.png"))
+  ###webshot
+  if (create_table_image != F) {
+    assertthat::assert_that(requireNamespace("webshot2", quietly = T)||requireNamespace("webshot", quietly = T), msg = "The package webshot or webshot2 is needed for creating an image of a HTML-table.")
+    if(requireNamespace("webshot2", quietly = T)){
+      webshot_func <- webshot2::webshot
+    }else{
+      assertthat::assert_that(webshot::is_phantomjs_installed(), msg="The function `install_phantomjs()` of webshot must be run before an image of a HTML-table can be created.")
+      webshot_func <- webshot::webshot
     }
+
+    image_dtu_table <- utils::head(dtu_table, n=create_table_image)
+
+    #remove image columns
+    cols_to_change <- which(sapply(image_dtu_table, is.character))
+    cols_to_change <- cols_to_change[!names(cols_to_change) %in% names(column_formatters)]
+    cols_to_change <- cols_to_change[sapply(cols_to_change, function(x) any(file.exists(image_dtu_table[[x]])))]
+    if(length(cols_to_change)>0){
+      image_dtu_table <- image_dtu_table[,-c(cols_to_change),drop=F]
+    }
+
+    args$x <- image_dtu_table
+    if(length(cols_to_change)>0){
+      args <- lapply(args, function(x){
+        if(length(x)==ncol(dtu_table)){
+          return(x[-c(cols_to_change)])
+        }else{
+          return(x)
+        }})
+    }
+    image_formattable <- do.call(formattable::format_table, c(args))
+
+    temp_path <- tempfile(tmpdir = file.path(dirname(savepath)), fileext=".html")
+    image_file_name <- gsub(".html",".png",paste0(savepath, ifelse(endsWith(basename(savepath),".html"),"",".html")))
+
+    write(paste0(get_html_header(), header_string , image_formattable),
+          file.path(temp_path))
+
+    webshot_func(url = file.path(temp_path), file = image_file_name,
+                     zoom = 4, vwidth = 1920, vheight = 1080, delay=0.5)
+    file.remove(temp_path)
+    #trim webshot
+    if(requireNamespace("magick", quietly = T)){
+      magick::image_write(magick::image_trim(magick::image_read(image_file_name)),path = image_file_name)
+    }else{
+      message("Trimming of table image could be performed, if `magick` package is installed.")
+    }
+  }
 }
-
-
-
 
 
 #' Visualize as barplot
@@ -349,12 +340,10 @@ plot_dtu_table <- function(dtu, txdf, title, folder, cores=1, image_folder="imag
 #' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
 #' @inheritDotParams ggplot2::ggsave
 #'
-#' @return If no `savepath` is provided, returns a list of the created plots for further processing.
+#' @return  Returns list of saved plots, for adding to the DTU table. If no `savepath` is provided, returns a list of the created plots for further processing.
 #' @family DTUrtle visualization
 #' @export
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
-#'
-#' @examples
 plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL, group_colors=NULL, fit_line_color="red", savepath=NULL, filename_ext="_barplot.png", BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
   assertthat::assert_that(is.null(meta_gene_id)||(methods::is(meta_gene_id, "character")&&meta_gene_id %in% colnames(dturtle$meta_table_gene)), msg = "The provided meta_gene_id column could not be found or is of wrong format.")
@@ -481,17 +470,23 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL, grou
                                  position = ggplot2::position_dodge(width = 0.9), size=0.5, linetype = "solid", inherit.aes = F, width = 1, colour = fit_line_color)
     }
     if(!is.null(savepath)){
-      ggplot2::ggsave(filename = file.path(savepath,paste0(make.names(gene),filename_ext)), plot = ggp, ...)
+      #default arguments for plot
+      args <- list(filename=file.path(savepath,paste0(make.names(gene),filename_ext)), plot = ggp, width=8, height=6)
+      args <- utils::modifyList(args, list(...))
+      do.call(ggplot2::ggsave, c(args))
+      return(args$filename)
+    }else{
+      return(ggp)
     }
-    return(ggp)
   }, BPPARAM = BPPARAM)
-  if(is.null(savepath)){
-    return(stats::setNames(plot_list, valid_genes))
+
+  if(all(lapply(plot_list, class) == "character")){
+    plot_list <- unlist(plot_list)
   }
+
+
+  return(stats::setNames(plot_list, valid_genes))
 }
-
-
-#### @param ... Further pheatmap parameters. See \code{\link[pheatmap:pheatmap]{pheatmap}} for more information.
 
 
 #' Visualize as extended heatmap
@@ -505,12 +500,10 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL, grou
 #' @inheritParams plot_proportion_barplot
 #' @inheritDotParams pheatmap::pheatmap
 #'
-#' @return If no `savepath` is provided, returns a list of the created plots for further processing.
+#' @return  Returns list of saved plots, for adding to the DTU table. If no `savepath` is provided, returns a list of the created plots for further processing.
 #' @family DTUrtle visualization
 #' @export
 #'@seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
-#'
-#' @examples
 plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_columns=NULL, include_expression=F, savepath=NULL, filename_ext="_pheatmap.png", BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(!is.null(dturtle$meta_table_sample), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
@@ -577,16 +570,23 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
     anno_row <- data.frame("Sig"=as.character(row.names(prop) %in% dturtle$sig_tx), row.names=row.names(prop), stringsAsFactors = F)
 
     #default arguments for pheatmap
-    args <- list(mat=prop, annotation_col=anno_col, annotation_row=anno_row, filename=ifelse(is.null(savepath),NA,paste0(savepath,gene,filename_ext)))
+    args <- list(mat=prop, annotation_col=anno_col, annotation_row=anno_row, filename=ifelse(is.null(savepath),NA,file.path(savepath,paste0(gene,filename_ext))))
     args <- utils::modifyList(args, list(...))
     p <- do.call(pheatmap::pheatmap, c(args))
-    return(p)
+    if(!is.na(args$filename)){
+      return(args$filename)
+    }else{
+      return(p)
+    }
     }, BPPARAM = BPPARAM)
 
-  if(is.null(savepath)){
-    return(stats::setNames(plot_list, valid_genes))
+  if(all(lapply(plot_list, class) == "character")){
+    plot_list <- unlist(plot_list)
   }
+
+  return(stats::setNames(plot_list, valid_genes))
 }
+
 
 #' Visualize transcripts on genomic scale
 #'
@@ -607,12 +607,10 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
 #'
 #' @inheritParams plot_proportion_barplot
 #'
-#' @return If no `savepath` is provided, returns a list of the created plots for further processing.
+#' @return Returns list of saved plots, for adding to the DTU table. If no `savepath` is provided, returns a list of the created plots for further processing.
 #' @family DTUrtle visualization
 #' @export
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
-#'
-#' @examples
 plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=NULL, reduce_introns=T,
                                   reduce_introns_fill="grey95", reduce_introns_min_size=50, fontsize_vec=c(10,1.1,0.6),
                                   arrow_colors=c("#7CAE00", "#00BFC4"), extension_factors=c(0.01, 0.15),
@@ -671,7 +669,7 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
   gtf <- gtf[GenomicRanges::elementMetadata(gtf)[,gtf_genes_column] %in% valid_genes]
 
   if(!is.null(genome)){
-    assertthat::assert_that(require("GenomeInfoDb", character.only = T), msg = "The package `GenomeInfoDb` is needed for fetching ideogram tracks.")
+    assertthat::assert_that(requireNamespace("GenomeInfoDb", quietly = T), msg = "The package `GenomeInfoDb` is needed for fetching ideogram tracks.")
     message("\nFetching ideogram tracks ...")
     GenomeInfoDb::seqlevelsStyle(gtf) <- "UCSC"
     ideoTracks <- lapply(levels(gtf@seqnames), function(x) Gviz::IdeogramTrack(genome = genome, chromosome = x))
@@ -771,87 +769,128 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
     extension_back <- (max(tx_ranges$end)-min(tx_ranges$start))*extension_factors[[2]]
 
     if(!is.null(savepath)){
+      filename <- file.path(savepath, paste0(make.names(gene), filename_ext))
       if(endsWith(filename_ext, ".png")){
-        args <- list(width=900, height=700, filename =paste0(savepath, make.names(gene), filename_ext))
+        args <- list(width=900, height=700, filename = filename)
         args <- utils::modifyList(args, list(...))
         do.call(grDevices::png, c(args))
       }else if(endsWith(filename_ext, ".pdf")){
         if(capabilities("cairo")){
-          args <- list(filename =paste0(savepath, make.names(gene), filename_ext), width=9)
+          args <- list(filename = filename, width=9)
           args <- utils::modifyList(args, list(...))
           do.call(grDevices::cairo_pdf, c(args))
         }else{
-          args <- list(file =paste0(savepath, make.names(gene), filename_ext), width=9)
+          args <- list(file = filename, width=9)
           args <- utils::modifyList(args, list(...))
           do.call(grDevices::pdf, c(args))
         }
       }else{
-        args <- list(width=900, height=700, filename =paste0(savepath, make.names(gene), filename_ext))
+        args <- list(width=900, height=700, filename = filename)
         args <- utils::modifyList(args, list(...))
         do.call(grDevices::jpeg, c(args))
       }
     }
-
-
-
 
     p <- Gviz::plotTracks(append(track_list, grtrack_list), collapse=T, from = min(tx_ranges$start), to = max(tx_ranges$end),
                extend.left = extension_front, extend.right = extension_back, title.width=if(any(tx_ids %in% dturtle$sig_tx)) NULL else 0,
                main = paste0(gene_info$gene_name, " (", gene_info$gene_id,") ---  ", levels(dturtle$group)[1], " vs. ",levels(dturtle$group)[2] ),
                cex.main = fontsize_vec[[2]])
     if(!is.null(savepath)){
-    grDevices::dev.off()
+      grDevices::dev.off()
+      return(args$filename)
     }
-    return(p)
+    else{
+      return(p)
+    }
+
   }, BPPARAM = BPPARAM)
-  if(is.null(savepath)){
-    return(stats::setNames(plot_list, valid_genes))
+
+  if(all(lapply(plot_list, class) == "character")){
+    plot_list <- unlist(plot_list)
   }
+
+  return(stats::setNames(plot_list, valid_genes))
 }
 
 
-percentage_tile <- function(color1, color2, digits, ...) {
-    formatter(
+#' Column formatter for percentages
+#'
+#' Create a color bar for percentage columns in [plot_dtu_table()].
+#'
+#' Shall be used in [plot_dtu_table()] or \code{\link[formattable:formattable]{formattable}}.
+#'
+#' @param color1 The color to use below the color breakpoint.
+#' @param color2 The color to use for greater or equal values to the color breakpoint.
+#' @param digits The number of digits to format the numbers to.
+#' @param color_break The value, where a color switch should hapen.
+#' @param ... Further arguments passed to \code{\link[formattable:style]{style}}.
+#'
+#' @return A formatter function, to be used by [plot_dtu_table()] or \code{\link[formattable:formattable]{formattable}}.
+#' @family DTUrtle formatter
+#' @export
+#'
+#' @seealso [create_dtu_table()] and [plot_dtu_table()] for table visualization.
+table_percentage_bar <- function(color1, color2, digits, color_break = 0, ...) {
+    formattable::formatter(
         "span",
-        x ~ percent(x, digits = digits),
+        x ~ formattable::percent(x, digits = digits),
         style = function(x)
-            style(
+          formattable::style(
                 display = "block",
                 direction = "ltr",
                 "border-radius" = "3px",
-                "background-color" = ifelse(x < 0, csscolor(color1), csscolor(color2)),
-                width = percent(formattable::proportion(abs(as.numeric(
-                    x
-                ))), ...)
-            )
+                "background-color" = ifelse(x < color_break, formattable::csscolor(color1), formattable::csscolor(color2)),
+                width = formattable::percent(formattable::proportion(abs(as.numeric(x)))),
+                ...)
     )
 }
 
 
-pval_tile <-
-    function(digits, ...) {
-        formatter(
+#' Column formatter for p-values
+#'
+#' Gradually color p-value columns in [plot_dtu_table()].
+#'
+#' Shall be used in [plot_dtu_table()] or \code{\link[formattable:formattable]{formattable}}. The color bar width is log10-scaled.
+#'
+#' @param gradient_min_color The color of the minimal value in the color gradient.
+#' @param gradient_max_color The color of the maximal value in the color gradient.
+#' @param gradient_alpha Logical of whether to include alpha channel. NULL to let the function decide by input.
+#' @param digits The number of digits to format the numbers to. Scientific notation is used.
+#' @param gradient_na_rm 	Logical indicating whether to ignore missing values.
+#' @param ... Further arguments passed to \code{\link[formattable:style]{style}}.
+#'
+#' @return A formatter function, to be used by [plot_dtu_table()] or \code{\link[formattable:formattable]{formattable}}.
+#' @family DTUrtle formatter
+#' @export
+#'
+#' @seealso [create_dtu_table()] and [plot_dtu_table()] for table visualization.
+table_pval_tile <- function(gradient_min_color, gradient_max_color, gradient_alpha=NULL, digits,  gradient_na_rm=T, ...) {
+      formattable::formatter(
             "span",
-            x ~ digits(x, digits = digits, format = "e"),
+            x ~ formattable::digits(x, digits = digits, format = "e"),
             style = function(x)
-                style(
+              formattable::style(
                     display = "inline-block",
                     padding = "0 8px",
                     "border-radius" = "8px",
-                    "background-color" = csscolor(gradient(abs(
-                        log10(proportion(as.numeric(x)))
-                    ), ...))
-                )
+                    "background-color" = formattable::csscolor(formattable::gradient(x=abs(
+                        log10(formattable::proportion(as.numeric(x)))), min.color = gradient_min_color,
+                        max.color = gradient_max_color, alpha = gradient_alpha, na.rm = gradient_na_rm)),
+                    ...)
         )
     }
 
 
-
+#' Basic HTML header for DTU table
+#'
+#' This header is only used for HTML images.
+#'
+#' @return A HTML header as as string.
 get_html_header <- function(){
     html_header = "
     <head>
     <meta charset=\"utf-8\">
-    <meta name=\"viewport\" content=\"width=80vw, initial-scale=1\">
+    <meta name=\"viewport\" content=\"width=80, initial-scale=1\">
     <link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">
     <style>
     .table {
@@ -874,7 +913,14 @@ get_html_header <- function(){
     text-align: center !important;
     }
 
-    h2
+    .header img
+    {
+    position: absolute;
+    height: 75px;
+    left: 75;
+    }
+
+    .header h2
     {
     font-weight: 900;
     }
@@ -885,4 +931,3 @@ get_html_header <- function(){
     "
     return(html_header)
 }
-

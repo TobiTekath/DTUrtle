@@ -2,32 +2,73 @@
 % Please edit documentation in R/visualization.R
 \name{plot_dtu_table}
 \alias{plot_dtu_table}
-\title{Title}
+\title{Plot a DTU table to HTML and image}
 \usage{
 plot_dtu_table(
-  dtu,
-  txdf,
-  title,
-  folder,
-  cores = 1,
-  image_folder = "images/",
-  dtu_table_image = F,
-  include_bar = F,
-  include_heat = F,
-  include_txplot = F,
-  heat_all_counts = all_counts_dtu,
-  heat_mut = mut_table,
-  heat_draw_genes = anno_genes,
-  txplot_reduce_introns = F,
-  txplot_reduce_introns_fill = "grey95"
+  dturtle,
+  columns = NULL,
+  column_formatters = list(),
+  order_by = NULL,
+  num_digits = NULL,
+  num_digits_format = NULL,
+  savepath = NULL,
+  create_table_image = F,
+  ...
 )
 }
 \arguments{
-\item{txplot_reduce_introns_fill}{}
+\item{dturtle}{\code{dturtle} result object of \code{\link[=create_dtu_table]{create_dtu_table()}}.}
+
+\item{columns}{Optinally subset the existing \code{dtu_table} of the dturtle object to the columns specified here.}
+
+\item{column_formatters}{Named list of column_formatters, specifying a formatter function for every column that shall be formatted.
+The formatter functions are either from this package like \code{\link[=table_percentage_bar]{table_percentage_bar()}}, \code{\link[=table_pval_tile]{table_pval_tile()}} or from \code{\link[formattable]{formattable}}.}
+
+\item{order_by}{One or multiple columns to order the table by. Must be a vector of column names, descending order can be achived by prepending a \code{-} (e.g. \code{c("-my_col_name")}).}
+
+\item{num_digits}{Number of digits, numerical columns shall be formatted to. Can be a single number to apply to all numerical columns, or a number for each numerical column (in their order).}
+
+\item{num_digits_format}{Digit format string, as in \code{\link[base:formatC]{formatC}}. These format string are used in numerical columns formatting if \code{num_digits} is provided.
+Can be a single format string to apply same format to all numerical columns, or a format string for each numerical column (in their order).}
+
+\item{savepath}{Specify save path, if the HTML table shall be saved to disk. The same path is used to create a table image, if \code{create_table_image} is not \code{FALSE}. The directories will be created if necessary.}
+
+\item{create_table_image}{Set number of table rows for optionally saving a image represantation of the subsetted HTML table. Utilizes the package \code{webshot} or \code{webshot2}.}
+
+\item{...}{
+  Arguments passed on to \code{\link[formattable:format_table]{formattable::format_table}}
+  \describe{
+    \item{\code{x}}{a \code{data.frame}.}
+    \item{\code{formatters}}{a list of formatter functions or formulas.
+The existing columns of \code{x} will be applied the formatter
+function in \code{formatters} if it exists.
+
+If a formatter is specified by formula, then the formula will be
+interpreted as a lambda expression with its left-hand side being
+a symbol and right-hand side being the expression using the symbol
+to represent the column values. The formula expression will be evaluated
+in the environment of the formula.
+
+If a formatter is \code{FALSE}, then the corresponding column will be hidden.
+
+Area formatter is specified in the form of
+\code{area(row, col) ~ formatter} without specifying the column name.}
+    \item{\code{format}}{The output format: html, markdown or pandoc?}
+    \item{\code{align}}{The alignment of columns: a character vector consisting
+of \code{'l'} (left), \code{'c'} (center), and/or \code{'r'} (right).
+By default, all columns are right-aligned.}
+    \item{\code{digits}}{The number of significant digits to be used for numeric
+and complex values.}
+    \item{\code{table.attr}}{The HTML class of \code{<table>} created when
+\code{format = "html"}}
+  }}
 }
 \value{
-
+A datatables object, if no savepath is provided.
 }
 \description{
-Title
+Creates a enhanced HTML representation of a DTU table. The table can be (color) formatted individually by providing \code{column_formatters}.
+}
+\details{
+The table can optionally also be saved as an image ('.png'), by specifying the wanted number of rows to create_table_image.
 }

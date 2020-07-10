@@ -77,8 +77,6 @@ sparse_filter <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), 
 }
 
 
-
-
 #' Read bustools output
 #'
 #' Read in result files for single-cell data quantified with kallisto and bustools.

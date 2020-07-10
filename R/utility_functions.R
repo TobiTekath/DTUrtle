@@ -7,6 +7,7 @@ no_na <- function(x){
     return(ifelse(is.na(x), 1, x))
 }
 
+
 #' Filter out results, whose standard deviation of proportional ratios is below the filter value.
 #'
 #' @param drim Results object of DRIMSeq statistical computations
@@ -71,6 +72,7 @@ seurat_add_tx2gene <- function(seurat_obj, tx2gene){
     return(seurat_obj)
 }
 
+
 #TODO: Add more posthoc filters
 #' Posthoc filtering
 #'
@@ -89,6 +91,7 @@ run_posthoc <- function(drim, filt){
     message("Posthoc filtered ", sum(filt, na.rm = T), " features.")
     return(res_txp_filt)
 }
+
 
 #' Get the transcript-wise proportion differnces of the specified gene
 #'
@@ -184,8 +187,6 @@ rm_version <- function(x){
 #' - `'gene'`: Gene-level expressed-in ratios.
 #' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for standard non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
 #' @return Data frame with the expressed-in ratios.
-#'
-#' @examples
 ratio_expression_in <- function(drim, type, BPPARAM=BiocParallel::SerialParam()){
     assertthat::assert_that(type %in% c("tx", "gene"))
     part <- drim@counts@partitioning
@@ -229,7 +230,6 @@ ratio_expression_in <- function(drim, type, BPPARAM=BiocParallel::SerialParam())
 #' @param columns Optional: Only check the specified columns of `df`. Defaults to all columns.
 #'
 #' @return Vector of column names of the columns, that agree with the partitioning.
-#' @export
 check_unique_by_partition <- function(df, partitioning, columns=NULL){
     assertthat::assert_that(is.data.frame(df))
     assertthat::assert_that(is.list(partitioning))
@@ -254,8 +254,6 @@ check_unique_by_partition <- function(df, partitioning, columns=NULL){
 #' Convenience function to aggregate the data frame according to the partitioning.
 #' Can specify a aggregation function like in \code{\link[stats:aggregate.data.frame]{aggregate}}.
 #'
-#'
-#'
 #' @param df Data frame that shall be aggregated.
 #' @param partitioning Nested list, specifying which `df` rows belong to one partition.
 #' @param FUN Aggregation function. Can be a base function like `unique`, `length`, etc., or a custom function.
@@ -276,7 +274,6 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, dr
     }
     return(BiocParallel::bpaggregate(df, by=list(rep(names(partitioning), lengths(partitioning))), FUN=FUN,  simplify=simplify, drop=T, BPPARAM = BPPARAM))
 }
-
 
 
 #' Summarize matrix to gene level
@@ -309,11 +306,7 @@ summarize_to_gene <- function(mtx, tx2gene, fun="sum", genes=NULL){
     }else{
         return(as.matrix(Matrix.utils::aggregate.Matrix(x = mtx, groupings = tx2gene[[2]], fun = fun)))
     }
-
 }
-
-
-
 
 
 #' Actual computation of proportion matrices
@@ -360,8 +353,6 @@ prop_matrix <- function(mtx, partitioning=NULL){
 #'
 #' @return A (sparse) matrix of transcript proportions
 #' @export
-#'
-#' @examples
 get_proportion_matrix <- function(obj,genes=NULL){
     assertthat::assert_that(methods::is(obj, "matrix")||methods::is(obj, "sparseMatrix")||methods::is(obj, "dturtle"), msg = "obj must be a (sparse) matrix or of class 'dturtle'.")
     assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
@@ -384,13 +375,10 @@ get_proportion_matrix <- function(obj,genes=NULL){
 #' @param partitioning The partitioning that shall converted
 #'
 #' @return A data frame with two columns, `tx` and `gene`.
-#'
-#' @examples
 partitioning_to_dataframe <- function(partitioning){
     assertthat::assert_that(methods::is(partitioning, "list"))
     return(data.frame("tx"=unlist(sapply(partitioning, FUN = names)), "gene"=rep(names(partitioning),lengths(partitioning)), row.names = NULL, stringsAsFactors = F))
 }
-
 
 
 #' Ensure one-to-one mapping
@@ -428,6 +416,7 @@ one_to_one_mapping <- function(name, id, ext="_"){
     }
 }
 
+
 #' Reduce introns in granges
 #'
 #' Reduces length of introns to 'min_intron_size' in the provided granges.
@@ -440,7 +429,6 @@ one_to_one_mapping <- function(name, id, ext="_"){
 #' @return A list containing:
 #' - `granges`: The granges object with reduced introns.
 #' - `reduced_regions`: A granges object with the ranges of the reduced intron regions and their new size.
-#' @export
 granges_reduce_introns <- function(granges, min_intron_size){
     assertthat::assert_that(methods::is(granges, "GenomicRanges"))
     assertthat::assert_that(assertthat::is.count(min_intron_size))
@@ -462,4 +450,12 @@ granges_reduce_introns <- function(granges, min_intron_size){
     GenomicRanges::start(granges) <- granges_reduced$new_start
     GenomicRanges::end(granges) <- GenomicRanges::start(granges)+GenomicRanges::width(granges_reduced)-1
     return(list("granges" = granges, "reduced_regions" = regions_to_reduce))
+}
+
+
+#' Return path to DTUrtle logo
+#'
+#' @return Path to DTUrtle logo
+dturtle_logo <- function() {
+    return(system.file("logo/logo.svg", package= "DTUrtle", mustWork = T))
 }

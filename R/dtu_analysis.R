@@ -21,14 +21,11 @@
 #'
 #' @inheritDotParams tximport::tximport -files -type
 #'
-#'
 #' @return - For bulk data: A combined count matrix for all specified samples.
 #' - For single-cell data (`type='alevin'`): A list of count matrices per sample. Should be combined and optionally added to a Seurat object with [combine_to_matrix()].
 #' @family DTUrtle
 #' @export
 #' @seealso Please see [import_gtf()], [move_columns_to_front()] and [one_to_one_mapping()] to help with tx2gene creation. See also [combine_to_matrix()], when output is a list of single-cell runs.
-#'
-#' @examples
 import_counts <- function(files, type, ...){
     assertthat::assert_that(type %in% c("salmon", "alevin", "kallisto", "bustools", "rsem", "stringtie", "sailfish", "none"))
     assertthat::assert_that(length(type)==1)
@@ -101,12 +98,10 @@ import_counts <- function(files, type, ...){
 #' @return Either a combined sparse transcription count matrix or a seurat object which the combined sparse transcription count matrix as an assay.
 #' @family DTUrtle
 #' @export
-#'
-#' @examples
 combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx2gene=NULL, assay_name="dtutx"){
 
     if(!is.null(seurat_obj)){
-        assertthat::assert_that(require("Seurat", character.only = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
+        assertthat::assert_that(requireNamespace("Seurat", quietly = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
         assertthat::assert_that(utils::packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
         assertthat::assert_that(methods::is(seurat_obj, "Seurat"), msg = "The provided 'seurat_obj' is not of class Seurat.")
         assertthat::assert_that(seurat_obj@version>="3.0.0", msg = "The provided 'seurat_obj' is not a Seurat 3 object. Currently only Seurat 3 objects are supported.")
@@ -215,7 +210,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
     }
 }
 
-#TODO: Carry over sample_pd if Seurat
+
 #TODO: Specify predefined strategies!
 #' Main DRIMSeq results
 #'
@@ -251,18 +246,16 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #'
 #' @family DTUrtle
 #' @export
-#'
-#' @examples
 run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", BPPARAM=BiocParallel::SerialParam(), force_dense=T, carry_over_metadata=T, ...){
     if(methods::is(counts, "Seurat")){
-        assertthat::assert_that(require("Seurat", character.only = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
+        assertthat::assert_that(requireNamespace("Seurat", quietly = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
         assertthat::assert_that(utils::packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
         assertthat::assert_that(counts@version>="3.0.0", msg = "The provided 'counts' is not a Seurat 3 object. Currently only Seurat 3 objects are supported.")
         if(is.vector(tx2gene)){
             meta_df <- counts[[counts@active.assay]]@meta.features
             assertthat::assert_that(ncol(meta_df)>1, msg="No feature-level meta data in active assay of seurat object. Was 'tx2gene' provided in 'combine_to_matrix()'?\nAlternatively provide a real tx2gene dataframe.")
             assertthat::assert_that(all(tx2gene %in% colnames(meta_df)), msg = "Not all provided 'tx2gene' colnames are present in the feature-level meta data.")
-            tx2gene <-  counts[[counts@active.assay]]@meta.features[,tx2gene]
+            tx2gene <-  move_columns_to_front(meta_df, tx2gene)
         }
         counts <- Seurat::GetAssayData(counts)
     }
@@ -291,11 +284,12 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     message("\nComparing ", cond_levels[1], " vs ", cond_levels[2])
 
     if(is.null(id_col)){
-        samp <- data.frame("sample_id"=row.names(pd), "condition"=pd[[cond_col]], stringsAsFactors = F)
+        samp <- data.frame("sample_id"=row.names(pd), "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd)==cond_col))], row.names = NULL, stringsAsFactors = F)
     }else{
-        samp <- data.frame("sample_id"=pd[[id_col]], "condition"=pd[[cond_col]], stringsAsFactors = F)
+        samp <- data.frame("sample_id"=pd[[id_col]], "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd) %in% c(id_col, cond_col)))], row.names = NULL, stringsAsFactors = F)
     }
     samp$condition <- factor(samp$condition, levels=cond_levels)
+
     #exclude samples not in comparison
     exclude <- as.vector(samp$sample_id[is.na(samp$condition)])
     if(length(exclude)!=0){
@@ -333,7 +327,9 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     own={
         filter_opt_list <- utils::modifyList(filter_opt_list, list(...))
     })
+    BiocParallel::bpprogressbar(BPPARAM) <- T
     counts <- do.call(sparse_filter, args = c(list("counts" = counts, "tx2gene" = tx2gene, "BPPARAM" = BPPARAM), filter_opt_list), quote=TRUE)
+    BiocParallel::bpprogressbar(BPPARAM) <- F
     tx2gene <- tx2gene[match(rownames(counts), tx2gene$feature_id),]
 
     if(methods::is(counts, 'sparseMatrix')&force_dense){
@@ -368,10 +364,10 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     design_full <- stats::model.matrix(~condition, data=samp)
 
     message("\nPerforming statistical tests...\n")
-    BiocParallel::bpprogressbar(BPPARAM) <- T
-    drim_test <- sparseDRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, add_uniform=T)
-    drim_test <- sparseDRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=T)
-    drim_test <- sparseDRIMSeq::dmTest(drim_test, coef=colnames(design_full)[2], BPPARAM=BPPARAM)
+    drim_test <- sparseDRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, add_uniform=T, verbose=1)
+    ### do not add uniform distribution to full fit, as it is not added to null fit
+    drim_test <- sparseDRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=F, verbose=1)
+    drim_test <- sparseDRIMSeq::dmTest(drim_test, coef=2, BPPARAM=BPPARAM, verbose=1)
 
     group <- factor(samp$condition, levels = cond_levels, ordered = T)
 
@@ -387,7 +383,6 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 
 
 #TODO: implement Noise - IQR filtering
-
 #' Posthoc filtering and two-staged statistical tests
 #'
 #' Perform optional posthoc filtering and run two-staged statistical tests.
@@ -395,7 +390,6 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 #' The posthoc filter excludes transcripts, which standard deviation of the proportion per cell/sample is below the threshold.
 #' The two-staged statistical test performed by stageR first determines if any of the transcripts of a gene is showing signs of DTU.
 #' The second step tries to identify on singular transcript level the significantly different transcripts.
-#'
 #'
 #' @param dturtle Result object of [run_drimseq()]. Must be of class `dturtle`.
 #' @param ofdr Overall false discovery rate (OFDR) threshold.
@@ -408,13 +402,10 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 #' @family DTUrtle
 #' @export
 #' @seealso [run_drimseq()] for DTU object creation. [create_dtu_table()] for result table creation.
-#'
-#' @examples
 posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
     assertthat::assert_that(!is.null(dturtle$drim), msg = "The provided dturtle object does not contain all the needed information. Have you run 'run_drimseq()'?")
     assertthat::assert_that((is.numeric(posthoc)&0<=posthoc & posthoc<=1)||isFALSE(posthoc), msg = "The provided 'posthoc' parameter is invalid. Must be a number between [0,1] or FALSE.")
     assertthat::assert_that(0<=ofdr & ofdr<=1, msg = "The provided 'ofdr' parameter is invalid. Must be a number between [0,1].")
-
 
     res <- sparseDRIMSeq::results(dturtle$drim)
     if(posthoc!=F||posthoc>0){
@@ -425,8 +416,11 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
 
     res$pvalue <- no_na(res$pvalue)
     res_txp$pvalue <- no_na(res_txp$pvalue)
-    pscreen <- res$pvalue
-    names(pscreen) <- res$gene_id
+    #replace 0 p-values
+    res$pvalue[res$pvalue==0] <- min(res$pvalue[res$pvalue!=0])*0.1
+    res_txp$pvalue[res_txp$pvalue==0] <- min(res_txp$pvalue[res_txp$pvalue!=0])*0.1
+
+    pscreen <- stats::setNames(res$pvalue, res$gene_id)
     pconfirm <- matrix(res_txp$pvalue, ncol=1)
     rownames(pconfirm) <- res_txp$feature_id
     tx2gene <- res_txp[,c("feature_id", "gene_id")]
@@ -454,5 +448,3 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
     class(return_obj) <- append("dturtle", class(return_obj))
     return(return_obj)
 }
-
-
