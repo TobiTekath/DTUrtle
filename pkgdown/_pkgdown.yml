@@ -1,3 +1,4 @@
+destination: docs
 url: https://tobitekath.github.io/DTUrtle
 
 title: DTUrtle
@@ -26,6 +27,11 @@ reference:
       - plot_proportion_pheatmap
       - plot_transcripts_view
       - plot_dtu_table
+
+  - title: Column formatters
+    desc: Formatter functions for plot_dtu_table
+    contents:
+      - starts_with("table_")
 
   - title: Utility functions
     desc: Help with data prcessing

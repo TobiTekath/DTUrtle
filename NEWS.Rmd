@@ -7,6 +7,9 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-### 0.2.5
 
+
+# DTUrtle 0.2.5
+
+## Changes
 - initial first version.

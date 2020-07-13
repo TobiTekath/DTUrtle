@@ -1,20 +1,14 @@
----
-output: github_document
----
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+# DTUrtle <img src="man/figures/logo.svg" align="right" alt="" width="250"/>
 
-# DTUrtle <img src="inst/logo/logo.svg" align="right" alt="" width="250"/>
-
-**Perform differential transcript usage (DTU) analysis of bulk or single-cell RNA-seq data.**
+**Perform differential transcript usage (DTU) analysis of bulk or
+single-cell RNA-seq data.**
 
 ## Installation
 
 Install from GitHub:
 
-```{r eval=F}
+``` r
 if(!requireNamespace(devtools){
     install.packages("devtools")
 }
@@ -23,21 +17,18 @@ devtools::install_github("TobiTekath/DTUrtle")
 
 ## Basic workflow
 
-- **See preprocessing vignettes for exemplified workflow with data**
+  - **See preprocessing vignettes for exemplified workflow with
+data**
 
-```{r echo=FALSE,  out.height = '100%', fig.align='center'}
-knitr::include_graphics("docs/DTUrtle_workflow.svg")
-```
-
+<img src="man/figures/DTUrtle_workflow.svg" height="100%" style="display: block; margin: auto;" />
 
 ## DTUrtle minimal workflow
 
 A minimal DTUrtle workflow might look like this:
 
-
 ### setup environment
 
-```{r eval=F}
+``` r
 library(DTUrtle)
 
 #the BiocParallel framework is used to parallelize the computations.
@@ -50,7 +41,7 @@ library(DTUrtle)
 
 ### import and format data
 
-```{r eval=F}
+``` r
 #import gtf Annotation to get transcript to gene mapping
 tx2gene <- import_gtf(gtf_file = "path_to_your_gtf_file.gtf")
 
@@ -80,9 +71,12 @@ pd <- data.frame("id"=colnames(cts), "group"="your_grouping_variable",
 
 ### DTU analysis
 
-- the `dturtle` object is an easy-to-access list, containing all necessary analysis information and results 
+  - the `dturtle` object is an easy-to-access list, containing all
+    necessary analysis information and results
 
-```{r eval=F}
+<!-- end list -->
+
+``` r
 #use DRIMSeq for fitting a Dirichlet-multinomial model
 dturtle <- run_drimseq(counts = cts, tx2gene = tx2gene, pd=pd, id_col = "id",
                     cond_col = "group", filtering_strategy = "bulk", 
@@ -90,13 +84,11 @@ dturtle <- run_drimseq(counts = cts, tx2gene = tx2gene, pd=pd, id_col = "id",
 
 #run posthoc filtering and two-staged statistical correction with stageR
 dturtle <- posthoc_and_stager(dturtle = dturtle, ofdr = 0.05)
-
 ```
-
 
 ### Result aggregation and visualization
 
-```{r, eval=F}
+``` r
 #highly felxible function to create a results data frame
 dturtle <- create_dtu_table(dturtle = dturtle)
 

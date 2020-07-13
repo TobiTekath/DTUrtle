@@ -13,3 +13,4 @@ Suggests: GenomeInfoDb, Seurat (>= 3.0.0), webshot, webshot2, magick
 Remotes: github::TobiTekath/sparseDRIMSeq
 RoxygenNote: 7.1.0
 Roxygen: list(markdown = TRUE)
+VignetteBuilder: knitr
