@@ -20,7 +20,7 @@ devtools::install_github("TobiTekath/DTUrtle")
   - **See preprocessing vignettes for exemplified workflow with
 data**
 
-<img src="/data/dturtle_package/DTUrtle_workflow.svg" height="100%" style="display: block; margin: auto;" />
+<img src="docs/DTUrtle_workflow.svg" height="100%" style="display: block; margin: auto;" />
 
 ## DTUrtle minimal workflow
 
