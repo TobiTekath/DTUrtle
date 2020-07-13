@@ -192,12 +192,15 @@
 <p><code>Alevin</code> is the single-cell counterpart of <code>Salmon</code>, one of the standard tools for bulk RNA-seq quantification. It is also integrated into the <code>Salmon</code> (Version 1.1.0) package. As most of the available transcript quantifiers, <code>Alevin/Salmon</code> do not perform a standard genomic alignment, but perform a quasi-mapping directly to the transcriptome. Reads, that could be originating from multiple transcript isoforms, are assigned to equivalence classes, where actual counts are later derived by expectation maximization algorithms.</p>
 <p>To run the <code>Alevin</code> quantification, we first need a transcriptomic index. For this example, we will use the <a href="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.transcripts.fa.gz">transcript sequences</a> and <a href="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.gtf.gz">comprehensive gene annotation</a> from <a href="https://www.gencodegenes.org/">Gencode</a> <a href="https://www.gencodegenes.org/human/release_34.html">Version 34</a>.</p>
 <p>Assume you have downloaded and unpacked the above mentioned files. To build the actual index we run this <em>bash</em> code:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="co">#create folder and change directory</span></a>
-<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="fu">mkdir</span> ../alevin</a>
-<a class="sourceLine" id="cb7-3" data-line-number="3"><span class="bu">cd</span> ../alevin</a>
-<a class="sourceLine" id="cb7-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb7-5" data-line-number="5"><span class="co">#build index - `p` specifies the number of threads to use</span></a>
-<a class="sourceLine" id="cb7-6" data-line-number="6"><span class="ex">salmon</span> index -t ../gencode.v34.transcripts.fa --gencode -p 4 -i index</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="co">#installation in conda evironment</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="ex">conda</span> install salmon</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4"><span class="co">#create folder and change directory</span></a>
+<a class="sourceLine" id="cb7-5" data-line-number="5"><span class="fu">mkdir</span> ../alevin</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6"><span class="bu">cd</span> ../alevin</a>
+<a class="sourceLine" id="cb7-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb7-8" data-line-number="8"><span class="co">#build index - `p` specifies the number of threads to use</span></a>
+<a class="sourceLine" id="cb7-9" data-line-number="9"><span class="ex">salmon</span> index -t ../gencode.v34.transcripts.fa --gencode -p 4 -i index</a></code></pre></div>
 <p>To perform the actual quantification, we need one last file specifying the transcript to gene mapping. <code>Alevin</code>, unlike <code>Salmon</code>, aggregates the quantification counts to gene level by default. For our DTU analysis we require transcript level counts, so we will only provide a <code>transcript_id</code> to <code>transcript_name</code> mapping. This could also be a <code>transcript_id</code> to <code>transcript_id</code> mapping file (so each id mapping to itself).</p>
 <p>We can create such a mapping file with the help of the <code>DTUrtle</code> package in <strong>R</strong>:</p>
 <div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">DTUrtle</span>)

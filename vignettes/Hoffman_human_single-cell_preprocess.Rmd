@@ -160,6 +160,9 @@ To run the `Alevin` quantification, we first need a transcriptomic index. For th
 Assume you have downloaded and unpacked the above mentioned files. To build the actual index we run this *bash* code:
 
 ```{bash, eval=F}
+#installation in conda evironment
+conda install salmon
+
 #create folder and change directory
 mkdir ../alevin
 cd ../alevin
