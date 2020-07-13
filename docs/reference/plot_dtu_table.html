@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Title — plot_dtu_table • DTUrtle</title>
+<title>Plot a DTU table to HTML and image — plot_dtu_table • DTUrtle</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,9 @@
 
 
 
-<meta property="og:title" content="Title — plot_dtu_table" />
-<meta property="og:description" content="Title" />
+<meta property="og:title" content="Plot a DTU table to HTML and image — plot_dtu_table" />
+<meta property="og:description" content="Creates a enhanced HTML representation of a DTU table. The table can be (color) formatted individually by providing column_formatters.
+Also automatically links columns of plot names, to be viewable in the table. Currently you are not allowed to provide a column formatter for plot columns." />
 
 
 
@@ -72,7 +73,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.5</span>
       </span>
     </div>
 
@@ -83,13 +84,13 @@
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Articles
+    Vignettes
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Vignette human single-cell RNA-seq preprocessing</a>
+      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq preprocessing</a>
     </li>
   </ul>
 </li>
@@ -112,47 +113,96 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Title</h1>
+    <h1>Plot a DTU table to HTML and image</h1>
     
     <div class="hidden name"><code>plot_dtu_table.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Title</p>
+    <p>Creates a enhanced HTML representation of a DTU table. The table can be (color) formatted individually by providing <code>column_formatters</code>.
+Also automatically links columns of plot names, to be viewable in the table. Currently you are not allowed to provide a column formatter for plot columns.</p>
     </div>
 
     <pre class="usage"><span class='fu'>plot_dtu_table</span>(
-  <span class='no'>dtu</span>,
-  <span class='no'>txdf</span>,
-  <span class='no'>title</span>,
-  <span class='no'>folder</span>,
-  <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>image_folder</span> <span class='kw'>=</span> <span class='st'>"images/"</span>,
-  <span class='kw'>dtu_table_image</span> <span class='kw'>=</span> <span class='no'>F</span>,
-  <span class='kw'>include_bar</span> <span class='kw'>=</span> <span class='no'>F</span>,
-  <span class='kw'>include_heat</span> <span class='kw'>=</span> <span class='no'>F</span>,
-  <span class='kw'>include_txplot</span> <span class='kw'>=</span> <span class='no'>F</span>,
-  <span class='kw'>heat_all_counts</span> <span class='kw'>=</span> <span class='no'>all_counts_dtu</span>,
-  <span class='kw'>heat_mut</span> <span class='kw'>=</span> <span class='no'>mut_table</span>,
-  <span class='kw'>heat_draw_genes</span> <span class='kw'>=</span> <span class='no'>anno_genes</span>,
-  <span class='kw'>txplot_reduce_introns</span> <span class='kw'>=</span> <span class='no'>F</span>,
-  <span class='kw'>txplot_reduce_introns_fill</span> <span class='kw'>=</span> <span class='st'>"grey95"</span>
+  <span class='no'>dturtle</span>,
+  <span class='kw'>columns</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>column_formatters</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
+  <span class='kw'>order_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>num_digits</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>num_digits_format</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>savepath</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>create_table_image</span> <span class='kw'>=</span> <span class='no'>F</span>,
+  <span class='no'>...</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>txplot_reduce_introns_fill</th>
-      <td></td>
+      <th>dturtle</th>
+      <td><p><code>dturtle</code> result object of <code><a href='create_dtu_table.html'>create_dtu_table()</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>columns</th>
+      <td><p>Optinally subset the existing <code>dtu_table</code> of the dturtle object to the columns specified here.</p></td>
+    </tr>
+    <tr>
+      <th>column_formatters</th>
+      <td><p>Named list of column_formatters, specifying a formatter function for every column that shall be formatted.
+The formatter functions are either from this package like <code><a href='table_percentage_bar.html'>table_percentage_bar()</a></code>, <code><a href='table_pval_tile.html'>table_pval_tile()</a></code> or from <code>formattable</code>.</p></td>
+    </tr>
+    <tr>
+      <th>order_by</th>
+      <td><p>One or multiple columns to order the table by. Must be a vector of column names, descending order can be achived by prepending a <code>-</code> (e.g. <code><a href='https://rdrr.io/r/base/c.html'>c("-my_col_name")</a></code>).</p></td>
+    </tr>
+    <tr>
+      <th>num_digits</th>
+      <td><p>Number of digits, numerical columns shall be formatted to. Can be a single number to apply to all numerical columns, or a number for each numerical column (in their order).</p></td>
+    </tr>
+    <tr>
+      <th>num_digits_format</th>
+      <td><p>Digit format string, as in <code><a href='https://rdrr.io/r/base/formatc.html'>formatC</a></code>. These format string are used in numerical columns formatting if <code>num_digits</code> is provided.
+Can be a single format string to apply same format to all numerical columns, or a format string for each numerical column (in their order).</p></td>
+    </tr>
+    <tr>
+      <th>savepath</th>
+      <td><p>Specify save path, if the HTML table shall be saved to disk. The same path is used to create a table image, if <code>create_table_image</code> is not <code>FALSE</code>. The directories will be created if necessary.</p></td>
+    </tr>
+    <tr>
+      <th>create_table_image</th>
+      <td><p>Set number of table rows for optionally saving a image represantation of the subsetted HTML table. Utilizes the package <code>webshot</code> or <code>webshot2</code>.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Arguments passed on to <code><a href='https://rdrr.io/pkg/formattable/man/format_table.html'>formattable::format_table</a></code></p><dl'>
+    <dt><code>x</code></dt><dd><p>a <code>data.frame</code>.</p></dd>
+    <dt><code>formatters</code></dt><dd><p>a list of formatter functions or formulas.
+The existing columns of <code>x</code> will be applied the formatter
+function in <code>formatters</code> if it exists.If a formatter is specified by formula, then the formula will be
+interpreted as a lambda expression with its left-hand side being
+a symbol and right-hand side being the expression using the symbol
+to represent the column values. The formula expression will be evaluated
+in the environment of the formula.If a formatter is <code>FALSE</code>, then the corresponding column will be hidden.Area formatter is specified in the form of
+<code>area(row, col) ~ formatter</code> without specifying the column name.</p></dd>
+    <dt><code>format</code></dt><dd><p>The output format: html, markdown or pandoc?</p></dd>
+    <dt><code>align</code></dt><dd><p>The alignment of columns: a character vector consisting
+of <code>'l'</code> (left), <code>'c'</code> (center), and/or <code>'r'</code> (right).
+By default, all columns are right-aligned.</p></dd>
+    <dt><code>digits</code></dt><dd><p>The number of significant digits to be used for numeric
+and complex values.</p></dd>
+    <dt><code>table.attr</code></dt><dd><p>The HTML class of <code>&lt;table&gt;</code> created when
+<code>format = "html"</code></p></dd>
+  
+</dl></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    
+    <p>A datatables object, if no savepath is provided.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-
+    <p>The table can optionally also be saved as an image ('.png'), by specifying the wanted number of rows to create_table_image.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -165,7 +215,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://hesselberthlab.org'>Tobias Tekath</a>.</p>
+  <p>Developed by Tobias Tekath.</p>
 </div>
 
 <div class="pkgdown">

@@ -71,7 +71,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.5</span>
       </span>
     </div>
 
@@ -82,13 +82,13 @@
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Articles
+    Vignettes
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Vignette human single-cell RNA-seq preprocessing</a>
+      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq preprocessing</a>
     </li>
   </ul>
 </li>
@@ -135,6 +135,12 @@
       
       
       <tr>
+        
+        <td>
+          <p><code><a href="import_gtf.html">import_gtf()</a></code> </p>
+        </td>
+        <td><p>Parse a gtf file and return a transcript level dataframe.</p></td>
+      </tr><tr>
         
         <td>
           <p><code><a href="import_counts.html">import_counts()</a></code> </p>
@@ -189,6 +195,61 @@
           <p><code><a href="plot_transcripts_view.html">plot_transcripts_view()</a></code> </p>
         </td>
         <td><p>Visualize transcripts on genomic scale</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plot_dtu_table.html">plot_dtu_table()</a></code> </p>
+        </td>
+        <td><p>Plot a DTU table to HTML and image</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-utility-functions" class="hasAnchor"><a href="#section-utility-functions" class="anchor"></a>Utility functions</h2>
+          <p class="section-desc"><p>Help with data prcessing</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="get_by_partition.html">get_by_partition()</a></code> </p>
+        </td>
+        <td><p>Aggregate data frame by partitions</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="get_proportion_matrix.html">get_proportion_matrix()</a></code> </p>
+        </td>
+        <td><p>Compute proportion matrix</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="move_columns_to_front.html">move_columns_to_front()</a></code> </p>
+        </td>
+        <td><p>Reorder columns</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="one_to_one_mapping.html">one_to_one_mapping()</a></code> </p>
+        </td>
+        <td><p>Ensure one-to-one mapping</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="rm_version.html">rm_version()</a></code> </p>
+        </td>
+        <td><p>Remove ensembl version number</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="summarize_to_gene.html">summarize_to_gene()</a></code> </p>
+        </td>
+        <td><p>Summarize matrix to gene level</p></td>
       </tr>
     </tbody>
     </table>
@@ -204,7 +265,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://hesselberthlab.org'>Tobias Tekath</a>.</p>
+  <p>Developed by Tobias Tekath.</p>
 </div>
 
 <div class="pkgdown">

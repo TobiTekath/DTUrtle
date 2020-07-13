@@ -90,13 +90,14 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
 #' Plot a DTU table to HTML and image
 #'
 #' Creates a enhanced HTML representation of a DTU table. The table can be (color) formatted individually by providing `column_formatters`.
+#' Also automatically links columns of plot names, to be viewable in the table. Currently you are not allowed to provide a column formatter for plot columns.
 #'
 #' The table can optionally also be saved as an image ('.png'), by specifying the wanted number of rows to create_table_image.
 #'
 #' @param dturtle `dturtle` result object of [create_dtu_table()].
 #' @param columns Optinally subset the existing `dtu_table` of the dturtle object to the columns specified here.
 #' @param column_formatters Named list of column_formatters, specifying a formatter function for every column that shall be formatted.
-#' The formatter functions are either from this package like [table_percentage_bar()], [table_pval_tile()] or from \code{\link[formattable]{formattable}}.
+#' The formatter functions are either from this package like [table_percentage_bar()], [table_pval_tile()] or from \code{\link[formattable:00Index]{formattable}}.
 #' @param order_by One or multiple columns to order the table by. Must be a vector of column names, descending order can be achived by prepending a `-` (e.g. `c("-my_col_name")`).
 #' @param num_digits Number of digits, numerical columns shall be formatted to. Can be a single number to apply to all numerical columns, or a number for each numerical column (in their order).
 #' @param num_digits_format Digit format string, as in \code{\link[base:formatC]{formatC}}. These format string are used in numerical columns formatting if `num_digits` is provided.

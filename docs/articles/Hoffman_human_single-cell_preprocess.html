@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.5</span>
       </span>
     </div>
 
@@ -42,13 +42,13 @@
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Articles
+    Vignettes
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Vignette human single-cell RNA-seq preprocessing</a>
+      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq preprocessing</a>
     </li>
   </ul>
 </li>
@@ -72,7 +72,7 @@
       <h1 data-toc-skip>Preprocessing of the Hoffman et al. human single-cell RNA-seq data</h1>
                         <h4 class="author">Tobias Tekath</h4>
             
-            <h4 class="date">2020-06-30</h4>
+            <h4 class="date">2020-07-13</h4>
       
       
       <div class="hidden name"><code>Hoffman_human_single-cell_preprocess.Rmd</code></div>
@@ -81,13 +81,13 @@
 
     
     
-<p>This vignette examplifies the preprocessing of <strong>single-cell RNA-seq data for analysis with DTUrtle</strong>. The data used in this vignette is publicly available as <em>Bioproject PRJNA594939</em> and the used <em>FASTQ</em>-files can be downloaded from <a href="https://www.ebi.ac.uk/ena/browser/view/PRJNA594939">here</a>. The corresponding publication from Hoffman et al. to this dataset can be found <a href="https://doi.org/10.1038/s42003-020-0837-0">here</a>.</p>
+<p>This vignette exemplifies the preprocessing of <strong>single-cell RNA-seq data for analysis with DTUrtle</strong>. The data used in this vignette is publicly available as <em>Bioproject PRJNA594939</em> and the used <em>FASTQ</em>-files can be downloaded from <a href="https://www.ebi.ac.uk/ena/browser/view/PRJNA594939">here</a>. The corresponding publication from Hoffman et al. based on this data set can be found <a href="https://doi.org/10.1038/s42003-020-0837-0">here</a>.</p>
 <p>For this vignette we focus on just two of the available single-cell RNA-seq samples:</p>
 <ul>
 <li>
 <a href="https://www.ebi.ac.uk/ena/browser/view/SAMN13541133">SAMN13541133</a> which represents a control sample (18 hour treatment with ethanol (EtOH))</li>
 <li>
-<a href="https://www.ebi.ac.uk/ena/browser/view/SAMN13541131">SAMN13541131</a> which represants a sample after 2 hourse of Dexamethasone treatment (Dex2hr)</li>
+<a href="https://www.ebi.ac.uk/ena/browser/view/SAMN13541131">SAMN13541131</a> which represents a sample after 2 hours of Dexamethasone treatment (Dex2hr)</li>
 </ul>
 <p>The <em>FASTQ</em>-files can be directly obtained from ENA, alternatively they are also available as <em>SRA</em>-files from <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA594939">GEO</a>, which can be converted to <em>FASTQ</em>-format.</p>
 <p>After downloading a <strong>MD5-check</strong> is strongly encouraged.</p>
@@ -95,7 +95,7 @@
 <h3 class="hasAnchor">
 <a href="#preparing-fastq-files" class="anchor"></a>Preparing FASTQ-files</h3>
 <p>For this vignette, it is assumed that the <em>FASTQ</em>-files mentioned above have been downloaded to a directory called <em>samples</em>.</p>
-<p>After downloading the <em>FASTQ</em>-files, the first step is to rename the files and split them into two files each. This dataset was prodcued using a Illumina SureCell 3’ kit, which produces paired end reads (as all current single-cell protocols). For unknown reasons the original two <em>FASTQ</em>-files per sample have been appended for the upload. More information about the SureCell format can be found <a href="https://teichlab.github.io/scg_lib_structs/methods_html/SureCell.html">here</a>.</p>
+<p>After downloading the <em>FASTQ</em>-files, the first step is to rename the files and split them into two files each. This data set was produced using a Illumina SureCell 3’ kit, which produces paired end reads (as all current single-cell protocols). For unknown reasons the original two <em>FASTQ</em>-files per sample have been appended for / during the upload. More information about the SureCell format can be found <a href="https://teichlab.github.io/scg_lib_structs/methods_html/SureCell.html">here</a>.</p>
 <p>The read files can be split with the following <em>bash</em> commands:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="bu">cd</span> <span class="st">'YOUR_PATH'</span>/samples</a>
 <a class="sourceLine" id="cb1-2" data-line-number="2"></a>
@@ -111,7 +111,7 @@
 <a class="sourceLine" id="cb1-12" data-line-number="12"><span class="co"># or counting the number of '1'  at the end of the read name.</span></a>
 <a class="sourceLine" id="cb1-13" data-line-number="13"><span class="fu">split</span> -l 1215291200 --numeric-suffixes=1 --additional-suffix=.fastq.gz sc_EtOH.fastq sc_EtOH_</a>
 <a class="sourceLine" id="cb1-14" data-line-number="14"><span class="fu">split</span> -l 1394785580 --numeric-suffixes=1 --additional-suffix=.fastq.gz sc_Dex2hr.fastq sc_Dex2hr_</a></code></pre></div>
-<p>Another drawback of the concatenation of the files for the upload is, that the read names do not match between the samples. We also can overcome this with the following <em>bash</em> commands:</p>
+<p>Another drawback of the concatenation of the files is, that the read names do not match between the samples. We also can overcome this with the following <em>bash</em> commands:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="co">#create files with matching names</span></a>
 <a class="sourceLine" id="cb2-2" data-line-number="2"><span class="fu">cat</span> sc_EtOH_2.fastq <span class="kw">|</span> <span class="fu">sed</span> -e <span class="st">'s/^\(@SRR10669459.\)\(.*\) /echo \1$((\2-303822800)) /e'</span> <span class="op">&gt;</span> sc_EtOH_2_matched.fastq</a>
 <a class="sourceLine" id="cb2-3" data-line-number="3"><span class="fu">cat</span> sc_Dex2hr_2.fastq <span class="kw">|</span> <span class="fu">sed</span> -e <span class="st">'s/^\(@SRR10669461.\)\(.*\) /echo \1$((\2-348696395)) /e'</span> <span class="op">&gt;</span> sc_Dex2hr_2_matched.fastq</a>
@@ -126,227 +126,115 @@
 <a class="sourceLine" id="cb2-12" data-line-number="12"><span class="co">#optionally: remove concatenated files</span></a>
 <a class="sourceLine" id="cb2-13" data-line-number="13"><span class="fu">rm</span> sc_EtOH.fastq.gz </a>
 <a class="sourceLine" id="cb2-14" data-line-number="14"><span class="fu">rm</span> sc_Dex2hr.fastq.gz</a></code></pre></div>
-<p>There should be four packed <em>FASTQ</em>-files present in the folder, two per sample.</p>
-<p>Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The <code>html_vignette</code> output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The <code>html_vignette</code> format:</p>
-<ul>
-<li>Never uses retina figures</li>
-<li>Has a smaller default figure size</li>
-<li>Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style</li>
-</ul>
+<p>Now there should be four packed <em>FASTQ</em>-files present in the folder - two per sample.</p>
 </div>
-<div id="vignette-info" class="section level2">
-<h2 class="hasAnchor">
-<a href="#vignette-info" class="anchor"></a>Vignette Info</h2>
-<p>Note the various macros within the <code>vignette</code> section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the <code>title</code> field and the <code>\VignetteIndexEntry</code> to match the title of your vignette.</p>
+<div id="determining-valid-cellular-barcodes" class="section level3">
+<h3 class="hasAnchor">
+<a href="#determining-valid-cellular-barcodes" class="anchor"></a>Determining valid cellular barcodes</h3>
+<p>As with most single-cell data, the first analysis step is the determination of valid cellular barcodes. As the Illumina SureCell 3’ protocol was used, the R1 reads only contain barcode and UMI information.</p>
+<p>To error-correct the cell barcodes we use <code>umi_tools</code> (Version 1.0.1). The read data was created using the Illumina SureCell protocol, which uses a quite complex barcode / UMI pattern. Luckily, <code>umi_tools</code> can process arbitrary complex barcode / UMI structures via regular expressions. We allow correction of barcodes with up to one error and allow for an edit distance of 1 in each linker segment with the following <em>bash</em> code:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="co">#installation in conda evironment</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="ex">conda</span> install -c bioconda umi_tools </a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"><span class="co">#create folder and change path</span></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="fu">mkdir</span> ../umi_tools</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6"><span class="bu">cd</span> ../umi_tools</a>
+<a class="sourceLine" id="cb3-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb3-8" data-line-number="8"><span class="co">#collect and error correct barcode / UMI - `subset-reads` and `set-cell-number` have been chosen high to not exclude any relevant information</span></a>
+<a class="sourceLine" id="cb3-9" data-line-number="9"><span class="ex">umi_tools</span> whitelist --ed-above-threshold=<span class="st">'correct'</span> --subset-reads=1000000000 --error-correct-threshold=1 --set-cell-number=10000 --extract-method=<span class="st">'regex'</span> -p <span class="st">'(?P&lt;discard_1&gt;.{0,20})(?P&lt;cell_1&gt;.{6})(?P&lt;discard_2&gt;TAGCCATCGCATTGC){e&lt;=1}(?P&lt;cell_2&gt;.{6})(?P&lt;discard_3&gt;TACCTCTGAGCTGAA){e&lt;=1}(?P&lt;cell_3&gt;.{6})(?P&lt;discard_4&gt;ACG)(?P&lt;umi_1&gt;.{8})(?P&lt;discard_5&gt;GAC).*'</span> -I ../samples/sc_EtOH_1.fastq.gz -S etoh_whitelist.tsv</a>
+<a class="sourceLine" id="cb3-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb3-11" data-line-number="11"><span class="ex">umi_tools</span> whitelist --ed-above-threshold=<span class="st">'correct'</span> --subset-reads=1000000000 --error-correct-threshold=1 --set-cell-number=10000 --extract-method=<span class="st">'regex'</span> -p <span class="st">'(?P&lt;discard_1&gt;.{0,20})(?P&lt;cell_1&gt;.{6})(?P&lt;discard_2&gt;TAGCCATCGCATTGC){e&lt;=1}(?P&lt;cell_2&gt;.{6})(?P&lt;discard_3&gt;TACCTCTGAGCTGAA){e&lt;=1}(?P&lt;cell_3&gt;.{6})(?P&lt;discard_4&gt;ACG)(?P&lt;umi_1&gt;.{8})(?P&lt;discard_5&gt;GAC).*'</span> -I ../samples/sc_Dex2hr_1.fastq.gz -S dex2hr_whitelist.tsv</a></code></pre></div>
+<p>The <em>TSV</em> files contain all found barcode sequences in the samples, together with possible erroneous sequenced barcodes (less than 2 edit distance away) which will be corrected.</p>
+<p>In the publication, only 400 cells of each sample were used in the analysis. For simplicity, we stick to this process. We can get the 400 valid cell barcodes for each sample from the supplementary count files from <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE141834">GEO</a>: <code>GSE141834_scRNAseq_rawCounts.txt.gz</code></p>
+<p>Assume you have downloaded and unpacked the mentioned file. Lists of the valid cell barcodes can be created with this <em>R</em> code:</p>
+<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span>(<span class="st">"/umi_tools"</span>)
+
+<span class="co">#get valid barcodes from raw count table</span>
+<span class="no">raw_expr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span>(<span class="st">"GSE141834_scRNAseq_rawCounts.txt"</span>, <span class="kw">header</span><span class="kw">=</span><span class="no">T</span>, <span class="kw">sep</span><span class="kw">=</span><span class="st">"\t"</span>)
+<span class="no">etoh_selected_cells</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html">gsub</a></span>(<span class="st">".*_"</span>,<span class="st">""</span>,<span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span>(<span class="st">"Dex.00.2_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(<span class="no">raw_expr</span>), <span class="kw">value</span> <span class="kw">=</span> <span class="no">T</span>))
+<span class="no">dex2hr_selected_cells</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html">gsub</a></span>(<span class="st">".*_"</span>,<span class="st">""</span>,<span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span>(<span class="st">"Dex.02.2_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(<span class="no">raw_expr</span>), <span class="kw">value</span> <span class="kw">=</span> <span class="no">T</span>))
+
+<span class="co">#read-in created umi_tools whitelists</span>
+<span class="no">etoh_white</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span>(<span class="st">"etoh_whitelist.tsv"</span>, <span class="kw">stringsAsFactors</span> <span class="kw">=</span> <span class="no">F</span>)
+<span class="no">dex2hr_white</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span>(<span class="st">"dex2hr_whitelist.tsv"</span>, <span class="kw">stringsAsFactors</span> <span class="kw">=</span> <span class="no">F</span>)
+
+<span class="co">#write subset to file</span>
+<span class="no">etoh_white_sub</span> <span class="kw">&lt;-</span> <span class="no">etoh_white</span>[<span class="no">etoh_white</span>$<span class="no">V1</span> <span class="kw">%in%</span> <span class="no">etoh_selected_cells</span>,]
+<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span>(<span class="no">etoh_white_sub</span>, <span class="st">"etoh_whitelist_sub.tsv"</span>, <span class="kw">sep</span> <span class="kw">=</span> <span class="st">"\t"</span>, <span class="kw">quote</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">row.names</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">col.names</span> <span class="kw">=</span> <span class="no">F</span>)
+
+<span class="no">dex2hr_white_sub</span> <span class="kw">&lt;-</span> <span class="no">dex2hr_white</span>[<span class="no">dex2hr_white</span>$<span class="no">V1</span> <span class="kw">%in%</span> <span class="no">dex2hr_selected_cells</span>,]
+<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span>(<span class="no">dex2hr_white_sub</span>, <span class="st">"dex2hr_whitelist_sub.tsv"</span>, <span class="kw">sep</span> <span class="kw">=</span> <span class="st">"\t"</span>, <span class="kw">quote</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">row.names</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">col.names</span> <span class="kw">=</span> <span class="no">F</span>)</pre></body></html></div>
+<p>The subsetted <em>TSV</em> files contain only the 400 valid barcodes per cell, together with the barcodes that shall be corrected.</p>
 </div>
-<div id="styles" class="section level2">
-<h2 class="hasAnchor">
-<a href="#styles" class="anchor"></a>Styles</h2>
-<p>The <code>html_vignette</code> template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:</p>
-<pre><code>output: 
-  rmarkdown::html_vignette:
-    css: mystyles.css</code></pre>
+<div id="extract-and-correct-barcodes-umis" class="section level3">
+<h3 class="hasAnchor">
+<a href="#extract-and-correct-barcodes-umis" class="anchor"></a>Extract and correct barcodes &amp; UMIs</h3>
+<p>The actual barcode extraction and correction is again performed with <code>umi_tools</code>. In this process, only the reads of the R2 files are kept, that had a matching barcode in the R1 file. The barcode and UMI sequence are added to the sequence identifier line of each read in the new files. The not matching parts of the R1 reads are kept in the new R1 file. The <code>umi_tools</code> <em>bash</em> command looks like this:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="ex">umi_tools</span> extract --filter-cell-barcode --error-correct-cell --whitelist=etoh_whitelist_sub.tsv --extract-method=regex -p <span class="st">'(?P&lt;discard_1&gt;.{0,20})(?P&lt;cell_1&gt;.{6})(?P&lt;discard_2&gt;TAGCCATCGCATTGC){e&lt;=1}(?P&lt;cell_2&gt;.{6})(?P&lt;discard_3&gt;TACCTCTGAGCTGAA){e&lt;=1}(?P&lt;cell_3&gt;.{6})(?P&lt;discard_4&gt;ACG)(?P&lt;umi_1&gt;.{8})(?P&lt;discard_5&gt;GAC).*'</span> -I ../samples/sc_EtOH_1.fastq.gz -S sc_EtOH_1_extracted.fastq.gz --read2-in ../samples/sc_EtOH_2_matched.fastq.gz --read2-out sc_EtOH_2_extracted.fastq.gz</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4"><span class="ex">umi_tools</span> extract --filter-cell-barcode --error-correct-cell --whitelist=dex2hr_whitelist_sub.tsv --extract-method=regex -p <span class="st">'(?P&lt;discard_1&gt;.{0,20})(?P&lt;cell_1&gt;.{6})(?P&lt;discard_2&gt;TAGCCATCGCATTGC){e&lt;=1}(?P&lt;cell_2&gt;.{6})(?P&lt;discard_3&gt;TACCTCTGAGCTGAA){e&lt;=1}(?P&lt;cell_3&gt;.{6})(?P&lt;discard_4&gt;ACG)(?P&lt;umi_1&gt;.{8})(?P&lt;discard_5&gt;GAC).*'</span> -I ../samples/sc_Dex2hr_1.fastq.gz -S sc_Dex2hr_1_extracted.fastq.gz --read2-in ../samples/sc_Dex2hr_2_matched.fastq.gz --read2-out sc_Dex2hr_2_extracted.fastq.gz</a></code></pre></div>
+<p>The <code>umi_tools</code> folder should now contain four gzipped fastq files, two for each sample.</p>
+<p>We plan to use <code>Alevin</code> for transcript level quantification, which does not support the Illumina SureCell protocol by default. We can overcome this limitation by slightly editing the new R1 files with some <em>bash</em> code:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="fu">zgrep</span> <span class="st">"^@"</span> sc_EtOH_1_extracted.fastq.gz <span class="kw">|</span>  <span class="fu">awk</span> -F <span class="st">'_'</span> -v OFS=<span class="st">'\n'</span> <span class="st">'{split($3,a," ");print $0,$2a[1],"+","KKKKKKKKKKKKKKKKKKKKKKKKKK"}'</span> <span class="kw">|</span> <span class="fu">gzip</span> <span class="op">&gt;</span> sc_EtOH_1_altered.fastq.gz</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"><span class="fu">zgrep</span> <span class="st">"^@"</span> sc_Dex2hr_1_extracted.fastq.gz <span class="kw">|</span>  <span class="fu">awk</span> -F <span class="st">'_'</span> -v OFS=<span class="st">'\n'</span> <span class="st">'{split($3,a," ");print $0,$2a[1],"+","KKKKKKKKKKKKKKKKKKKKKKKKKK"}'</span> <span class="kw">|</span> <span class="fu">gzip</span> <span class="op">&gt;</span> sc_Dex2hr_1_altered.fastq.gz</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb6-6" data-line-number="6"><span class="co">#optional: remove `extracted` R1 files</span></a>
+<a class="sourceLine" id="cb6-7" data-line-number="7"><span class="fu">rm</span> sc_*_1_extracted.fastq.gz</a></code></pre></div>
+<p>With this command, we copied the barcode and UMI sequence of each reads sequence identifier to the actual raw sequence line. We also added some quality values for the bases (the actual value is not relevant).</p>
+<p>There should now be an <code>altered</code> R1 <em>FASTQ</em> file per sample, together with an <code>extracted</code> R2 <em>FASTQ</em> file.</p>
 </div>
-<div id="figures" class="section level2">
-<h2 class="hasAnchor">
-<a href="#figures" class="anchor"></a>Figures</h2>
-<p>The figure sizes have been customised so that you can easily put two images side-by-side.</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(<span class="fl">1</span>:<span class="fl">10</span>)
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(<span class="fl">10</span>:<span class="fl">1</span>)</pre></body></html></div>
-<p><img src="Hoffman_human_single-cell_preprocess_files/figure-html/unnamed-chunk-3-1.png" width="700"><img src="Hoffman_human_single-cell_preprocess_files/figure-html/unnamed-chunk-3-2.png" width="700"></p>
-<p>You can enable figure captions by <code>fig_caption: yes</code> in YAML:</p>
-<pre><code>output:
-  rmarkdown::html_vignette:
-    fig_caption: yes</code></pre>
-<p>Then you can use the chunk option <code>fig.cap = "Your figure caption."</code> in <strong>knitr</strong>.</p>
-</div>
-<div id="more-examples" class="section level2">
-<h2 class="hasAnchor">
-<a href="#more-examples" class="anchor"></a>More Examples</h2>
-<p>You can write math expressions, e.g. <span class="math inline">\(Y = X\beta + \epsilon\)</span>, footnotes<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, and tables, e.g. using <code><a href="https://rdrr.io/pkg/knitr/man/kable.html">knitr::kable()</a></code>.</p>
-<table class="table">
-<thead><tr class="header">
-<th></th>
-<th align="right">mpg</th>
-<th align="right">cyl</th>
-<th align="right">disp</th>
-<th align="right">hp</th>
-<th align="right">drat</th>
-<th align="right">wt</th>
-<th align="right">qsec</th>
-<th align="right">vs</th>
-<th align="right">am</th>
-<th align="right">gear</th>
-<th align="right">carb</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Mazda RX4</td>
-<td align="right">21.0</td>
-<td align="right">6</td>
-<td align="right">160.0</td>
-<td align="right">110</td>
-<td align="right">3.90</td>
-<td align="right">2.620</td>
-<td align="right">16.46</td>
-<td align="right">0</td>
-<td align="right">1</td>
-<td align="right">4</td>
-<td align="right">4</td>
-</tr>
-<tr class="even">
-<td>Mazda RX4 Wag</td>
-<td align="right">21.0</td>
-<td align="right">6</td>
-<td align="right">160.0</td>
-<td align="right">110</td>
-<td align="right">3.90</td>
-<td align="right">2.875</td>
-<td align="right">17.02</td>
-<td align="right">0</td>
-<td align="right">1</td>
-<td align="right">4</td>
-<td align="right">4</td>
-</tr>
-<tr class="odd">
-<td>Datsun 710</td>
-<td align="right">22.8</td>
-<td align="right">4</td>
-<td align="right">108.0</td>
-<td align="right">93</td>
-<td align="right">3.85</td>
-<td align="right">2.320</td>
-<td align="right">18.61</td>
-<td align="right">1</td>
-<td align="right">1</td>
-<td align="right">4</td>
-<td align="right">1</td>
-</tr>
-<tr class="even">
-<td>Hornet 4 Drive</td>
-<td align="right">21.4</td>
-<td align="right">6</td>
-<td align="right">258.0</td>
-<td align="right">110</td>
-<td align="right">3.08</td>
-<td align="right">3.215</td>
-<td align="right">19.44</td>
-<td align="right">1</td>
-<td align="right">0</td>
-<td align="right">3</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td>Hornet Sportabout</td>
-<td align="right">18.7</td>
-<td align="right">8</td>
-<td align="right">360.0</td>
-<td align="right">175</td>
-<td align="right">3.15</td>
-<td align="right">3.440</td>
-<td align="right">17.02</td>
-<td align="right">0</td>
-<td align="right">0</td>
-<td align="right">3</td>
-<td align="right">2</td>
-</tr>
-<tr class="even">
-<td>Valiant</td>
-<td align="right">18.1</td>
-<td align="right">6</td>
-<td align="right">225.0</td>
-<td align="right">105</td>
-<td align="right">2.76</td>
-<td align="right">3.460</td>
-<td align="right">20.22</td>
-<td align="right">1</td>
-<td align="right">0</td>
-<td align="right">3</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td>Duster 360</td>
-<td align="right">14.3</td>
-<td align="right">8</td>
-<td align="right">360.0</td>
-<td align="right">245</td>
-<td align="right">3.21</td>
-<td align="right">3.570</td>
-<td align="right">15.84</td>
-<td align="right">0</td>
-<td align="right">0</td>
-<td align="right">3</td>
-<td align="right">4</td>
-</tr>
-<tr class="even">
-<td>Merc 240D</td>
-<td align="right">24.4</td>
-<td align="right">4</td>
-<td align="right">146.7</td>
-<td align="right">62</td>
-<td align="right">3.69</td>
-<td align="right">3.190</td>
-<td align="right">20.00</td>
-<td align="right">1</td>
-<td align="right">0</td>
-<td align="right">4</td>
-<td align="right">2</td>
-</tr>
-<tr class="odd">
-<td>Merc 230</td>
-<td align="right">22.8</td>
-<td align="right">4</td>
-<td align="right">140.8</td>
-<td align="right">95</td>
-<td align="right">3.92</td>
-<td align="right">3.150</td>
-<td align="right">22.90</td>
-<td align="right">1</td>
-<td align="right">0</td>
-<td align="right">4</td>
-<td align="right">2</td>
-</tr>
-<tr class="even">
-<td>Merc 280</td>
-<td align="right">19.2</td>
-<td align="right">6</td>
-<td align="right">167.6</td>
-<td align="right">123</td>
-<td align="right">3.92</td>
-<td align="right">3.440</td>
-<td align="right">18.30</td>
-<td align="right">1</td>
-<td align="right">0</td>
-<td align="right">4</td>
-<td align="right">4</td>
-</tr>
-</tbody>
-</table>
-<p>Also a quote using <code><a href="https://rdrr.io/r/base/Comparison.html">&gt;</a></code>:</p>
-<blockquote>
-<p>“He who gives up [code] safety for [code] speed deserves neither.” (<a href="https://twitter.com/hadleywickham/status/504368538874703872">via</a>)</p>
-</blockquote>
-</div>
-<div class="footnotes">
+<div id="quantification-with-alevin" class="section level3">
+<h3 class="hasAnchor">
+<a href="#quantification-with-alevin" class="anchor"></a>Quantification with Alevin</h3>
+<p><code>Alevin</code> is the single-cell counterpart of <code>Salmon</code>, one of the standard tools for bulk RNA-seq quantification. It is also integrated into the <code>Salmon</code> (Version 1.1.0) package. As most of the available transcript quantifiers, <code>Alevin/Salmon</code> do not perform a standard genomic alignment, but perform a quasi-mapping directly to the transcriptome. Reads, that could be originating from multiple transcript isoforms, are assigned to equivalence classes, where actual counts are later derived by expectation maximization algorithms.</p>
+<p>To run the <code>Alevin</code> quantification, we first need a transcriptomic index. For this example, we will use the <a href="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.transcripts.fa.gz">transcript sequences</a> and <a href="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.gtf.gz">comprehensive gene annotation</a> from <a href="https://www.gencodegenes.org/">Gencode</a> <a href="https://www.gencodegenes.org/human/release_34.html">Version 34</a>.</p>
+<p>Assume you have downloaded and unpacked the above mentioned files. To build the actual index we run this <em>bash</em> code:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="co">#create folder and change directory</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="fu">mkdir</span> ../alevin</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3"><span class="bu">cd</span> ../alevin</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb7-5" data-line-number="5"><span class="co">#build index - `p` specifies the number of threads to use</span></a>
+<a class="sourceLine" id="cb7-6" data-line-number="6"><span class="ex">salmon</span> index -t ../gencode.v34.transcripts.fa --gencode -p 4 -i index</a></code></pre></div>
+<p>To perform the actual quantification, we need one last file specifying the transcript to gene mapping. <code>Alevin</code>, unlike <code>Salmon</code>, aggregates the quantification counts to gene level by default. For our DTU analysis we require transcript level counts, so we will only provide a <code>transcript_id</code> to <code>transcript_name</code> mapping. This could also be a <code>transcript_id</code> to <code>transcript_id</code> mapping file (so each id mapping to itself).</p>
+<p>We can create such a mapping file with the help of the <code>DTUrtle</code> package in <strong>R</strong>:</p>
+<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">DTUrtle</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span>(<span class="st">"../alevin"</span>)
+
+<span class="co">#import information from the GTF file</span>
+<span class="no">tx2gene</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/import_gtf.html">import_gtf</a></span>(<span class="kw">gtf_file</span> <span class="kw">=</span> <span class="st">"gencode.v34.annotation.gtf"</span>)
+
+  <span class="co">##optional for later name consistency:</span>
+  <span class="no">tx2gene</span>$<span class="no">gene_name</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/one_to_one_mapping.html">one_to_one_mapping</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="no">tx2gene</span>$<span class="no">gene_name</span>,
+                                          <span class="kw">id</span> <span class="kw">=</span> <span class="no">tx2gene</span>$<span class="no">gene_id</span>)
+  <span class="no">tx2gene</span>$<span class="no">transcript_name</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/one_to_one_mapping.html">one_to_one_mapping</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="no">tx2gene</span>$<span class="no">transcript_name</span>,
+                                                <span class="kw">id</span> <span class="kw">=</span> <span class="no">tx2gene</span>$<span class="no">transcript_id</span>)
+
+
+<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span>(<span class="kw">x</span> <span class="kw">=</span> <span class="no">tx2gene</span>[,<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"transcript_id"</span>, <span class="st">"transcript_name"</span>)],
+            <span class="kw">file</span> <span class="kw">=</span> <span class="st">"txmap.tsv"</span>, <span class="kw">sep</span> <span class="kw">=</span> <span class="st">"\t"</span>, <span class="kw">quote</span> <span class="kw">=</span> <span class="no">F</span>,
+            <span class="kw">row.names</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">col.names</span> <span class="kw">=</span> <span class="no">F</span>)</pre></body></html></div>
+<p>The actual quantification can be performed in <strong>bash</strong> with:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ex">salmon</span> alevin -l A -i index/ -1 ../umi_tools/sc_EtOH_1_altered.fastq.gz -2 ../umi_tools/sc_EtOH_2_extracted.fastq.gz --keepCBFraction 1 --end 5 --umiLength 8 --barcodeLength 18 --dumpFeatures --tgMap txmap.tsv -o sc_EtOH</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb9-3" data-line-number="3"><span class="ex">salmon</span> alevin -l A -i index/ -1 ../umi_tools/sc_Dex2hr_1_altered.fastq.gz -2 ../umi_tools/sc_Dex2hr_2_extracted.fastq.gz --keepCBFraction 1 --end 5 --umiLength 8 --barcodeLength 18 --dumpFeatures --tgMap txmap.tsv -o sc_Dex2hr</a></code></pre></div>
 <hr>
-<ol>
-<li id="fn1"><p>A footnote here.<a href="#fnref1" class="footnote-back">↩</a></p></li>
-</ol>
+<p><strong>This concludes the preprocessing of the data. Please see the corresponding analysis vignette for an usage example of DTUrtle.</strong></p>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
-    </nav>
-</div>
+      </div>
 
 </div>
 
 
 
       <footer><div class="copyright">
-  <p>Developed by <a href="https://hesselberthlab.org">Tobias Tekath</a>.</p>
+  <p>Developed by Tobias Tekath.</p>
 </div>
 
 <div class="pkgdown">

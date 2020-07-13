@@ -5,9 +5,6 @@ title: DTUrtle
 template:
   bootswatch: spacelab
 
-authors:
-  Tobias Tekath
-
 development:
   mode: auto
 
@@ -27,6 +24,7 @@ reference:
       - plot_proportion_barplot
       - plot_proportion_pheatmap
       - plot_transcripts_view
+      - plot_dtu_table
 
   - title: Utility functions
     desc: Help with data prcessing
@@ -44,9 +42,9 @@ navbar:
   left:
     - text: Functions and data
       href: reference/index.html
-    - text: Articles
+    - text: Vignettes
       menu:
-      - text: Vignette human single-cell RNA-seq preprocessing
+      - text: Human single-cell RNA-seq preprocessing
         href: articles/Hoffman_human_single-cell_preprocess.html
     - text: News
       href: news/index.html

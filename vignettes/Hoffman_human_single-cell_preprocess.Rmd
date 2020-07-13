@@ -4,7 +4,7 @@ author: "Tobias Tekath"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Preprocessing of the Hoffman et al. human single-cell RNA-seq data}
   %\VignetteBuilder{knitr}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
@@ -17,12 +17,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette examplifies the preprocessing of **single-cell RNA-seq data for analysis with DTUrtle**. The data used in this vignette is publicly available as *Bioproject PRJNA594939* and the used *FASTQ*-files can be downloaded from [here](https://www.ebi.ac.uk/ena/browser/view/PRJNA594939). The corresponding publication from Hoffman et al. to this dataset can be found [here](https://doi.org/10.1038/s42003-020-0837-0). 
+This vignette exemplifies the preprocessing of **single-cell RNA-seq data for analysis with DTUrtle**. The data used in this vignette is publicly available as *Bioproject PRJNA594939* and the used *FASTQ*-files can be downloaded from [here](https://www.ebi.ac.uk/ena/browser/view/PRJNA594939). The corresponding publication from Hoffman et al. based on this data set can be found [here](https://doi.org/10.1038/s42003-020-0837-0). 
 
 For this vignette we focus on just two of the available single-cell RNA-seq samples:
 
 - [SAMN13541133](https://www.ebi.ac.uk/ena/browser/view/SAMN13541133) which represents a control sample (18 hour treatment with ethanol (EtOH))
-- [SAMN13541131](https://www.ebi.ac.uk/ena/browser/view/SAMN13541131) which represants a sample after 2 hourse of Dexamethasone treatment (Dex2hr)
+- [SAMN13541131](https://www.ebi.ac.uk/ena/browser/view/SAMN13541131) which represents a sample after 2 hours of Dexamethasone treatment (Dex2hr)
 
 The *FASTQ*-files can be directly obtained from ENA, alternatively they are also available as *SRA*-files from [GEO](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA594939), which can be converted to *FASTQ*-format.
 
@@ -31,7 +31,7 @@ After downloading a **MD5-check** is strongly encouraged.
 ### Preparing FASTQ-files
 For this vignette, it is assumed that the *FASTQ*-files mentioned above have been downloaded to a directory called *samples*.
 
-After downloading the *FASTQ*-files, the first step is to rename the files and split them into two files each. This dataset was prodcued using a Illumina SureCell 3' kit, which produces paired end reads (as all current single-cell protocols). For unknown reasons the original two *FASTQ*-files per sample have been appended for the upload. More information about the SureCell format can be found [here](https://teichlab.github.io/scg_lib_structs/methods_html/SureCell.html).
+After downloading the *FASTQ*-files, the first step is to rename the files and split them into two files each. This data set was produced using a Illumina SureCell 3' kit, which produces paired end reads (as all current single-cell protocols). For unknown reasons the original two *FASTQ*-files per sample have been appended for / during the upload. More information about the SureCell format can be found [here](https://teichlab.github.io/scg_lib_structs/methods_html/SureCell.html).
 
 The read files can be split with the following *bash* commands:
 
@@ -71,60 +71,134 @@ rm sc_EtOH.fastq.gz
 rm sc_Dex2hr.fastq.gz
 ```
 
-Now there should be four packed *FASTQ*-files present in the folder, two per sample.
+Now there should be four packed *FASTQ*-files present in the folder - two per sample.
 
 
-### Determing valid cellular barcodes
-As with most single-cell data, the first real anaylsis step is the determination of valid cellular barcodes. As the Illumina SureCell 3' protocol was used, the R1 reads only contain barcode and UMI information.
+### Determining valid cellular barcodes
+As with most single-cell data, the first analysis step is the determination of valid cellular barcodes. As the Illumina SureCell 3' protocol was used, the R1 reads only contain barcode and UMI information.
 
+To error-correct the cell barcodes we use `umi_tools` (Version 1.0.1).  The read data was created using the Illumina SureCell protocol, which uses a quite complex barcode / UMI pattern. Luckily, `umi_tools` can process arbitrary complex barcode / UMI structures via regular expressions. We allow correction of barcodes with up to one error and allow for an edit distance of 1 in each linker segment with the following *bash* code:
 
+```{bash, eval=F}
+#installation in conda evironment
+conda install -c bioconda umi_tools 
 
+#create folder and change path
+mkdir ../umi_tools
+cd ../umi_tools
 
+#collect and error correct barcode / UMI - `subset-reads` and `set-cell-number` have been chosen high to not exclude any relevant information
+umi_tools whitelist --ed-above-threshold='correct' --subset-reads=1000000000 --error-correct-threshold=1 --set-cell-number=10000 --extract-method='regex' -p '(?P<discard_1>.{0,20})(?P<cell_1>.{6})(?P<discard_2>TAGCCATCGCATTGC){e<=1}(?P<cell_2>.{6})(?P<discard_3>TACCTCTGAGCTGAA){e<=1}(?P<cell_3>.{6})(?P<discard_4>ACG)(?P<umi_1>.{8})(?P<discard_5>GAC).*' -I ../samples/sc_EtOH_1.fastq.gz -S etoh_whitelist.tsv
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
-
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
-
-## Vignette Info
-
-Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
-
-## Styles
-
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+umi_tools whitelist --ed-above-threshold='correct' --subset-reads=1000000000 --error-correct-threshold=1 --set-cell-number=10000 --extract-method='regex' -p '(?P<discard_1>.{0,20})(?P<cell_1>.{6})(?P<discard_2>TAGCCATCGCATTGC){e<=1}(?P<cell_2>.{6})(?P<discard_3>TACCTCTGAGCTGAA){e<=1}(?P<cell_3>.{6})(?P<discard_4>ACG)(?P<umi_1>.{8})(?P<discard_5>GAC).*' -I ../samples/sc_Dex2hr_1.fastq.gz -S dex2hr_whitelist.tsv
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
+The *TSV* files contain all found barcode sequences in the samples, together with possible erroneous sequenced barcodes (less than 2 edit distance away) which will be corrected.
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
+In the publication, only 400 cells of each sample were used in the analysis. For simplicity, we stick to this process. We can get the 400 valid cell barcodes for each sample from the supplementary count files from [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE141834): `GSE141834_scRNAseq_rawCounts.txt.gz`
 
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+Assume you have downloaded and unpacked the mentioned file. Lists of the valid cell barcodes can be created with this *R* code:
 
-## More Examples
+```{r, eval=F}
+setwd("/umi_tools")
 
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+#get valid barcodes from raw count table
+raw_expr <- read.table("GSE141834_scRNAseq_rawCounts.txt", header=T, sep="\t")
+etoh_selected_cells <- gsub(".*_","",grep("Dex.00.2_", colnames(raw_expr), value = T))
+dex2hr_selected_cells <- gsub(".*_","",grep("Dex.02.2_", colnames(raw_expr), value = T))
 
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
+#read-in created umi_tools whitelists
+etoh_white <- read.table("etoh_whitelist.tsv", stringsAsFactors = F)
+dex2hr_white <- read.table("dex2hr_whitelist.tsv", stringsAsFactors = F)
+
+#write subset to file
+etoh_white_sub <- etoh_white[etoh_white$V1 %in% etoh_selected_cells,]
+write.table(etoh_white_sub, "etoh_whitelist_sub.tsv", sep = "\t", quote = F, row.names = F, col.names = F)
+
+dex2hr_white_sub <- dex2hr_white[dex2hr_white$V1 %in% dex2hr_selected_cells,]
+write.table(dex2hr_white_sub, "dex2hr_whitelist_sub.tsv", sep = "\t", quote = F, row.names = F, col.names = F)
 ```
 
-Also a quote using `>`:
+The subsetted *TSV* files contain only the 400 valid barcodes per cell, together with the barcodes that shall be corrected.
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+### Extract and correct barcodes & UMIs
+
+The actual barcode extraction and correction is again performed with `umi_tools`. In this process, only the reads of the R2 files are kept, that had a matching barcode in the R1 file. The barcode and UMI sequence are added to the sequence identifier line of each read in the new files. The not matching parts of the R1 reads are kept in the new R1 file. The `umi_tools` *bash* command looks like this:
+
+```{bash, eval=F}
+umi_tools extract --filter-cell-barcode --error-correct-cell --whitelist=etoh_whitelist_sub.tsv --extract-method=regex -p '(?P<discard_1>.{0,20})(?P<cell_1>.{6})(?P<discard_2>TAGCCATCGCATTGC){e<=1}(?P<cell_2>.{6})(?P<discard_3>TACCTCTGAGCTGAA){e<=1}(?P<cell_3>.{6})(?P<discard_4>ACG)(?P<umi_1>.{8})(?P<discard_5>GAC).*' -I ../samples/sc_EtOH_1.fastq.gz -S sc_EtOH_1_extracted.fastq.gz --read2-in ../samples/sc_EtOH_2_matched.fastq.gz --read2-out sc_EtOH_2_extracted.fastq.gz
+
+
+umi_tools extract --filter-cell-barcode --error-correct-cell --whitelist=dex2hr_whitelist_sub.tsv --extract-method=regex -p '(?P<discard_1>.{0,20})(?P<cell_1>.{6})(?P<discard_2>TAGCCATCGCATTGC){e<=1}(?P<cell_2>.{6})(?P<discard_3>TACCTCTGAGCTGAA){e<=1}(?P<cell_3>.{6})(?P<discard_4>ACG)(?P<umi_1>.{8})(?P<discard_5>GAC).*' -I ../samples/sc_Dex2hr_1.fastq.gz -S sc_Dex2hr_1_extracted.fastq.gz --read2-in ../samples/sc_Dex2hr_2_matched.fastq.gz --read2-out sc_Dex2hr_2_extracted.fastq.gz
+```
+
+The `umi_tools` folder should now contain four gzipped fastq files, two for each sample. 
+
+
+We plan to use `Alevin` for transcript level quantification, which does not support the Illumina SureCell protocol by default. We can overcome this limitation by slightly editing the new R1 files with some *bash* code:
+
+```{bash, eval=F}
+zgrep "^@" sc_EtOH_1_extracted.fastq.gz |  awk -F '_' -v OFS='\n' '{split($3,a," ");print $0,$2a[1],"+","KKKKKKKKKKKKKKKKKKKKKKKKKK"}' | gzip > sc_EtOH_1_altered.fastq.gz
+
+
+zgrep "^@" sc_Dex2hr_1_extracted.fastq.gz |  awk -F '_' -v OFS='\n' '{split($3,a," ");print $0,$2a[1],"+","KKKKKKKKKKKKKKKKKKKKKKKKKK"}' | gzip > sc_Dex2hr_1_altered.fastq.gz
+
+#optional: remove `extracted` R1 files
+rm sc_*_1_extracted.fastq.gz
+```
+
+With this command, we copied the barcode and UMI sequence of each reads sequence identifier to the actual raw sequence line. We also added some quality values for the bases (the actual value is not relevant).
+
+There should now be an `altered` R1 *FASTQ* file per sample, together with an `extracted` R2 *FASTQ* file. 
+
+### Quantification with Alevin
+
+`Alevin` is the single-cell counterpart of `Salmon`, one of the standard tools for bulk RNA-seq quantification. It is also integrated into the `Salmon` (Version 1.1.0) package. As most of the available transcript quantifiers, `Alevin/Salmon` do not perform a standard genomic alignment, but perform a quasi-mapping directly to the transcriptome. Reads, that could be originating from multiple transcript isoforms, are assigned to equivalence classes, where actual counts are later derived by expectation maximization algorithms.
+
+To run the `Alevin` quantification, we first need a transcriptomic index. For this example, we will use the [transcript sequences](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.transcripts.fa.gz) and [comprehensive gene annotation](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.gtf.gz) from [Gencode](https://www.gencodegenes.org/) [Version 34](https://www.gencodegenes.org/human/release_34.html). 
+
+Assume you have downloaded and unpacked the above mentioned files. To build the actual index we run this *bash* code:
+
+```{bash, eval=F}
+#create folder and change directory
+mkdir ../alevin
+cd ../alevin
+
+#build index - `p` specifies the number of threads to use
+salmon index -t ../gencode.v34.transcripts.fa --gencode -p 4 -i index
+```
+
+To perform the actual quantification, we need one last file specifying the transcript to gene mapping. `Alevin`, unlike `Salmon`, aggregates the quantification counts to gene level by default. For our DTU analysis we require transcript level counts, so we will only provide a `transcript_id` to `transcript_name` mapping. This could also be a `transcript_id` to `transcript_id` mapping file (so each id mapping to itself).
+
+We can create such a mapping file with the help of the `DTUrtle` package in **R**:
+
+```{r, eval=F}
+library(DTUrtle)
+setwd("../alevin")
+
+#import information from the GTF file
+tx2gene <- import_gtf(gtf_file = "gencode.v34.annotation.gtf")
+
+  ##optional for later name consistency:
+  tx2gene$gene_name <- one_to_one_mapping(name = tx2gene$gene_name, 
+                                          id = tx2gene$gene_id)
+  tx2gene$transcript_name <- one_to_one_mapping(name = tx2gene$transcript_name, 
+                                                id = tx2gene$transcript_id)
+  
+
+write.table(x = tx2gene[,c("transcript_id", "transcript_name")], 
+            file = "txmap.tsv", sep = "\t", quote = F, 
+            row.names = F, col.names = F)
+```
+
+The actual quantification can be performed in **bash** with:
+
+```{bash, eval=F}
+salmon alevin -l A -i index/ -1 ../umi_tools/sc_EtOH_1_altered.fastq.gz -2 ../umi_tools/sc_EtOH_2_extracted.fastq.gz --keepCBFraction 1 --end 5 --umiLength 8 --barcodeLength 18 --dumpFeatures --tgMap txmap.tsv -o sc_EtOH
+
+salmon alevin -l A -i index/ -1 ../umi_tools/sc_Dex2hr_1_altered.fastq.gz -2 ../umi_tools/sc_Dex2hr_2_extracted.fastq.gz --keepCBFraction 1 --end 5 --umiLength 8 --barcodeLength 18 --dumpFeatures --tgMap txmap.tsv -o sc_Dex2hr
+```
+
+---
+
+**This concludes the preprocessing of the data. Please see the corresponding analysis vignette for an usage example of DTUrtle.**

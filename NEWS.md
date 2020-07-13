@@ -1,5 +1,6 @@
-# DTUrtle News
+DTUrtle News
+================
 
-## 0.5.0
+### 0.2.5
 
-* initial first version.
+  - initial first version.

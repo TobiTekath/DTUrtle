@@ -22,7 +22,7 @@ plot_dtu_table(
 \item{columns}{Optinally subset the existing \code{dtu_table} of the dturtle object to the columns specified here.}
 
 \item{column_formatters}{Named list of column_formatters, specifying a formatter function for every column that shall be formatted.
-The formatter functions are either from this package like \code{\link[=table_percentage_bar]{table_percentage_bar()}}, \code{\link[=table_pval_tile]{table_pval_tile()}} or from \code{\link[formattable]{formattable}}.}
+The formatter functions are either from this package like \code{\link[=table_percentage_bar]{table_percentage_bar()}}, \code{\link[=table_pval_tile]{table_pval_tile()}} or from \code{\link[formattable:00Index]{formattable}}.}
 
 \item{order_by}{One or multiple columns to order the table by. Must be a vector of column names, descending order can be achived by prepending a \code{-} (e.g. \code{c("-my_col_name")}).}
 
@@ -68,6 +68,7 @@ A datatables object, if no savepath is provided.
 }
 \description{
 Creates a enhanced HTML representation of a DTU table. The table can be (color) formatted individually by providing \code{column_formatters}.
+Also automatically links columns of plot names, to be viewable in the table. Currently you are not allowed to provide a column formatter for plot columns.
 }
 \details{
 The table can optionally also be saved as an image ('.png'), by specifying the wanted number of rows to create_table_image.

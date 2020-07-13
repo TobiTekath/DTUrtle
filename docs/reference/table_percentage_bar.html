@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Replaces NA values by 1. — no_na • DTUrtle</title>
+<title>Column formatter for percentages — table_percentage_bar • DTUrtle</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Replaces NA values by 1. — no_na" />
-<meta property="og:description" content="Replaces NA values by 1." />
+<meta property="og:title" content="Column formatter for percentages — table_percentage_bar" />
+<meta property="og:description" content="Create a color bar for percentage columns in plot_dtu_table()." />
 
 
 
@@ -112,29 +112,53 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Replaces NA values by 1.</h1>
+    <h1>Column formatter for percentages</h1>
     
-    <div class="hidden name"><code>no_na.Rd</code></div>
+    <div class="hidden name"><code>table_percentage_bar.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Replaces NA values by 1.</p>
+    <p>Create a color bar for percentage columns in <code><a href='plot_dtu_table.html'>plot_dtu_table()</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>no_na</span>(<span class='no'>x</span>)</pre>
+    <pre class="usage"><span class='fu'>table_percentage_bar</span>(<span class='no'>color1</span>, <span class='no'>color2</span>, <span class='no'>digits</span>, <span class='kw'>color_break</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>Vector of values (e.g. pvalues).</p></td>
+      <th>color1</th>
+      <td><p>The color to use below the color breakpoint.</p></td>
+    </tr>
+    <tr>
+      <th>color2</th>
+      <td><p>The color to use for greater or equal values to the color breakpoint.</p></td>
+    </tr>
+    <tr>
+      <th>digits</th>
+      <td><p>The number of digits to format the numbers to.</p></td>
+    </tr>
+    <tr>
+      <th>color_break</th>
+      <td><p>The value, where a color switch should hapen.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Further arguments passed to <code><a href='https://rdrr.io/pkg/formattable/man/style.html'>style</a></code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Vector of values with NAs replaced.</p>
+    <p>A formatter function, to be used by <code><a href='plot_dtu_table.html'>plot_dtu_table()</a></code> or <code><a href='https://rdrr.io/pkg/formattable/man/formattable.html'>formattable</a></code>.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Shall be used in <code><a href='plot_dtu_table.html'>plot_dtu_table()</a></code> or <code><a href='https://rdrr.io/pkg/formattable/man/formattable.html'>formattable</a></code>.</p>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p><code><a href='create_dtu_table.html'>create_dtu_table()</a></code> and <code><a href='plot_dtu_table.html'>plot_dtu_table()</a></code> for table visualization.</p>
+<p>Other DTUrtle formatter: 
+<code><a href='table_pval_tile.html'>table_pval_tile</a>()</code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

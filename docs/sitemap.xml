@@ -1,99 +1,111 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://pkgdown.r-lib.org/index.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/index.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/check_unique_by_partition.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/check_unique_by_partition.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/combine_to_matrix.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/combine_to_matrix.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/create_dtu_table.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/create_dtu_table.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/get_by_partition.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/dturtle_logo.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/get_diff.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/get_by_partition.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/get_proportion_matrix.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/get_diff.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/getmax.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/get_html_header.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/granges_reduce_introns.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/get_proportion_matrix.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/import_counts.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/getmax.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/import_gtf.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/granges_reduce_introns.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/merge_sparse.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/import_counts.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/move_columns_to_front.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/import_gtf.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/no_na.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/merge_sparse.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/one_to_one_mapping.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/move_columns_to_front.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/partitioning_to_dataframe.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/no_na.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/plot_dtu_table.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/one_to_one_mapping.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/plot_proportion_barplot.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/partitioning_to_dataframe.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/plot_proportion_pheatmap.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/plot_dtu_table.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/plot_transcripts_view.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/plot_proportion_barplot.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/posthoc_and_stager.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/plot_proportion_pheatmap.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/prop_matrix.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/plot_transcripts_view.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/ratio_expression_in.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/posthoc_and_stager.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/readin_bustools.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/prop_matrix.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/rm_version.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/ratio_expression_in.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/run_drimseq.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/readin_bustools.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/run_posthoc.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/rm_version.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/seurat_add_tx2gene.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/run_drimseq.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/smallProportionSD.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/run_posthoc.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/sparse_filter.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/seurat_add_tx2gene.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/reference/summarize_to_gene.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/smallProportionSD.html</loc>
   </url>
   <url>
-    <loc>https://pkgdown.r-lib.org/articles/Hoffman_human_single-cell_preprocess.html</loc>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/sparse_filter.html</loc>
+  </url>
+  <url>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/summarize_to_gene.html</loc>
+  </url>
+  <url>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/table_percentage_bar.html</loc>
+  </url>
+  <url>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/table_pval_tile.html</loc>
+  </url>
+  <url>
+    <loc>https://tobitekath.github.io/DTUrtle/articles/Hoffman_human_single-cell_preprocess.html</loc>
   </url>
 </urlset>

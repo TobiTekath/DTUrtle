@@ -3,8 +3,8 @@ pkgdown: 1.5.1
 pkgdown_sha: ~
 articles:
   Hoffman_human_single-cell_preprocess: Hoffman_human_single-cell_preprocess.html
-last_built: 2020-06-30T10:58Z
+last_built: 2020-07-13T11:13Z
 urls:
-  reference: https://pkgdown.r-lib.org/reference
-  article: https://pkgdown.r-lib.org/articles
+  reference: https://tobitekath.github.io/DTUrtle/reference
+  article: https://tobitekath.github.io/DTUrtle/articles
 
