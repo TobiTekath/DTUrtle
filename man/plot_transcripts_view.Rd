@@ -15,9 +15,10 @@ plot_transcripts_view(
   reduce_introns_min_size = 50,
   fontsize_vec = c(10, 1.1, 0.6),
   arrow_colors = c("#7CAE00", "#00BFC4"),
-  extension_factors = c(0.01, 0.15),
+  extension_factors = c(0.015, 0.15),
   savepath = NULL,
   filename_ext = "_transcripts.png",
+  add_to_table = F,
   BPPARAM = BiocParallel::SerialParam(),
   ...
 )
@@ -48,6 +49,8 @@ plot_transcripts_view(
 \item{savepath}{If you want your files to be saved to disk, specify a save path here. The directories will be created if necessary.}
 
 \item{filename_ext}{Optionally specify a file name extension here, which also defines the save image format. The file name will be 'gene_name+extension'.}
+
+\item{add_to_table}{If a \code{savepath} is provided, add the filepaths of the created plots to the corresponding entries in \code{dtu_table}. The name of the column that shall be created can be specified here.}
 
 \item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
 

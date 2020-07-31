@@ -47,7 +47,7 @@
 
 
 <meta property="og:title" content="Posthoc filtering and two-staged statistical tests — posthoc_and_stager" />
-<meta property="og:description" content="Perform optional posthoc filtering and run two-staged statistical tests." />
+<meta property="og:description" content="Perform optional post-hoc filtering and run two-staged statistical tests." />
 <meta property="og:image" content="https://tobitekath.github.io/DTUrtle/logo.svg" />
 
 
@@ -97,7 +97,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq preprocessing</a>
+      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_analysis.html">Human bulk RNA-seq analysis</a>
     </li>
   </ul>
 </li>
@@ -131,7 +140,7 @@
     </div>
 
     <div class="ref-description">
-    <p>Perform optional posthoc filtering and run two-staged statistical tests.</p>
+    <p>Perform optional post-hoc filtering and run two-staged statistical tests.</p>
     </div>
 
     <pre class="usage"><span class='fu'>posthoc_and_stager</span>(<span class='no'>dturtle</span>, <span class='kw'>ofdr</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>posthoc</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)</pre>
@@ -149,7 +158,7 @@
     </tr>
     <tr>
       <th>posthoc</th>
-      <td><p>Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or <code>FALSE</code> can be provided.</p></td>
+      <td><p>Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing post-hoc filtering. To disbale poshoc filtering 0 or <code>FALSE</code> can be provided.</p></td>
     </tr>
     </table>
 
@@ -163,7 +172,7 @@
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>The posthoc filter excludes transcripts, which standard deviation of the proportion per cell/sample is below the threshold.
+    <p>The post-hoc filter excludes transcripts, which standard deviation of the proportion per cell/sample is below the threshold.
 The two-staged statistical test performed by stageR first determines if any of the transcripts of a gene is showing signs of DTU.
 The second step tries to identify on singular transcript level the significantly different transcripts.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>

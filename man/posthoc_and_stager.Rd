@@ -11,7 +11,7 @@ posthoc_and_stager(dturtle, ofdr = 0.05, posthoc = 0.1)
 
 \item{ofdr}{Overall false discovery rate (OFDR) threshold.}
 
-\item{posthoc}{Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or \code{FALSE} can be provided.}
+\item{posthoc}{Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing post-hoc filtering. To disbale poshoc filtering 0 or \code{FALSE} can be provided.}
 }
 \value{
 An extended \code{dturtle} object. Additional slots include:
@@ -22,10 +22,10 @@ An extended \code{dturtle} object. Additional slots include:
 }
 }
 \description{
-Perform optional posthoc filtering and run two-staged statistical tests.
+Perform optional post-hoc filtering and run two-staged statistical tests.
 }
 \details{
-The posthoc filter excludes transcripts, which standard deviation of the proportion per cell/sample is below the threshold.
+The post-hoc filter excludes transcripts, which standard deviation of the proportion per cell/sample is below the threshold.
 The two-staged statistical test performed by stageR first determines if any of the transcripts of a gene is showing signs of DTU.
 The second step tries to identify on singular transcript level the significantly different transcripts.
 }

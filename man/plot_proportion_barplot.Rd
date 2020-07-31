@@ -12,6 +12,7 @@ plot_proportion_barplot(
   fit_line_color = "red",
   savepath = NULL,
   filename_ext = "_barplot.png",
+  add_to_table = F,
   BPPARAM = BiocParallel::SerialParam(),
   ...
 )
@@ -30,6 +31,8 @@ plot_proportion_barplot(
 \item{savepath}{If you want your files to be saved to disk, specify a save path here. The directories will be created if necessary.}
 
 \item{filename_ext}{Optionally specify a file name extension here, which also defines the save image format. The file name will be 'gene_name+extension'.}
+
+\item{add_to_table}{If a \code{savepath} is provided, add the filepaths of the created plots to the corresponding entries in \code{dtu_table}. The name of the column that shall be created can be specified here.}
 
 \item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
 
@@ -59,7 +62,7 @@ specifying dimensions in pixels.}
   }}
 }
 \value{
-Returns list of saved plots, for adding to the DTU table. If no \code{savepath} is provided, returns a list of the created plots for further processing.
+Returns list of saved plots, for adding to the DTU table. If no \code{savepath} is provided, returns a list of the created plots for further processing. If \code{add_to_table} is provided, return the altered \code{dturtle} object, if at least one of the plots could be added to the DTU summary table.
 }
 \description{
 Visualize genes and it's transcript proportions in a barplot.

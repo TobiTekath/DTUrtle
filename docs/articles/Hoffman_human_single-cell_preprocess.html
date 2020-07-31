@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Preprocessing of the Hoffman et al. human single-cell RNA-seq data • DTUrtle</title>
+<title>Pre-processing of the Hoffman et al. human single-cell RNA-seq data • DTUrtle</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
@@ -17,7 +17,7 @@
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Preprocessing of the Hoffman et al. human single-cell RNA-seq data">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Pre-processing of the Hoffman et al. human single-cell RNA-seq data">
 <meta property="og:description" content="DTUrtle">
 <meta property="og:image" content="https://tobitekath.github.io/DTUrtle/logo.svg">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -55,7 +55,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq preprocessing</a>
+      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_analysis.html">Human bulk RNA-seq analysis</a>
     </li>
   </ul>
 </li>
@@ -83,10 +92,10 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>Preprocessing of the Hoffman et al. human single-cell RNA-seq data</h1>
+      <h1 data-toc-skip>Pre-processing of the Hoffman et al. human single-cell RNA-seq data</h1>
                         <h4 class="author">Tobias Tekath</h4>
             
-            <h4 class="date">2020-07-13</h4>
+            <h4 class="date">2020-07-31</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/TobiTekath/DTUrtle/blob/master/vignettes/Hoffman_human_single-cell_preprocess.Rmd"><code>vignettes/Hoffman_human_single-cell_preprocess.Rmd</code></a></small>
       <div class="hidden name"><code>Hoffman_human_single-cell_preprocess.Rmd</code></div>
@@ -95,8 +104,8 @@
 
     
     
-<p>This vignette exemplifies the preprocessing of <strong>single-cell RNA-seq data for analysis with DTUrtle</strong>. The data used in this vignette is publicly available as <em>Bioproject PRJNA594939</em> and the used <em>FASTQ</em>-files can be downloaded from <a href="https://www.ebi.ac.uk/ena/browser/view/PRJNA594939">here</a>. The corresponding publication from Hoffman et al. based on this data set can be found <a href="https://doi.org/10.1038/s42003-020-0837-0">here</a>.</p>
-<p>For this vignette we focus on just two of the available single-cell RNA-seq samples:</p>
+<p>This vignette exemplifies the pre-processing of <strong>single-cell RNA-seq data for analysis with DTUrtle</strong>. The data used in this vignette is publicly available as <em>Bioproject PRJNA594939</em> and the used <em>FASTQ</em>-files can be downloaded from <a href="https://www.ebi.ac.uk/ena/browser/view/PRJNA594939">here</a>. The corresponding publication from Hoffman et al. based on this data set can be found <a href="https://doi.org/10.1038/s42003-020-0837-0">here</a>.</p>
+<p>For this vignette we focus on two of the available single-cell RNA-seq samples:</p>
 <ul>
 <li>
 <a href="https://www.ebi.ac.uk/ena/browser/view/SAMN13541133">SAMN13541133</a> which represents a control sample (18 hour treatment with ethanol (EtOH))</li>
@@ -108,10 +117,10 @@
 <div id="preparing-fastq-files" class="section level3">
 <h3 class="hasAnchor">
 <a href="#preparing-fastq-files" class="anchor"></a>Preparing FASTQ-files</h3>
-<p>For this vignette, it is assumed that the <em>FASTQ</em>-files mentioned above have been downloaded to a directory called <em>samples</em>.</p>
-<p>After downloading the <em>FASTQ</em>-files, the first step is to rename the files and split them into two files each. This data set was produced using a Illumina SureCell 3’ kit, which produces paired end reads (as all current single-cell protocols). For unknown reasons the original two <em>FASTQ</em>-files per sample have been appended for / during the upload. More information about the SureCell format can be found <a href="https://teichlab.github.io/scg_lib_structs/methods_html/SureCell.html">here</a>.</p>
+<p>For this vignette, it is assumed that the <em>FASTQ</em>-files mentioned above have been downloaded to a directory called <code>samples</code>.</p>
+<p>After downloading the <em>FASTQ</em>-files, the first step is to rename the files and split them into two files each. This data set was produced using a Illumina SureCell 3’ kit, which produces paired end reads (as all current single-cell protocols). For unknown reasons the original two <em>FASTQ</em>-files per sample have been appended for / during upload. More information about the SureCell format can be found <a href="https://teichlab.github.io/scg_lib_structs/methods_html/SureCell.html">here</a>.</p>
 <p>The read files can be split with the following <em>bash</em> commands:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="bu">cd</span> <span class="st">'YOUR_PATH'</span>/samples</a>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="bu">cd</span> <span class="va">$PATH_TO_ANAYLSIS_ROOT_DIRECTORY</span>$/samples</a>
 <a class="sourceLine" id="cb1-2" data-line-number="2"></a>
 <a class="sourceLine" id="cb1-3" data-line-number="3"><span class="co">#rename</span></a>
 <a class="sourceLine" id="cb1-4" data-line-number="4"><span class="fu">mv</span> SRR10669459.fastq.gz sc_EtOH.fastq.gz</a>
@@ -125,7 +134,7 @@
 <a class="sourceLine" id="cb1-12" data-line-number="12"><span class="co"># or counting the number of '1'  at the end of the read name.</span></a>
 <a class="sourceLine" id="cb1-13" data-line-number="13"><span class="fu">split</span> -l 1215291200 --numeric-suffixes=1 --additional-suffix=.fastq.gz sc_EtOH.fastq sc_EtOH_</a>
 <a class="sourceLine" id="cb1-14" data-line-number="14"><span class="fu">split</span> -l 1394785580 --numeric-suffixes=1 --additional-suffix=.fastq.gz sc_Dex2hr.fastq sc_Dex2hr_</a></code></pre></div>
-<p>Another drawback of the concatenation of the files is, that the read names do not match between the samples. We also can overcome this with the following <em>bash</em> commands:</p>
+<p>Unfortunately, the read names do not directly match between the samples. The downstream tools would refuse to analyze samples without matching read names. We can overcome this with the following <em>bash</em> commands:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="co">#create files with matching names</span></a>
 <a class="sourceLine" id="cb2-2" data-line-number="2"><span class="fu">cat</span> sc_EtOH_2.fastq <span class="kw">|</span> <span class="fu">sed</span> -e <span class="st">'s/^\(@SRR10669459.\)\(.*\) /echo \1$((\2-303822800)) /e'</span> <span class="op">&gt;</span> sc_EtOH_2_matched.fastq</a>
 <a class="sourceLine" id="cb2-3" data-line-number="3"><span class="fu">cat</span> sc_Dex2hr_2.fastq <span class="kw">|</span> <span class="fu">sed</span> -e <span class="st">'s/^\(@SRR10669461.\)\(.*\) /echo \1$((\2-348696395)) /e'</span> <span class="op">&gt;</span> sc_Dex2hr_2_matched.fastq</a>
@@ -140,7 +149,7 @@
 <a class="sourceLine" id="cb2-12" data-line-number="12"><span class="co">#optionally: remove concatenated files</span></a>
 <a class="sourceLine" id="cb2-13" data-line-number="13"><span class="fu">rm</span> sc_EtOH.fastq.gz </a>
 <a class="sourceLine" id="cb2-14" data-line-number="14"><span class="fu">rm</span> sc_Dex2hr.fastq.gz</a></code></pre></div>
-<p>Now there should be four packed <em>FASTQ</em>-files present in the folder - two per sample.</p>
+<p>There should be four packed <em>FASTQ</em>-files present in the folder - two per sample.</p>
 </div>
 <div id="determining-valid-cellular-barcodes" class="section level3">
 <h3 class="hasAnchor">
@@ -161,7 +170,7 @@
 <p>The <em>TSV</em> files contain all found barcode sequences in the samples, together with possible erroneous sequenced barcodes (less than 2 edit distance away) which will be corrected.</p>
 <p>In the publication, only 400 cells of each sample were used in the analysis. For simplicity, we stick to this process. We can get the 400 valid cell barcodes for each sample from the supplementary count files from <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE141834">GEO</a>: <code>GSE141834_scRNAseq_rawCounts.txt.gz</code></p>
 <p>Assume you have downloaded and unpacked the mentioned file. Lists of the valid cell barcodes can be created with this <em>R</em> code:</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span>(<span class="st">"/umi_tools"</span>)
+<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span>(<span class="st">"$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/umi_tools"</span>)
 
 <span class="co">#get valid barcodes from raw count table</span>
 <span class="no">raw_expr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span>(<span class="st">"GSE141834_scRNAseq_rawCounts.txt"</span>, <span class="kw">header</span><span class="kw">=</span><span class="no">T</span>, <span class="kw">sep</span><span class="kw">=</span><span class="st">"\t"</span>)
@@ -189,6 +198,7 @@
 <a class="sourceLine" id="cb5-3" data-line-number="3"></a>
 <a class="sourceLine" id="cb5-4" data-line-number="4"><span class="ex">umi_tools</span> extract --filter-cell-barcode --error-correct-cell --whitelist=dex2hr_whitelist_sub.tsv --extract-method=regex -p <span class="st">'(?P&lt;discard_1&gt;.{0,20})(?P&lt;cell_1&gt;.{6})(?P&lt;discard_2&gt;TAGCCATCGCATTGC){e&lt;=1}(?P&lt;cell_2&gt;.{6})(?P&lt;discard_3&gt;TACCTCTGAGCTGAA){e&lt;=1}(?P&lt;cell_3&gt;.{6})(?P&lt;discard_4&gt;ACG)(?P&lt;umi_1&gt;.{8})(?P&lt;discard_5&gt;GAC).*'</span> -I ../samples/sc_Dex2hr_1.fastq.gz -S sc_Dex2hr_1_extracted.fastq.gz --read2-in ../samples/sc_Dex2hr_2_matched.fastq.gz --read2-out sc_Dex2hr_2_extracted.fastq.gz</a></code></pre></div>
 <p>The <code>umi_tools</code> folder should now contain four gzipped fastq files, two for each sample.</p>
+<hr>
 <p>We plan to use <code>Alevin</code> for transcript level quantification, which does not support the Illumina SureCell protocol by default. We can overcome this limitation by slightly editing the new R1 files with some <em>bash</em> code:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="fu">zgrep</span> <span class="st">"^@"</span> sc_EtOH_1_extracted.fastq.gz <span class="kw">|</span>  <span class="fu">awk</span> -F <span class="st">'_'</span> -v OFS=<span class="st">'\n'</span> <span class="st">'{split($3,a," ");print $0,$2a[1],"+","KKKKKKKKKKKKKKKKKKKKKKKKKK"}'</span> <span class="kw">|</span> <span class="fu">gzip</span> <span class="op">&gt;</span> sc_EtOH_1_altered.fastq.gz</a>
 <a class="sourceLine" id="cb6-2" data-line-number="2"></a>
@@ -205,7 +215,7 @@
 <a href="#quantification-with-alevin" class="anchor"></a>Quantification with Alevin</h3>
 <p><code>Alevin</code> is the single-cell counterpart of <code>Salmon</code>, one of the standard tools for bulk RNA-seq quantification. It is also integrated into the <code>Salmon</code> (Version 1.1.0) package. As most of the available transcript quantifiers, <code>Alevin/Salmon</code> do not perform a standard genomic alignment, but perform a quasi-mapping directly to the transcriptome. Reads, that could be originating from multiple transcript isoforms, are assigned to equivalence classes, where actual counts are later derived by expectation maximization algorithms.</p>
 <p>To run the <code>Alevin</code> quantification, we first need a transcriptomic index. For this example, we will use the <a href="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.transcripts.fa.gz">transcript sequences</a> and <a href="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.gtf.gz">comprehensive gene annotation</a> from <a href="https://www.gencodegenes.org/">Gencode</a> <a href="https://www.gencodegenes.org/human/release_34.html">Version 34</a>.</p>
-<p>Assume you have downloaded and unpacked the above mentioned files. To build the actual index we run this <em>bash</em> code:</p>
+<p>Assume you have downloaded and unpacked the above mentioned files in the analysis root directory. To build the actual index we run this <em>bash</em> code:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="co">#installation in conda evironment</span></a>
 <a class="sourceLine" id="cb7-2" data-line-number="2"><span class="ex">conda</span> install salmon</a>
 <a class="sourceLine" id="cb7-3" data-line-number="3"></a>
@@ -216,12 +226,12 @@
 <a class="sourceLine" id="cb7-8" data-line-number="8"><span class="co">#build index - `p` specifies the number of threads to use</span></a>
 <a class="sourceLine" id="cb7-9" data-line-number="9"><span class="ex">salmon</span> index -t ../gencode.v34.transcripts.fa --gencode -p 4 -i index</a></code></pre></div>
 <p>To perform the actual quantification, we need one last file specifying the transcript to gene mapping. <code>Alevin</code>, unlike <code>Salmon</code>, aggregates the quantification counts to gene level by default. For our DTU analysis we require transcript level counts, so we will only provide a <code>transcript_id</code> to <code>transcript_name</code> mapping. This could also be a <code>transcript_id</code> to <code>transcript_id</code> mapping file (so each id mapping to itself).</p>
-<p>We can create such a mapping file with the help of the <code>DTUrtle</code> package in <strong>R</strong>:</p>
+<p>We can create such a mapping file with the help of the <code>DTUrtle</code> package in <em>R</em>:</p>
 <div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">DTUrtle</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span>(<span class="st">"../alevin"</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span>(<span class="st">"$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/alevin"</span>)
 
 <span class="co">#import information from the GTF file</span>
-<span class="no">tx2gene</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/import_gtf.html">import_gtf</a></span>(<span class="kw">gtf_file</span> <span class="kw">=</span> <span class="st">"gencode.v34.annotation.gtf"</span>)
+<span class="no">tx2gene</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/import_gtf.html">import_gtf</a></span>(<span class="kw">gtf_file</span> <span class="kw">=</span> <span class="st">"../gencode.v34.annotation.gtf"</span>)
 
   <span class="co">##optional for later name consistency:</span>
   <span class="no">tx2gene</span>$<span class="no">gene_name</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/one_to_one_mapping.html">one_to_one_mapping</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="no">tx2gene</span>$<span class="no">gene_name</span>,
@@ -233,7 +243,7 @@
 <span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span>(<span class="kw">x</span> <span class="kw">=</span> <span class="no">tx2gene</span>[,<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"transcript_id"</span>, <span class="st">"transcript_name"</span>)],
             <span class="kw">file</span> <span class="kw">=</span> <span class="st">"txmap.tsv"</span>, <span class="kw">sep</span> <span class="kw">=</span> <span class="st">"\t"</span>, <span class="kw">quote</span> <span class="kw">=</span> <span class="no">F</span>,
             <span class="kw">row.names</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">col.names</span> <span class="kw">=</span> <span class="no">F</span>)</pre></body></html></div>
-<p>The actual quantification can be performed in <strong>bash</strong> with:</p>
+<p>The actual quantification can be performed in <em>bash</em> with:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ex">salmon</span> alevin -l A -i index/ -1 ../umi_tools/sc_EtOH_1_altered.fastq.gz -2 ../umi_tools/sc_EtOH_2_extracted.fastq.gz --keepCBFraction 1 --end 5 --umiLength 8 --barcodeLength 18 --dumpFeatures --tgMap txmap.tsv -o sc_EtOH</a>
 <a class="sourceLine" id="cb9-2" data-line-number="2"></a>
 <a class="sourceLine" id="cb9-3" data-line-number="3"><span class="ex">salmon</span> alevin -l A -i index/ -1 ../umi_tools/sc_Dex2hr_1_altered.fastq.gz -2 ../umi_tools/sc_Dex2hr_2_extracted.fastq.gz --keepCBFraction 1 --end 5 --umiLength 8 --barcodeLength 18 --dumpFeatures --tgMap txmap.tsv -o sc_Dex2hr</a></code></pre></div>

@@ -97,7 +97,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq preprocessing</a>
+      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_analysis.html">Human bulk RNA-seq analysis</a>
     </li>
   </ul>
 </li>
@@ -181,9 +190,9 @@
     <tr>
       <th>filtering_strategy</th>
       <td><p>Define the filtering strategy to reduce and noise and increase statistical power.</p><ul>
-<li><p><code>'bulk'</code>: Predefined strategy for bulk RNAseq data. (default)</p></li>
-<li><p><code>'sc'</code>: Predefined strategy for single-cell RNAseq data.</p></li>
-<li><p><code>'own'</code>: Can be used to specify a user-defined strategy via the <code>...</code> argument (using the parameters of <code>dmFilter()</code>).</p></li>
+<li><p><code>'bulk'</code>: Predefined strategy for bulk RNAseq data (default): Features must contribute at least 5% of the total expression in at least 50% of the samples of the smallest group. Additionally the total gene expression must be 5 or more for at least 50% of the samples of the smallest group.</p></li>
+<li><p><code>'sc'</code>: Predefined strategy for single-cell RNAseq data: Features must contribute at least 5% of the total expression in at least 5% of the cells of the smallest group.</p></li>
+<li><p><code>'own'</code>: Can be used to specify a user-defined strategy via the <code>...</code> argument (using the parameters of <code><a href='https://rdrr.io/pkg/sparseDRIMSeq/man/dmFilter.html'>dmFilter</a></code>).</p></li>
 </ul></td>
     </tr>
     <tr>
@@ -200,7 +209,11 @@
     </tr>
     <tr>
       <th>...</th>
-      <td><p>If <code>filtering_strategy='own'</code> specify the wished parameters of <code><a href='https://rdrr.io/pkg/sparseDRIMSeq/man/dmFilter.html'>dmFilter</a></code> here.</p></td>
+      <td><p>Arguments passed on to <code><a href='https://rdrr.io/pkg/sparseDRIMSeq/man/dmFilter.html'>sparseDRIMSeq::dmFilter</a></code></p><dl'>
+    <dt><code>x</code></dt><dd><p><code>dmDSdata</code> or <code>dmSQTLdata</code>
+object.</p></dd>
+  
+</dl></td>
     </tr>
     </table>
 
@@ -210,10 +223,10 @@
 <li><p><code>meta_table_gene</code>: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression &gt; 0. Can be used to add gene level meta-information for plotting.</p></li>
 <li><p><code>meta_table_tx</code>: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression &gt; 0. Can be used to add transcript level meta-information for plotting.</p></li>
 <li><p><code>meta_table_sample</code>: Data frame of the provided sample level information (<code>pd</code>). Can be used to add sample level meta-information for plotting.</p></li>
-<li><p><code>drim</code>: The results of the DRIMSeq statistical computations (<code>dmTest()</code>).</p></li>
-<li><p><code>design</code>: The design matrix generated from the specified <code>pd</code> columns.</p></li>
+<li><p><code>drim</code>: Results of the DRIMSeq statistical computations (<code>dmTest()</code>).</p></li>
+<li><p><code>design</code>: Design matrix generated from the specified <code>pd</code> columns.</p></li>
 <li><p><code>group</code>: Vector which sample/cell belongs to which comparison group.</p></li>
-<li><p><code>used_filtering_options</code>: Vector of the used filtering options.</p></li>
+<li><p><code>used_filtering_options</code>: List of the used filtering options.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>

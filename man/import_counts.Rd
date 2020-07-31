@@ -95,7 +95,7 @@ library is installed. Default is FALSE}
 \value{
 \itemize{
 \item For bulk data: A combined count matrix for all specified samples.
-\item For single-cell data (\code{type='alevin'}): A list of count matrices per sample. Should be combined and optionally added to a Seurat object with \code{\link[=combine_to_matrix]{combine_to_matrix()}}.
+\item For single-cell data: A list of count matrices per sample. Should be combined and optionally added to a Seurat object with \code{\link[=combine_to_matrix]{combine_to_matrix()}}.
 }
 }
 \description{

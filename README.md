@@ -61,7 +61,7 @@ names(files) <- gsub(".*/","",gsub("/quant.sf","",files))
 cts <- import_counts(files = files, type = "Salmon")
 
 ##for single-cell data only:
-    #import counts returned a list of matrices -> combine them to one matrix
+    #import_counts returned a list of matrices -> combine them to one matrix
     cts <- combine_to_matrix(tx_list = cts)
 
 #create a sample data sheet, specifying which sample / cell belongs to which group
@@ -95,34 +95,29 @@ dturtle <- create_dtu_table(dturtle = dturtle)
     ## View results data frame
     View(dturtle$dtu_table)
 
-#plot and save the results
+#change to results folder
 setwd("my_results_folder")    
 
-barprop_plot_list <- plot_proportion_barplot(dturtle = dturtle, 
-                                             savepath = "images", 
-                                             BPPARAM = biocpar)
-pheatprop_plot_list <- plot_proportion_pheatmap(dturtle = dturtle, 
-                                                savepath = "images", 
-                                                include_expression = T, 
-                                                BPPARAM = biocpar)
-transcriptview_plot_list <- plot_transcripts_view(dturtle = dturtle, 
-                                                  gtf = "path_to_your_gtf_file.gtf", 
-                                                  genome = 'hg38', 
-                                                  one_to_one = T,
-                                                  savepath = "images", 
-                                                  BPPARAM = biocpar)
-
-#add relative filepaths of plots to results data frame
-dturtle$dtu_table$barplot <- barprop_plot_list[match(rownames(dturtle$dtu_table),
-                                                     names(barprop_plot_list))]
-dturtle$dtu_table$pheatmap <- pheatprop_plot_list[match(rownames(dturtle$dtu_table),
-                                                        names(pheatprop_plot_list))]
-dturtle$dtu_table$transcript_view <- transcriptview_plot_list[match(rownames(dturtle$dtu_table),
-                                                                    names(transcriptview_plot_list))]
-
+#create plots, save them to disk and link them in the `dtu_table`.
+dturtle <- plot_proportion_barplot(dturtle = dturtle, 
+                                   savepath = "images", 
+                                   add_to_table = "barplot",
+                                   BPPARAM = biocpar)
+dturtle <- plot_proportion_pheatmap(dturtle = dturtle, 
+                                    savepath = "images", 
+                                    include_expression = T,
+                                    add_to_table = "pheatmap",
+                                    BPPARAM = biocpar)
+dturtle <- plot_transcripts_view(dturtle = dturtle, 
+                                 gtf = "path_to_your_gtf_file.gtf", 
+                                 genome = 'hg38', 
+                                 one_to_one = T,
+                                 savepath = "images", 
+                                 add_to_table = "transcript_view",
+                                 BPPARAM = biocpar)
 
 #create interactive HTML-table from results data frame
-    #specify colorful column formatters
+    #optional: specify colorful column formatters
     column_formatter_list <- list(
       "gene_qval" = table_pval_tile("white", "orange", digits = 3),
       "min_tx_qval" = table_pval_tile("white", "orange", digits = 3),

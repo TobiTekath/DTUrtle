@@ -1,0 +1,115 @@
+---
+title: "Pre-processing of the Hoffman et al. human bulk RNA-seq data"
+author: "Tobias Tekath"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Pre-processing of the Hoffman et al. human bulk RNA-seq data}
+  %\VignetteBuilder{knitr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette exemplifies the pre-processing of **bulk RNA-seq data for analysis with DTUrtle**. The data used in this vignette is publicly available as *Bioproject PRJNA594939* and the used *FASTQ*-files can be downloaded from [here](https://www.ebi.ac.uk/ena/browser/view/PRJNA594939). The corresponding publication from Hoffman et al. based on this data set can be found [here](https://doi.org/10.1038/s42003-020-0837-0). 
+
+For this vignette we focus on two groups with 3 biological replicates each:
+
+- Group 1 - Control samples (EtOH):
+  - [SAMN13541125](https://www.ebi.ac.uk/ena/browser/view/SAMN13541125)
+  - [SAMN13541124](https://www.ebi.ac.uk/ena/browser/view/SAMN13541124)
+  - [SAMN13541123](https://www.ebi.ac.uk/ena/browser/view/SAMN13541123)
+- Group 2 - Samples after 2 hours of Dexamethasone treatment (Dex2hr):  
+  - [SAMN13541127](https://www.ebi.ac.uk/ena/browser/view/SAMN13541127)
+  - [SAMN13541119](https://www.ebi.ac.uk/ena/browser/view/SAMN13541119)
+  - [SAMN13541118](https://www.ebi.ac.uk/ena/browser/view/SAMN13541118)
+
+The *FASTQ*-files can be directly obtained from ENA, alternatively they are also available as *SRA*-files from [GEO](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA594939), which can be converted to *FASTQ*-format.
+
+After downloading a **MD5-check** is strongly encouraged.
+
+### Preparing FASTQ-files
+For this vignette, it is assumed that the *FASTQ*-files mentioned above have been downloaded to a directory called `samples`.
+
+After downloading the *FASTQ*-files, we first run a basic quality control step to assess if there might be some quality issues or left over adapter sequences. 
+We will use the tools `FastQC` and `MultiQC` for this task with the following *bash* commands:
+
+
+```{bash eval=FALSE}
+cd 'YOUR_PATH'/samples
+
+#rename files
+mv SRR10669441_1.fastq.gz bulk_EtOH_rep1_1.fastq.gz
+mv SRR10669441_2.fastq.gz bulk_EtOH_rep1_2.fastq.gz
+mv SRR10669442_1.fastq.gz bulk_EtOH_rep2_1.fastq.gz
+mv SRR10669442_2.fastq.gz bulk_EtOH_rep2_2.fastq.gz
+mv SRR10669443_1.fastq.gz bulk_EtOH_rep3_1.fastq.gz
+mv SRR10669443_2.fastq.gz bulk_EtOH_rep3_2.fastq.gz
+mv SRR10669447_1.fastq.gz bulk_D2hr_rep1_1.fastq.gz
+mv SRR10669447_2.fastq.gz bulk_D2hr_rep1_2.fastq.gz
+mv SRR10669448_1.fastq.gz bulk_D2hr_rep2_1.fastq.gz
+mv SRR10669448_2.fastq.gz bulk_D2hr_rep2_2.fastq.gz
+mv SRR10669449_1.fastq.gz bulk_D2hr_rep3_1.fastq.gz
+mv SRR10669449_2.fastq.gz bulk_D2hr_rep3_2.fastq.gz
+	
+#Quality control
+fastqc -t 4 -o fastqc/ *.fastq.gz
+
+#summarize reports
+multiqc -o multiqc ./fastqc/
+```
+
+We calculated a `FastQC` report for every file and summarized the 12 reports with `MultiQC`.
+The reports show minor leftovers of an Illumina sequencing adapter in the samples. This makes sense, as the samples were sequenced by an Illumina NovaSeq 6000.
+Although the adapter content is not dramatic, we will trim the reads to remove those adapters and perform a very relaxed quality filtering. We will use the tool `trim-galore` (Version 0.6.4_dev) for this task.
+
+```{bash eval=FALSE}
+trim_galore --quality 20  --illumina --length 20 --trim-n --cores 4 -o ../trim/ --paired bulk_*.fastq.gz
+```
+
+The trimmed files are the newly created folder `/trim`. Less than 1% of the total base pairs have been removed by the trimming process.
+Optionally one can again perform a `FastQC` and `MultiQC` analysis to confirm that the adapter sequences have been removed.
+
+### Transcript level quantification
+
+The files are now ready for transcript level quantification. We will use the tool `Salmon` (Version 1.1.0) for this.
+
+`Salmon` does not perform a standard genomic alignment, but performs a quasi-mapping directly to the transcriptome. Reads, that could be originating from multiple transcript isoforms, are assigned to equivalence classes, where actual counts are derived by expectation maximization algorithms.
+
+To run the `Salmon` quantification, we first need a transcriptomic index. For this example, we will use the [transcript sequences](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.transcripts.fa.gz) and [comprehensive gene annotation](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.gtf.gz) from [Gencode](https://www.gencodegenes.org/) [Version 34](https://www.gencodegenes.org/human/release_34.html). 
+
+Assume you have downloaded and unpacked the above mentioned files in the analysis root directory. To build the actual index we run this *bash* code:
+
+```{bash, eval=F}
+#installation in conda evironment
+conda install salmon
+
+#create folder and change directory
+mkdir ../salmon
+cd ../salmon
+
+#build index - `p` specifies the number of threads to use
+salmon index -t ../gencode.v34.transcripts.fa --gencode -p 4 -i index
+```
+
+The actual quantification can be performed in *bash* with:
+
+```{bash, eval=F}
+cd ../trim
+
+#loop over files
+for i in bulk_*_1.fq.gz; do salmon quant -l A -i ../salmon/index/ -1 $i -2 ${i/_1_val_1/_2_val_2} --seqBias --gcBias --validateMappings --rangeFactorizationBins 4 --threads 4 -o ../salmon/${i/_1_val_1.fq.gz/}; done
+```
+
+---
+
+**This concludes the preprocessing of the data. Please see the corresponding analysis vignette for an usage example of DTUrtle.**

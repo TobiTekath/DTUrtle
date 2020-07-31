@@ -98,17 +98,18 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
 #' @param columns Optinally subset the existing `dtu_table` of the dturtle object to the columns specified here.
 #' @param column_formatters Named list of column_formatters, specifying a formatter function for every column that shall be formatted.
 #' The formatter functions are either from this package like [table_percentage_bar()], [table_pval_tile()] or from \code{\link[formattable:00Index]{formattable}}.
-#' @param order_by One or multiple columns to order the table by. Must be a vector of column names, descending order can be achived by prepending a `-` (e.g. `c("-my_col_name")`).
+#' @param order_by One or multiple columns to order the table by. Must be a vector of column names, descending order can be achived by prepending a '-' (e.g. `c("-my_col_name")`).
 #' @param num_digits Number of digits, numerical columns shall be formatted to. Can be a single number to apply to all numerical columns, or a number for each numerical column (in their order).
 #' @param num_digits_format Digit format string, as in \code{\link[base:formatC]{formatC}}. These format string are used in numerical columns formatting if `num_digits` is provided.
 #'  Can be a single format string to apply same format to all numerical columns, or a format string for each numerical column (in their order).
+#' @param min_page_length Specify the minimal number of items, available to display in the table. Will be used as default number of items.
 #' @param savepath Specify save path, if the HTML table shall be saved to disk. The same path is used to create a table image, if `create_table_image` is not `FALSE`. The directories will be created if necessary.
 #' @param create_table_image Set number of table rows for optionally saving a image represantation of the subsetted HTML table. Utilizes the package `webshot` or `webshot2`.
 #' @inheritDotParams formattable::format_table
 #'
 #' @return A datatables object, if no savepath is provided.
 #' @export
-plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), order_by=NULL, num_digits=NULL, num_digits_format=NULL, savepath=NULL, create_table_image=F, ...) {
+plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), order_by=NULL, num_digits=NULL, num_digits_format=NULL, min_page_length=25, savepath=NULL, create_table_image=F, ...) {
   assertthat::assert_that(!is.null(dturtle$dtu_table), msg = "The provided dturtle object does not contain the needed dtu_table. Have you run 'create_dtu_table()'?")
   assertthat::assert_that(!is.null(dturtle$group), msg = "The provided dturtle object does not contain all the needed information. Have you run 'create_dtu_table()'?")
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'create_dtu_table()'?")
@@ -118,6 +119,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
   assertthat::assert_that(is.null(order_by)||(is.character(order_by)&&length(order_by)>0), msg = "The order_by object must be a non-empty character vector or NULL.")
   assertthat::assert_that(is.null(num_digits)||is.numeric(num_digits), msg = "The num_digits object must be a numeric vector or NULL.")
   assertthat::assert_that(is.null(num_digits_format)||is.character(num_digits_format), msg = "The num_digits object must be a character vector or NULL.")
+  assertthat::assert_that(assertthat::is.count(min_page_length), msg = "The min_page_length object must be a positive number.")
   assertthat::assert_that(is.null(savepath)||(is.character(savepath)&&length(savepath)==1), msg = "The savepath object must be a character vector of length 1 or NULL.")
   assertthat::assert_that(isFALSE(create_table_image)||assertthat::is.count(create_table_image), msg = "The create_table_image object must be a positive number or FALSE.")
 
@@ -182,13 +184,13 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
                       ", sum(dturtle$group == levels(dturtle$group)[2]) ,")")
   header_string <- paste0("<div class='header'>",
     sprintf("<img src=\"%s\" />", logo_uri),
-    "<h2 align='center'>",
+    "<div class='txt'><h2 align='center'>",
     tbl_title,
     "</h2>",
     "<h4 align='center'>Significant differential genes: ",
     length(dturtle$sig_gene),"<br>Significant differential transcripts: ",
     length(dturtle$sig_tx),
-    "</h4></div>")
+    "</h4></div></div>")
 
   container <- htmltools::withTags(table(DT::tableHeader(dtu_formattable)))
   container <- paste0(header_string,container)
@@ -210,6 +212,10 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
         }})})
   }
 
+  if(min_page_length>nrow(temp_table)){
+    min_page_length <- nrow(temp_table)
+  }
+
   #TODO: test datatables columns.data
   dtable <- DT::datatable(temp_table, escape = FALSE, filter='top', rownames = F,
                           extensions = 'Buttons', width = "90%",
@@ -217,8 +223,8 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
                         dom = "lBfrtip", orderClasses = T, buttons = list(list(
                           extend = 'collection', buttons = c('csv', 'excel'),
                           text = 'Download')),
-                        autoWidth = TRUE, pageLength = min(25, nrow(temp_table)),
-                        lengthMenu = unique(c(seq(from = min(25,nrow(temp_table)), to = min(100,nrow(temp_table)), by = 25), nrow(temp_table))),
+                        autoWidth = TRUE, pageLength = min_page_length,
+                        lengthMenu = unique(c(min_page_length, seq(25,100,25)[min_page_length<seq(25,100,25)&nrow(temp_table)>seq(25,100,25)], nrow(temp_table))),
                         columnDefs = list(list(
                           targets = "_all",
                           render = htmlwidgets::JS(
@@ -254,10 +260,15 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
                             "addStyleString('td { padding: 5px 7px !important; max-width: 200px; text-align: center;}');",
                             "addStyleString('.datatables { margin-left: auto; margin-right: auto;}');",
                             "addStyleString('.dt-buttons { margin-left: 50px;}');",
-                            "addStyleString('.header img { position: absolute; height: 75px}');",
-                            "addStyleString('.header h2 { font-weight: 900;}');",
+                            "addStyleString('.header img { float: left; max-width: 25%; min-width: 150px;}');",
+                            "addStyleString('.header .txt { display: flow-root; padding-right: 15%;}');",
+                            "addStyleString('.header h2 { font-weight: 900; margin: auto;}');",
+                            "addStyleString('.header h4 { margin: auto;}');",
                             "addStyleString('body { font-size: 120%;}');",
                           "}")))
+
+  # "addStyleString('.header img { position: absolute; height: 75px}');",
+
 
   if(is.null(savepath)){
     return(dtable)
@@ -338,20 +349,25 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
 #' @param fit_line_color Optionally specify the colour to use for the mean fit line.
 #' @param savepath If you want your files to be saved to disk, specify a save path here. The directories will be created if necessary.
 #' @param filename_ext Optionally specify a file name extension here, which also defines the save image format. The file name will be 'gene_name+extension'.
+#' @param add_to_table If a `savepath` is provided, add the filepaths of the created plots to the corresponding entries in `dtu_table`. The name of the column that shall be created can be specified here.
 #' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
 #' @inheritDotParams ggplot2::ggsave
 #'
-#' @return  Returns list of saved plots, for adding to the DTU table. If no `savepath` is provided, returns a list of the created plots for further processing.
+#' @return  Returns list of saved plots, for adding to the DTU table. If no `savepath` is provided, returns a list of the created plots for further processing. If `add_to_table` is provided, return the altered `dturtle` object, if at least one of the plots could be added to the DTU summary table.
 #' @family DTUrtle visualization
 #' @export
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
-plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL, group_colors=NULL, fit_line_color="red", savepath=NULL, filename_ext="_barplot.png", BPPARAM=BiocParallel::SerialParam(), ...){
+plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
+                                    group_colors=NULL, fit_line_color="red", savepath=NULL,
+                                    filename_ext="_barplot.png", add_to_table=F,
+                                    BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
   assertthat::assert_that(is.null(meta_gene_id)||(methods::is(meta_gene_id, "character")&&meta_gene_id %in% colnames(dturtle$meta_table_gene)), msg = "The provided meta_gene_id column could not be found or is of wrong format.")
   assertthat::assert_that(is.null(group_colors)||(methods::is(group_colors, "list")&&!is.null(names(group_colors))), msg = "The provided group colors must be a named list or NULL.")
   assertthat::assert_that(is.null(fit_line_color)||methods::is(fit_line_color,"character"), msg = "The provided fit_line_color must be of type character or NULL.")
   assertthat::assert_that(is.null(savepath)||methods::is(savepath,"character"), msg = "The provided savepath must be of type character or NULL.")
   assertthat::assert_that(methods::is(filename_ext, "character"), msg = "The provided filename_ext must be of type character." )
+  assertthat::assert_that(isFALSE(add_to_table)||(is.character(add_to_table)&&length(add_to_table==1)), msg = "The provided add_to_table must a character or FALSE." )
   assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(!is.null(dturtle$meta_table_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
@@ -485,8 +501,23 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL, grou
     plot_list <- unlist(plot_list)
   }
 
+  ret <- stats::setNames(plot_list, valid_genes)
 
-  return(stats::setNames(plot_list, valid_genes))
+  if(!is.null(savepath) && !isFALSE(add_to_table)){
+    if(is.null(dturtle$dtu_table)){
+      warning("Could not add_to_table, as the `dtu_table` fata frame is missing. Please run `create_dtu_table()` beforehand.")
+      return(ret)
+    }else{
+      if(!any(names(ret) %in% rownames(dturtle$dtu_table))){
+        message("Add_to_table failed, none of the genes could be found in the table.")
+        return(ret)
+      }
+      dturtle$dtu_table[[add_to_table]] <- ""
+      dturtle$dtu_table[names(ret), add_to_table] <- ret
+      return(dturtle)
+    }
+  }
+  return(ret)
 }
 
 
@@ -505,7 +536,9 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL, grou
 #' @family DTUrtle visualization
 #' @export
 #'@seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
-plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_columns=NULL, include_expression=F, savepath=NULL, filename_ext="_pheatmap.png", BPPARAM=BiocParallel::SerialParam(), ...){
+plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_columns=NULL,
+                                     include_expression=F, savepath=NULL, filename_ext="_pheatmap.png",
+                                     add_to_table=F, BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(!is.null(dturtle$meta_table_sample), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(!is.null(dturtle$drim), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
@@ -513,6 +546,7 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
   assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
   assertthat::assert_that((is.null(sample_meta_table_columns)||methods::is(sample_meta_table_columns,"character")&&length(sample_meta_table_columns)>0), msg = "The sample_meta_table_columns object must be a non-empty character vector or NULL.")
   assertthat::assert_that(is.logical(include_expression), msg = "The include_expression object must be a logical ('TRUE' or 'FALSE').")
+  assertthat::assert_that(isFALSE(add_to_table)||(is.character(add_to_table)&&length(add_to_table==1)), msg = "The provided add_to_table must a character or FALSE." )
   assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
 
   if(is.null(genes)){
@@ -571,7 +605,9 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
     anno_row <- data.frame("Sig"=as.character(row.names(prop) %in% dturtle$sig_tx), row.names=row.names(prop), stringsAsFactors = F)
 
     #default arguments for pheatmap
-    args <- list(mat=prop, annotation_col=anno_col, annotation_row=anno_row, filename=ifelse(is.null(savepath),NA,file.path(savepath,paste0(gene,filename_ext))))
+    args <- list(mat=prop, annotation_col=anno_col, annotation_row=anno_row,
+                 filename=ifelse(is.null(savepath),NA,file.path(savepath,paste0(gene,filename_ext))),
+                 show_colnames=ifelse(ncol(prop)>15,F,T), treeheight_row=0)
     args <- utils::modifyList(args, list(...))
     p <- do.call(pheatmap::pheatmap, c(args))
     if(!is.na(args$filename)){
@@ -585,7 +621,23 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
     plot_list <- unlist(plot_list)
   }
 
-  return(stats::setNames(plot_list, valid_genes))
+  ret <- stats::setNames(plot_list, valid_genes)
+
+  if(!is.null(savepath) && !isFALSE(add_to_table)){
+    if(is.null(dturtle$dtu_table)){
+      warning("Could not add_to_table, as the `dtu_table` fata frame is missing. Please run `create_dtu_table()` beforehand.")
+      return(ret)
+    }else{
+      if(!any(names(ret) %in% rownames(dturtle$dtu_table))){
+        message("Add_to_table failed, none of the genes could be found in the table.")
+        return(ret)
+      }
+      dturtle$dtu_table[[add_to_table]] <- ""
+      dturtle$dtu_table[names(ret), add_to_table] <- ret
+      return(dturtle)
+    }
+  }
+  return(ret)
 }
 
 
@@ -614,8 +666,8 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
 plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=NULL, reduce_introns=T,
                                   reduce_introns_fill="grey95", reduce_introns_min_size=50, fontsize_vec=c(10,1.1,0.6),
-                                  arrow_colors=c("#7CAE00", "#00BFC4"), extension_factors=c(0.01, 0.15),
-                                  savepath=NULL, filename_ext="_transcripts.png", BPPARAM=BiocParallel::SerialParam(), ...){
+                                  arrow_colors=c("#7CAE00", "#00BFC4"), extension_factors=c(0.015, 0.15),
+                                  savepath=NULL, filename_ext="_transcripts.png", add_to_table=F, BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
   assertthat::assert_that(methods::is(gtf, "character") && file.exists(gtf) || methods::is(gtf, "GRanges"), msg = "Invalid gtf filepath or object. Must be either a filepath to a gtf file or a previously created granges object.")
   assertthat::assert_that(!missing(genome), msg = "Please specify a UCSC genome identifier in `genome` (e.g. 'hg38', 'mm10', 'danRer11', etc.). Can also be NULL to skip ideogram track generation.")
@@ -630,6 +682,7 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
   assertthat::assert_that(is.null(savepath)||methods::is(savepath,"character"), msg = "The provided savepath must be of type character or NULL.")
   assertthat::assert_that(methods::is(filename_ext, "character"), msg = "The provided filename_ext must be of type character." )
   assertthat::assert_that(endsWith(filename_ext, "png")||endsWith(filename_ext, "pdf")||endsWith(filename_ext, "jpg")||endsWith(filename_ext, "jpeg"), msg = "The provided filename ending is not valid.")
+  assertthat::assert_that(isFALSE(add_to_table)||(is.character(add_to_table)&&length(add_to_table==1)), msg = "The provided add_to_table must a character or FALSE." )
   assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(length(dturtle$sig_gene)>0, msg = "The provided dturtle object does not contain any significant gene. Maybe try to rerun the pipeline with more relaxes thresholds.")
@@ -810,7 +863,23 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
     plot_list <- unlist(plot_list)
   }
 
-  return(stats::setNames(plot_list, valid_genes))
+  ret <- stats::setNames(plot_list, valid_genes)
+
+  if(!is.null(savepath) && !isFALSE(add_to_table)){
+    if(is.null(dturtle$dtu_table)){
+      warning("Could not add_to_table, as the `dtu_table` fata frame is missing. Please run `create_dtu_table()` beforehand.")
+      return(ret)
+    }else{
+      if(!any(names(ret) %in% rownames(dturtle$dtu_table))){
+        message("Add_to_table failed, none of the genes could be found in the table.")
+        return(ret)
+      }
+      dturtle$dtu_table[[add_to_table]] <- ""
+      dturtle$dtu_table[names(ret), add_to_table] <- ret
+      return(dturtle)
+    }
+  }
+  return(ret)
 }
 
 
@@ -916,14 +985,26 @@ get_html_header <- function(){
 
     .header img
     {
-    position: absolute;
-    height: 75px;
-    left: 75;
+    float: left;
+    max-width: 25%;
+    min-width: 150px;
     }
 
     .header h2
     {
     font-weight: 900;
+    margin: auto;
+    }
+
+    .header h4
+    {
+    margin: auto;
+    }
+
+    .header .txt
+    {
+    display: flow-root;
+    padding-right: 15%;
     }
   }
     </style>

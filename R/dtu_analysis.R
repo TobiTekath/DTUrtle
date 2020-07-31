@@ -22,7 +22,7 @@
 #' @inheritDotParams tximport::tximport -files -type
 #'
 #' @return - For bulk data: A combined count matrix for all specified samples.
-#' - For single-cell data (`type='alevin'`): A list of count matrices per sample. Should be combined and optionally added to a Seurat object with [combine_to_matrix()].
+#' - For single-cell data: A list of count matrices per sample. Should be combined and optionally added to a Seurat object with [combine_to_matrix()].
 #' @family DTUrtle
 #' @export
 #' @seealso Please see [import_gtf()], [move_columns_to_front()] and [one_to_one_mapping()] to help with tx2gene creation. See also [combine_to_matrix()], when output is a list of single-cell runs.
@@ -83,14 +83,14 @@ import_counts <- function(files, type, ...){
 
 #' Combine sparse matrices.
 #'
-#' Combine list of sparse transcription count matrices. Presumably coming from [import_counts()] with single-cell data.
+#' Combine list of sparse transcription count matrices. Presumably coming from [import_counts()] in conjunction with single-cell data.
 #'
 #' This function adds a cellname extension if necessary.
 #' Can optionally add the combined matrix to a existing Seurat object (keeping the cellname extension of the object and matching the cells).
 #' Also removes overall non expressed features.
 #'
 #' @param tx_list List of sparse transcription count matrices, as returned by [import_counts()] for single-cell data.
-#' @param cell_extensions Optional list of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'.
+#' @param cell_extensions Optional vector of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'. Defaults to an increasing integer per sample.
 #' @param seurat_obj Optional seurat object, where the combined matrix is added as an assay. This has the advantage, that the cells are matched and subsetted if necessary. Currently only Seurat 3 objects are supported.
 #' @param tx2gene Optional tx2gene or metadata data frame, can only be used in conjunction with a seurat object. Metadata is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the `tx_list` objects must be used.
 #' @param assay_name If the combined matrix should be added to an existing Seurat object, the name of the assay can be specified here.
@@ -211,7 +211,6 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 }
 
 
-#TODO: Specify predefined strategies!
 #' Main DRIMSeq results
 #'
 #' Compute the main DRIMSeq results.
@@ -227,22 +226,22 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #' @param cond_col Name of the column in `pd`, where the comparison groups/conditions are defined. If more than 2 levels/groups are present, the groups that should be used must be specified in `cond_levels`.
 #' @param cond_levels Define two levels/groups of `cond_col`, that should be compared. The order of the levels states the comparison formula (i.e. `cond_col[1]-cond_col[2]`).
 #' @param filtering_strategy Define the filtering strategy to reduce and noise and increase statistical power.
-#' - `'bulk'`: Predefined strategy for bulk RNAseq data. (default)
-#' - `'sc'`: Predefined strategy for single-cell RNAseq data.
-#' - `'own'`: Can be used to specify a user-defined strategy via the `...` argument (using the parameters of `dmFilter()`).
+#' - `'bulk'`: Predefined strategy for bulk RNAseq data (default): Features must contribute at least 5% of the total expression in at least 50% of the samples of the smallest group. Additionally the total gene expression must be 5 or more for at least 50% of the samples of the smallest group.
+#' - `'sc'`: Predefined strategy for single-cell RNAseq data: Features must contribute at least 5% of the total expression in at least 5% of the cells of the smallest group.
+#' - `'own'`: Can be used to specify a user-defined strategy via the `...` argument (using the parameters of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter}}).
 #' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
 #' @param force_dense If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying `TRUE`. Increases memory usage, but also reduces runtime drastically (currently).
 #' @param carry_over_metadata Specify if compatible additional columns of `tx2gene` shall be carried over to the gene and transcript level `meta_table` in the results. Columns with `NA` values are not carried over.
-#' @param ... If `filtering_strategy='own'` specify the wished parameters of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter}} here.
+#' @inheritDotParams sparseDRIMSeq::dmFilter
 #'
 #' @return `dturtle` object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
 #' - `meta_table_gene`: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0. Can be used to add gene level meta-information for plotting.
 #' - `meta_table_tx`: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0. Can be used to add transcript level meta-information for plotting.
 #' - `meta_table_sample`: Data frame of the provided sample level information (`pd`). Can be used to add sample level meta-information for plotting.
-#' - `drim`: The results of the DRIMSeq statistical computations (`dmTest()`).
-#' - `design`: The design matrix generated from the specified `pd` columns.
+#' - `drim`: Results of the DRIMSeq statistical computations (`dmTest()`).
+#' - `design`: Design matrix generated from the specified `pd` columns.
 #' - `group`: Vector which sample/cell belongs to which comparison group.
-#' - `used_filtering_options`: Vector of the used filtering options.
+#' - `used_filtering_options`: List of the used filtering options.
 #'
 #' @family DTUrtle
 #' @export
@@ -298,27 +297,23 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
         counts <- counts[ , !(colnames(counts) %in% exclude)]
     }
     message("\nProceed with cells/samples: ",paste0(utils::capture.output(table(samp$condition)), collapse = "\n"))
+    assertthat::assert_that(length(unique(samp$condition))==2, msg="No two sample groups left for comparison. Aborting!")
 
-    #TODO: Reevaluate!
     message("\nFiltering...\n")
-    total_sample <- round(nrow(samp)*0.8)
-    smallest_group <- min(min(table(samp$condition)), 10)
     filter_opt_list <- list("min_samps_gene_expr" = 0,
                              "min_samps_feature_expr" = 0, "min_samps_feature_prop" = 0,
                              "min_gene_expr" = 0, "min_feature_expr" = 0, "min_feature_prop" = 0,
                              "run_gene_twice" = FALSE)
     switch(filtering_strategy,
     sc={
-
+        smallest_group <- min(table(samp$condition))*0.05
         filter_opt_list <- utils::modifyList(filter_opt_list, list("min_samps_feature_prop" = smallest_group,
-                                      "min_feature_prop" = 0.1, "run_gene_twice" = T))
+                                      "min_feature_prop" = 0.05, "run_gene_twice" = T))
     },
     bulk={
-
+        smallest_group <- min(table(samp$condition))*0.5
         filter_opt_list <- utils::modifyList(filter_opt_list,
-                                      list("min_samps_feature_expr" = smallest_group,
-                                           "min_feature_expr" = 1,
-                                           "min_samps_gene_expr" = total_sample,
+                                      list("min_samps_gene_expr" = smallest_group,
                                            "min_gene_expr" = 5,
                                            "min_samps_feature_prop" = smallest_group,
                                            "min_feature_prop" = 0.05, "run_gene_twice" = T))
@@ -385,15 +380,15 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 #TODO: implement Noise - IQR filtering
 #' Posthoc filtering and two-staged statistical tests
 #'
-#' Perform optional posthoc filtering and run two-staged statistical tests.
+#' Perform optional post-hoc filtering and run two-staged statistical tests.
 #'
-#' The posthoc filter excludes transcripts, which standard deviation of the proportion per cell/sample is below the threshold.
+#' The post-hoc filter excludes transcripts, which standard deviation of the proportion per cell/sample is below the threshold.
 #' The two-staged statistical test performed by stageR first determines if any of the transcripts of a gene is showing signs of DTU.
 #' The second step tries to identify on singular transcript level the significantly different transcripts.
 #'
 #' @param dturtle Result object of [run_drimseq()]. Must be of class `dturtle`.
 #' @param ofdr Overall false discovery rate (OFDR) threshold.
-#' @param posthoc Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing posthoc filtering. To disbale poshoc filtering 0 or `FALSE` can be provided.
+#' @param posthoc Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing post-hoc filtering. To disbale poshoc filtering 0 or `FALSE` can be provided.
 #' @return An extended `dturtle` object. Additional slots include:
 #' - `sig_gene`: A character vector of all genes where the first stageR step was significant. Basically the significant genes, that showed signs of DTU.
 #' - `sig_tx` : A named character vector of transcripts where the second stageR step was significant. Basically the significant transcripts of the significant genes.

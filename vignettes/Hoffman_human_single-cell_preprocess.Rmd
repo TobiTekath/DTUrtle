@@ -1,10 +1,13 @@
 ---
-title: "Preprocessing of the Hoffman et al. human single-cell RNA-seq data"
+title: "Pre-processing of the Hoffman et al. human single-cell RNA-seq data"
 author: "Tobias Tekath"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
 vignette: >
-  %\VignetteIndexEntry{Preprocessing of the Hoffman et al. human single-cell RNA-seq data}
+  %\VignetteIndexEntry{Pre-processing of the Hoffman et al. human single-cell RNA-seq data}
   %\VignetteBuilder{knitr}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
@@ -17,9 +20,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette exemplifies the preprocessing of **single-cell RNA-seq data for analysis with DTUrtle**. The data used in this vignette is publicly available as *Bioproject PRJNA594939* and the used *FASTQ*-files can be downloaded from [here](https://www.ebi.ac.uk/ena/browser/view/PRJNA594939). The corresponding publication from Hoffman et al. based on this data set can be found [here](https://doi.org/10.1038/s42003-020-0837-0). 
+This vignette exemplifies the pre-processing of **single-cell RNA-seq data for analysis with DTUrtle**. The data used in this vignette is publicly available as *Bioproject PRJNA594939* and the used *FASTQ*-files can be downloaded from [here](https://www.ebi.ac.uk/ena/browser/view/PRJNA594939). The corresponding publication from Hoffman et al. based on this data set can be found [here](https://doi.org/10.1038/s42003-020-0837-0). 
 
-For this vignette we focus on just two of the available single-cell RNA-seq samples:
+For this vignette we focus on two of the available single-cell RNA-seq samples:
 
 - [SAMN13541133](https://www.ebi.ac.uk/ena/browser/view/SAMN13541133) which represents a control sample (18 hour treatment with ethanol (EtOH))
 - [SAMN13541131](https://www.ebi.ac.uk/ena/browser/view/SAMN13541131) which represents a sample after 2 hours of Dexamethasone treatment (Dex2hr)
@@ -29,14 +32,14 @@ The *FASTQ*-files can be directly obtained from ENA, alternatively they are also
 After downloading a **MD5-check** is strongly encouraged.
 
 ### Preparing FASTQ-files
-For this vignette, it is assumed that the *FASTQ*-files mentioned above have been downloaded to a directory called *samples*.
+For this vignette, it is assumed that the *FASTQ*-files mentioned above have been downloaded to a directory called `samples`.
 
-After downloading the *FASTQ*-files, the first step is to rename the files and split them into two files each. This data set was produced using a Illumina SureCell 3' kit, which produces paired end reads (as all current single-cell protocols). For unknown reasons the original two *FASTQ*-files per sample have been appended for / during the upload. More information about the SureCell format can be found [here](https://teichlab.github.io/scg_lib_structs/methods_html/SureCell.html).
+After downloading the *FASTQ*-files, the first step is to rename the files and split them into two files each. This data set was produced using a Illumina SureCell 3' kit, which produces paired end reads (as all current single-cell protocols). For unknown reasons the original two *FASTQ*-files per sample have been appended for / during upload. More information about the SureCell format can be found [here](https://teichlab.github.io/scg_lib_structs/methods_html/SureCell.html).
 
 The read files can be split with the following *bash* commands:
 
 ```{bash eval=FALSE}
-cd 'YOUR_PATH'/samples
+cd $PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/samples
 
 #rename
 mv SRR10669459.fastq.gz sc_EtOH.fastq.gz
@@ -52,7 +55,7 @@ split -l 1215291200 --numeric-suffixes=1 --additional-suffix=.fastq.gz sc_EtOH.f
 split -l 1394785580 --numeric-suffixes=1 --additional-suffix=.fastq.gz sc_Dex2hr.fastq sc_Dex2hr_
 ```
 
-Another drawback of the concatenation of the files is, that the read names do not match between the samples. We also can overcome this with the following *bash* commands:
+Unfortunately, the read names do not directly match between the samples. The downstream tools would refuse to analyze samples without matching read names. We can overcome this with the following *bash* commands:
 
 ```{bash eval=FALSE}
 #create files with matching names
@@ -71,7 +74,7 @@ rm sc_EtOH.fastq.gz
 rm sc_Dex2hr.fastq.gz
 ```
 
-Now there should be four packed *FASTQ*-files present in the folder - two per sample.
+There should be four packed *FASTQ*-files present in the folder - two per sample.
 
 
 ### Determining valid cellular barcodes
@@ -100,7 +103,7 @@ In the publication, only 400 cells of each sample were used in the analysis. For
 Assume you have downloaded and unpacked the mentioned file. Lists of the valid cell barcodes can be created with this *R* code:
 
 ```{r, eval=F}
-setwd("/umi_tools")
+setwd("$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/umi_tools")
 
 #get valid barcodes from raw count table
 raw_expr <- read.table("GSE141834_scRNAseq_rawCounts.txt", header=T, sep="\t")
@@ -134,6 +137,7 @@ umi_tools extract --filter-cell-barcode --error-correct-cell --whitelist=dex2hr_
 
 The `umi_tools` folder should now contain four gzipped fastq files, two for each sample. 
 
+---
 
 We plan to use `Alevin` for transcript level quantification, which does not support the Illumina SureCell protocol by default. We can overcome this limitation by slightly editing the new R1 files with some *bash* code:
 
@@ -157,7 +161,7 @@ There should now be an `altered` R1 *FASTQ* file per sample, together with an `e
 
 To run the `Alevin` quantification, we first need a transcriptomic index. For this example, we will use the [transcript sequences](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.transcripts.fa.gz) and [comprehensive gene annotation](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.gtf.gz) from [Gencode](https://www.gencodegenes.org/) [Version 34](https://www.gencodegenes.org/human/release_34.html). 
 
-Assume you have downloaded and unpacked the above mentioned files. To build the actual index we run this *bash* code:
+Assume you have downloaded and unpacked the above mentioned files in the analysis root directory. To build the actual index we run this *bash* code:
 
 ```{bash, eval=F}
 #installation in conda evironment
@@ -173,14 +177,14 @@ salmon index -t ../gencode.v34.transcripts.fa --gencode -p 4 -i index
 
 To perform the actual quantification, we need one last file specifying the transcript to gene mapping. `Alevin`, unlike `Salmon`, aggregates the quantification counts to gene level by default. For our DTU analysis we require transcript level counts, so we will only provide a `transcript_id` to `transcript_name` mapping. This could also be a `transcript_id` to `transcript_id` mapping file (so each id mapping to itself).
 
-We can create such a mapping file with the help of the `DTUrtle` package in **R**:
+We can create such a mapping file with the help of the `DTUrtle` package in *R*:
 
 ```{r, eval=F}
 library(DTUrtle)
-setwd("../alevin")
+setwd("$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/alevin")
 
 #import information from the GTF file
-tx2gene <- import_gtf(gtf_file = "gencode.v34.annotation.gtf")
+tx2gene <- import_gtf(gtf_file = "../gencode.v34.annotation.gtf")
 
   ##optional for later name consistency:
   tx2gene$gene_name <- one_to_one_mapping(name = tx2gene$gene_name, 
@@ -194,7 +198,7 @@ write.table(x = tx2gene[,c("transcript_id", "transcript_name")],
             row.names = F, col.names = F)
 ```
 
-The actual quantification can be performed in **bash** with:
+The actual quantification can be performed in *bash* with:
 
 ```{bash, eval=F}
 salmon alevin -l A -i index/ -1 ../umi_tools/sc_EtOH_1_altered.fastq.gz -2 ../umi_tools/sc_EtOH_2_extracted.fastq.gz --keepCBFraction 1 --end 5 --umiLength 8 --barcodeLength 18 --dumpFeatures --tgMap txmap.tsv -o sc_EtOH

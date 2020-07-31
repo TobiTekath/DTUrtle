@@ -2,8 +2,11 @@ pandoc: 2.3.1
 pkgdown: 1.5.1
 pkgdown_sha: ~
 articles:
+  Hoffman_human_bulk_analysis: Hoffman_human_bulk_analysis.html
+  Hoffman_human_bulk_preprocess: Hoffman_human_bulk_preprocess.html
+  Hoffman_human_single-cell_analysis: Hoffman_human_single-cell_analysis.html
   Hoffman_human_single-cell_preprocess: Hoffman_human_single-cell_preprocess.html
-last_built: 2020-07-13T13:01Z
+last_built: 2020-07-31T08:28Z
 urls:
   reference: https://tobitekath.github.io/DTUrtle/reference
   article: https://tobitekath.github.io/DTUrtle/articles

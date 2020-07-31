@@ -51,7 +51,13 @@ navbar:
       href: reference/index.html
     - text: Vignettes
       menu:
-      - text: Human single-cell RNA-seq preprocessing
+      - text: Human single-cell RNA-seq pre-processing
         href: articles/Hoffman_human_single-cell_preprocess.html
+      - text: Human single-cell RNA-seq analysis
+        href: articles/Hoffman_human_single-cell_analysis.html
+      - text: Human bulk RNA-seq pre-processing
+        href: articles/Hoffman_human_bulk_preprocess.html
+      - text: Human bulk RNA-seq analysis
+        href: articles/Hoffman_human_bulk_analysis.html
     - text: News
       href: news/index.html

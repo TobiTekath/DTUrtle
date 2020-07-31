@@ -37,9 +37,9 @@ run_drimseq(
 
 \item{filtering_strategy}{Define the filtering strategy to reduce and noise and increase statistical power.
 \itemize{
-\item \code{'bulk'}: Predefined strategy for bulk RNAseq data. (default)
-\item \code{'sc'}: Predefined strategy for single-cell RNAseq data.
-\item \code{'own'}: Can be used to specify a user-defined strategy via the \code{...} argument (using the parameters of \code{dmFilter()}).
+\item \code{'bulk'}: Predefined strategy for bulk RNAseq data (default): Features must contribute at least 5\% of the total expression in at least 50\% of the samples of the smallest group. Additionally the total gene expression must be 5 or more for at least 50\% of the samples of the smallest group.
+\item \code{'sc'}: Predefined strategy for single-cell RNAseq data: Features must contribute at least 5\% of the total expression in at least 5\% of the cells of the smallest group.
+\item \code{'own'}: Can be used to specify a user-defined strategy via the \code{...} argument (using the parameters of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter}}).
 }}
 
 \item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
@@ -48,7 +48,12 @@ run_drimseq(
 
 \item{carry_over_metadata}{Specify if compatible additional columns of \code{tx2gene} shall be carried over to the gene and transcript level \code{meta_table} in the results. Columns with \code{NA} values are not carried over.}
 
-\item{...}{If \code{filtering_strategy='own'} specify the wished parameters of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter}} here.}
+\item{...}{
+  Arguments passed on to \code{\link[sparseDRIMSeq:dmFilter]{sparseDRIMSeq::dmFilter}}
+  \describe{
+    \item{\code{x}}{\code{\linkS4class{dmDSdata}} or \code{\linkS4class{dmSQTLdata}}
+object.}
+  }}
 }
 \value{
 \code{dturtle} object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
@@ -56,10 +61,10 @@ run_drimseq(
 \item \code{meta_table_gene}: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0. Can be used to add gene level meta-information for plotting.
 \item \code{meta_table_tx}: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0. Can be used to add transcript level meta-information for plotting.
 \item \code{meta_table_sample}: Data frame of the provided sample level information (\code{pd}). Can be used to add sample level meta-information for plotting.
-\item \code{drim}: The results of the DRIMSeq statistical computations (\code{dmTest()}).
-\item \code{design}: The design matrix generated from the specified \code{pd} columns.
+\item \code{drim}: Results of the DRIMSeq statistical computations (\code{dmTest()}).
+\item \code{design}: Design matrix generated from the specified \code{pd} columns.
 \item \code{group}: Vector which sample/cell belongs to which comparison group.
-\item \code{used_filtering_options}: Vector of the used filtering options.
+\item \code{used_filtering_options}: List of the used filtering options.
 }
 }
 \description{

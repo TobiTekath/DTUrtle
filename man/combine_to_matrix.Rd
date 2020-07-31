@@ -15,7 +15,7 @@ combine_to_matrix(
 \arguments{
 \item{tx_list}{List of sparse transcription count matrices, as returned by \code{\link[=import_counts]{import_counts()}} for single-cell data.}
 
-\item{cell_extensions}{Optional list of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'.}
+\item{cell_extensions}{Optional vector of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'. Defaults to an increasing integer per sample.}
 
 \item{seurat_obj}{Optional seurat object, where the combined matrix is added as an assay. This has the advantage, that the cells are matched and subsetted if necessary. Currently only Seurat 3 objects are supported.}
 
@@ -27,7 +27,7 @@ combine_to_matrix(
 Either a combined sparse transcription count matrix or a seurat object which the combined sparse transcription count matrix as an assay.
 }
 \description{
-Combine list of sparse transcription count matrices. Presumably coming from \code{\link[=import_counts]{import_counts()}} with single-cell data.
+Combine list of sparse transcription count matrices. Presumably coming from \code{\link[=import_counts]{import_counts()}} in conjunction with single-cell data.
 }
 \details{
 This function adds a cellname extension if necessary.

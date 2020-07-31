@@ -97,7 +97,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq preprocessing</a>
+      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_analysis.html">Human bulk RNA-seq analysis</a>
     </li>
   </ul>
 </li>
@@ -145,9 +154,10 @@
   <span class='kw'>reduce_introns_min_size</span> <span class='kw'>=</span> <span class='fl'>50</span>,
   <span class='kw'>fontsize_vec</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>10</span>, <span class='fl'>1.1</span>, <span class='fl'>0.6</span>),
   <span class='kw'>arrow_colors</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"#7CAE00"</span>, <span class='st'>"#00BFC4"</span>),
-  <span class='kw'>extension_factors</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.01</span>, <span class='fl'>0.15</span>),
+  <span class='kw'>extension_factors</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.015</span>, <span class='fl'>0.15</span>),
   <span class='kw'>savepath</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>filename_ext</span> <span class='kw'>=</span> <span class='st'>"_transcripts.png"</span>,
+  <span class='kw'>add_to_table</span> <span class='kw'>=</span> <span class='no'>F</span>,
   <span class='kw'>BPPARAM</span> <span class='kw'>=</span> <span class='kw pkg'>BiocParallel</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html'>SerialParam</a></span>(),
   <span class='no'>...</span>
 )</pre>
@@ -206,6 +216,10 @@
     <tr>
       <th>filename_ext</th>
       <td><p>Optionally specify a file name extension here, which also defines the save image format. The file name will be 'gene_name+extension'.</p></td>
+    </tr>
+    <tr>
+      <th>add_to_table</th>
+      <td><p>If a <code>savepath</code> is provided, add the filepaths of the created plots to the corresponding entries in <code>dtu_table</code>. The name of the column that shall be created can be specified here.</p></td>
     </tr>
     <tr>
       <th>BPPARAM</th>

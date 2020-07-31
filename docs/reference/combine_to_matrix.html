@@ -47,7 +47,7 @@
 
 
 <meta property="og:title" content="Combine sparse matrices. — combine_to_matrix" />
-<meta property="og:description" content="Combine list of sparse transcription count matrices. Presumably coming from import_counts() with single-cell data." />
+<meta property="og:description" content="Combine list of sparse transcription count matrices. Presumably coming from import_counts() in conjunction with single-cell data." />
 <meta property="og:image" content="https://tobitekath.github.io/DTUrtle/logo.svg" />
 
 
@@ -97,7 +97,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq preprocessing</a>
+      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_analysis.html">Human bulk RNA-seq analysis</a>
     </li>
   </ul>
 </li>
@@ -131,7 +140,7 @@
     </div>
 
     <div class="ref-description">
-    <p>Combine list of sparse transcription count matrices. Presumably coming from <code><a href='import_counts.html'>import_counts()</a></code> with single-cell data.</p>
+    <p>Combine list of sparse transcription count matrices. Presumably coming from <code><a href='import_counts.html'>import_counts()</a></code> in conjunction with single-cell data.</p>
     </div>
 
     <pre class="usage"><span class='fu'>combine_to_matrix</span>(
@@ -151,7 +160,7 @@
     </tr>
     <tr>
       <th>cell_extensions</th>
-      <td><p>Optional list of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'.</p></td>
+      <td><p>Optional vector of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'. Defaults to an increasing integer per sample.</p></td>
     </tr>
     <tr>
       <th>seurat_obj</th>

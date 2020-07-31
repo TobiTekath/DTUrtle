@@ -55,7 +55,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq preprocessing</a>
+      <a href="articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
+    </li>
+    <li>
+      <a href="articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="articles/Hoffman_human_bulk_analysis.html">Human bulk RNA-seq analysis</a>
     </li>
   </ul>
 </li>
@@ -142,7 +151,7 @@ devtools::install_github("TobiTekath/DTUrtle")</pre></div>
 <span class="no">cts</span> <span class="kw">&lt;-</span> <span class="fu"><a href="reference/import_counts.html">import_counts</a></span>(<span class="kw">files</span> <span class="kw">=</span> <span class="no">files</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">"Salmon"</span>)
 
 <span class="co">##for single-cell data only:</span>
-    <span class="co">#import counts returned a list of matrices -&gt; combine them to one matrix</span>
+    <span class="co">#import_counts returned a list of matrices -&gt; combine them to one matrix</span>
     <span class="no">cts</span> <span class="kw">&lt;-</span> <span class="fu"><a href="reference/combine_to_matrix.html">combine_to_matrix</a></span>(<span class="kw">tx_list</span> <span class="kw">=</span> <span class="no">cts</span>)
 
 <span class="co">#create a sample data sheet, specifying which sample / cell belongs to which group</span>
@@ -172,34 +181,29 @@ devtools::install_github("TobiTekath/DTUrtle")</pre></div>
     <span class="co">## View results data frame</span>
     <span class="fu"><a href="https://rdrr.io/r/utils/View.html">View</a></span>(<span class="no">dturtle</span>$<span class="no">dtu_table</span>)
 
-<span class="co">#plot and save the results</span>
+<span class="co">#change to results folder</span>
 <span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span>(<span class="st">"my_results_folder"</span>)
 
-<span class="no">barprop_plot_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="reference/plot_proportion_barplot.html">plot_proportion_barplot</a></span>(<span class="kw">dturtle</span> <span class="kw">=</span> <span class="no">dturtle</span>,
-                                             <span class="kw">savepath</span> <span class="kw">=</span> <span class="st">"images"</span>,
-                                             <span class="kw">BPPARAM</span> <span class="kw">=</span> <span class="no">biocpar</span>)
-<span class="no">pheatprop_plot_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="reference/plot_proportion_pheatmap.html">plot_proportion_pheatmap</a></span>(<span class="kw">dturtle</span> <span class="kw">=</span> <span class="no">dturtle</span>,
-                                                <span class="kw">savepath</span> <span class="kw">=</span> <span class="st">"images"</span>,
-                                                <span class="kw">include_expression</span> <span class="kw">=</span> <span class="no">T</span>,
-                                                <span class="kw">BPPARAM</span> <span class="kw">=</span> <span class="no">biocpar</span>)
-<span class="no">transcriptview_plot_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="reference/plot_transcripts_view.html">plot_transcripts_view</a></span>(<span class="kw">dturtle</span> <span class="kw">=</span> <span class="no">dturtle</span>,
-                                                  <span class="kw">gtf</span> <span class="kw">=</span> <span class="st">"path_to_your_gtf_file.gtf"</span>,
-                                                  <span class="kw">genome</span> <span class="kw">=</span> <span class="st">'hg38'</span>,
-                                                  <span class="kw">one_to_one</span> <span class="kw">=</span> <span class="no">T</span>,
-                                                  <span class="kw">savepath</span> <span class="kw">=</span> <span class="st">"images"</span>,
-                                                  <span class="kw">BPPARAM</span> <span class="kw">=</span> <span class="no">biocpar</span>)
-
-<span class="co">#add relative filepaths of plots to results data frame</span>
-<span class="no">dturtle</span>$<span class="no">dtu_table</span>$<span class="no">barplot</span> <span class="kw">&lt;-</span> <span class="no">barprop_plot_list</span>[<span class="fu"><a href="https://rdrr.io/r/base/match.html">match</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(<span class="no">dturtle</span>$<span class="no">dtu_table</span>),
-                                                     <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span>(<span class="no">barprop_plot_list</span>))]
-<span class="no">dturtle</span>$<span class="no">dtu_table</span>$<span class="no">pheatmap</span> <span class="kw">&lt;-</span> <span class="no">pheatprop_plot_list</span>[<span class="fu"><a href="https://rdrr.io/r/base/match.html">match</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(<span class="no">dturtle</span>$<span class="no">dtu_table</span>),
-                                                        <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span>(<span class="no">pheatprop_plot_list</span>))]
-<span class="no">dturtle</span>$<span class="no">dtu_table</span>$<span class="no">transcript_view</span> <span class="kw">&lt;-</span> <span class="no">transcriptview_plot_list</span>[<span class="fu"><a href="https://rdrr.io/r/base/match.html">match</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(<span class="no">dturtle</span>$<span class="no">dtu_table</span>),
-                                                                    <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span>(<span class="no">transcriptview_plot_list</span>))]
-
+<span class="co">#create plots, save them to disk and link them in the `dtu_table`.</span>
+<span class="no">dturtle</span> <span class="kw">&lt;-</span> <span class="fu"><a href="reference/plot_proportion_barplot.html">plot_proportion_barplot</a></span>(<span class="kw">dturtle</span> <span class="kw">=</span> <span class="no">dturtle</span>,
+                                   <span class="kw">savepath</span> <span class="kw">=</span> <span class="st">"images"</span>,
+                                   <span class="kw">add_to_table</span> <span class="kw">=</span> <span class="st">"barplot"</span>,
+                                   <span class="kw">BPPARAM</span> <span class="kw">=</span> <span class="no">biocpar</span>)
+<span class="no">dturtle</span> <span class="kw">&lt;-</span> <span class="fu"><a href="reference/plot_proportion_pheatmap.html">plot_proportion_pheatmap</a></span>(<span class="kw">dturtle</span> <span class="kw">=</span> <span class="no">dturtle</span>,
+                                    <span class="kw">savepath</span> <span class="kw">=</span> <span class="st">"images"</span>,
+                                    <span class="kw">include_expression</span> <span class="kw">=</span> <span class="no">T</span>,
+                                    <span class="kw">add_to_table</span> <span class="kw">=</span> <span class="st">"pheatmap"</span>,
+                                    <span class="kw">BPPARAM</span> <span class="kw">=</span> <span class="no">biocpar</span>)
+<span class="no">dturtle</span> <span class="kw">&lt;-</span> <span class="fu"><a href="reference/plot_transcripts_view.html">plot_transcripts_view</a></span>(<span class="kw">dturtle</span> <span class="kw">=</span> <span class="no">dturtle</span>,
+                                 <span class="kw">gtf</span> <span class="kw">=</span> <span class="st">"path_to_your_gtf_file.gtf"</span>,
+                                 <span class="kw">genome</span> <span class="kw">=</span> <span class="st">'hg38'</span>,
+                                 <span class="kw">one_to_one</span> <span class="kw">=</span> <span class="no">T</span>,
+                                 <span class="kw">savepath</span> <span class="kw">=</span> <span class="st">"images"</span>,
+                                 <span class="kw">add_to_table</span> <span class="kw">=</span> <span class="st">"transcript_view"</span>,
+                                 <span class="kw">BPPARAM</span> <span class="kw">=</span> <span class="no">biocpar</span>)
 
 <span class="co">#create interactive HTML-table from results data frame</span>
-    <span class="co">#specify colorful column formatters</span>
+    <span class="co">#optional: specify colorful column formatters</span>
     <span class="no">column_formatter_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
       <span class="st">"gene_qval"</span> <span class="kw">=</span> <span class="fu"><a href="reference/table_pval_tile.html">table_pval_tile</a></span>(<span class="st">"white"</span>, <span class="st">"orange"</span>, <span class="kw">digits</span> <span class="kw">=</span> <span class="fl">3</span>),
       <span class="st">"min_tx_qval"</span> <span class="kw">=</span> <span class="fu"><a href="reference/table_pval_tile.html">table_pval_tile</a></span>(<span class="st">"white"</span>, <span class="st">"orange"</span>, <span class="kw">digits</span> <span class="kw">=</span> <span class="fl">3</span>),

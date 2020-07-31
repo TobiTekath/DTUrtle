@@ -98,7 +98,16 @@ Also automatically links columns of plot names, to be viewable in the table. Cur
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq preprocessing</a>
+      <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Hoffman_human_bulk_analysis.html">Human bulk RNA-seq analysis</a>
     </li>
   </ul>
 </li>
@@ -143,6 +152,7 @@ Also automatically links columns of plot names, to be viewable in the table. Cur
   <span class='kw'>order_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>num_digits</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>num_digits_format</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>min_page_length</span> <span class='kw'>=</span> <span class='fl'>25</span>,
   <span class='kw'>savepath</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>create_table_image</span> <span class='kw'>=</span> <span class='no'>F</span>,
   <span class='no'>...</span>
@@ -166,7 +176,7 @@ The formatter functions are either from this package like <code><a href='table_p
     </tr>
     <tr>
       <th>order_by</th>
-      <td><p>One or multiple columns to order the table by. Must be a vector of column names, descending order can be achived by prepending a <code>-</code> (e.g. <code><a href='https://rdrr.io/r/base/c.html'>c("-my_col_name")</a></code>).</p></td>
+      <td><p>One or multiple columns to order the table by. Must be a vector of column names, descending order can be achived by prepending a '-' (e.g. <code><a href='https://rdrr.io/r/base/c.html'>c("-my_col_name")</a></code>).</p></td>
     </tr>
     <tr>
       <th>num_digits</th>
@@ -176,6 +186,10 @@ The formatter functions are either from this package like <code><a href='table_p
       <th>num_digits_format</th>
       <td><p>Digit format string, as in <code><a href='https://rdrr.io/r/base/formatc.html'>formatC</a></code>. These format string are used in numerical columns formatting if <code>num_digits</code> is provided.
 Can be a single format string to apply same format to all numerical columns, or a format string for each numerical column (in their order).</p></td>
+    </tr>
+    <tr>
+      <th>min_page_length</th>
+      <td><p>Specify the minimal number of items, available to display in the table. Will be used as default number of items.</p></td>
     </tr>
     <tr>
       <th>savepath</th>
