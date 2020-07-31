@@ -184,7 +184,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
                       ", sum(dturtle$group == levels(dturtle$group)[2]) ,")")
   header_string <- paste0("<div class='header'>",
     sprintf("<img src=\"%s\" />", logo_uri),
-    "<div class='txt'><h2 align='center'>",
+    "<div class='txt'><h2 align='center' data-toc-skip>",
     tbl_title,
     "</h2>",
     "<h4 align='center'>Significant differential genes: ",
@@ -262,8 +262,8 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
                             "addStyleString('.dt-buttons { margin-left: 50px;}');",
                             "addStyleString('.header img { float: left; max-width: 25%; min-width: 150px;}');",
                             "addStyleString('.header .txt { display: flow-root; padding-right: 15%;}');",
-                            "addStyleString('.header h2 { font-weight: 900; margin: auto;}');",
-                            "addStyleString('.header h4 { margin: auto;}');",
+                            "addStyleString('.header h2 { font-weight: 900; margin: auto; padding: initial;}');",
+                            "addStyleString('.header h4 { margin: auto; padding: initial;}');",
                             "addStyleString('body { font-size: 120%;}');",
                           "}")))
 
@@ -994,11 +994,13 @@ get_html_header <- function(){
     {
     font-weight: 900;
     margin: auto;
+    padding: initial;
     }
 
     .header h4
     {
     margin: auto;
+    padding: initial;
     }
 
     .header .txt

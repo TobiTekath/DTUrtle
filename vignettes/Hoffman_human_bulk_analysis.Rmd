@@ -373,6 +373,8 @@ plot_dtu_table(dturtle = dturtle, savepath = "my_results.html",
 >
 > <strong>Note:</strong> ️As seen above, the paths to the plots are relative. Please make sure that the saving directory in `plot_dtu_table` is correctly set and the plots are reachable from that directory with the given path.
 >
+> <strong>The links in the following example are just for demonstration purposes and do not work!</strong> 
+>
 > </div>
 
 
