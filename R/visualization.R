@@ -187,7 +187,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
     "<div class='txt'><h2 align='center' data-toc-skip>",
     tbl_title,
     "</h2>",
-    "<h4 align='center'>Significant differential genes: ",
+    "<h4 align='center' data-toc-skip>Significant differential genes: ",
     length(dturtle$sig_gene),"<br>Significant differential transcripts: ",
     length(dturtle$sig_tx),
     "</h4></div></div>")

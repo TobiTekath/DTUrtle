@@ -31,7 +31,7 @@ The *FASTQ*-files can be directly obtained from ENA, alternatively they are also
 
 After downloading a **MD5-check** is strongly encouraged.
 
-### Preparing FASTQ-files
+## Preparing FASTQ-files
 For this vignette, it is assumed that the *FASTQ*-files mentioned above have been downloaded to a directory called `samples`.
 
 After downloading the *FASTQ*-files, the first step is to rename the files and split them into two files each. This data set was produced using a Illumina SureCell 3' kit, which produces paired end reads (as all current single-cell protocols). For unknown reasons the original two *FASTQ*-files per sample have been appended for / during upload. More information about the SureCell format can be found [here](https://teichlab.github.io/scg_lib_structs/methods_html/SureCell.html).
@@ -77,7 +77,7 @@ rm sc_Dex2hr.fastq.gz
 There should be four packed *FASTQ*-files present in the folder - two per sample.
 
 
-### Determining valid cellular barcodes
+## Determining valid cellular barcodes
 As with most single-cell data, the first analysis step is the determination of valid cellular barcodes. As the Illumina SureCell 3' protocol was used, the R1 reads only contain barcode and UMI information.
 
 To error-correct the cell barcodes we use `umi_tools` (Version 1.0.1).  The read data was created using the Illumina SureCell protocol, which uses a quite complex barcode / UMI pattern. Luckily, `umi_tools` can process arbitrary complex barcode / UMI structures via regular expressions. We allow correction of barcodes with up to one error and allow for an edit distance of 1 in each linker segment with the following *bash* code:
@@ -124,7 +124,7 @@ write.table(dex2hr_white_sub, "dex2hr_whitelist_sub.tsv", sep = "\t", quote = F,
 
 The subsetted *TSV* files contain only the 400 valid barcodes per cell, together with the barcodes that shall be corrected.
 
-### Extract and correct barcodes & UMIs
+## Extract and correct barcodes & UMIs
 
 The actual barcode extraction and correction is again performed with `umi_tools`. In this process, only the reads of the R2 files are kept, that had a matching barcode in the R1 file. The barcode and UMI sequence are added to the sequence identifier line of each read in the new files. The not matching parts of the R1 reads are kept in the new R1 file. The `umi_tools` *bash* command looks like this:
 
@@ -155,7 +155,7 @@ With this command, we copied the barcode and UMI sequence of each reads sequence
 
 There should now be an `altered` R1 *FASTQ* file per sample, together with an `extracted` R2 *FASTQ* file. 
 
-### Quantification with Alevin
+## Quantification with Alevin
 
 `Alevin` is the single-cell counterpart of `Salmon`, one of the standard tools for bulk RNA-seq quantification. It is also integrated into the `Salmon` (Version 1.1.0) package. As most of the available transcript quantifiers, `Alevin/Salmon` do not perform a standard genomic alignment, but perform a quasi-mapping directly to the transcriptome. Reads, that could be originating from multiple transcript isoforms, are assigned to equivalence classes, where actual counts are later derived by expectation maximization algorithms.
 

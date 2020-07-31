@@ -6,7 +6,7 @@ output:
   rmarkdown::html_vignette:
     df_print: paged
     toc: true
-    toc_depth: 4
+    toc_depth: 3
 vignette: >
   %\VignetteIndexEntry{Analysis of the Hoffman et al. human bulk RNA-seq data}
   %\VignetteBuilder{knitr}
@@ -32,12 +32,10 @@ This vignette exemplifies the analysis of **bulk RNA-seq data with DTUrtle**. Th
 
 ---
 
-## DTUrtle analysis
-
 The following code shows an example of an DTUrtle workflow. Assume we have performed the preprocessing as described [here](https://tobitekath.github.io/DTUrtle/articles/Hoffman_human_bulk_preprocess.html) and the R working directory is a newly created folder called `dtu_results`.
 
 
-### Setup
+## Setup
 
 Load the DTUrtle package and set the BiocParallel parameter. It is recommended to perform computations in parallel, if possible. 
 
@@ -47,11 +45,11 @@ library(DTUrtle)
 biocpar <- BiocParallel::MulticoreParam(10)
 ```
 
-### Import and format data
+## Import and format data
 
 We want to start by reading in our quantification counts, as well as a file specifying which transcript ID or name belongs to which gene ID or name.
 
-#### Importing and processing GTF annotation (tx2gene)
+### Importing and processing GTF annotation (tx2gene)
 
 To get this transcript to gene (`tx2gene`) mapping, we will utilize the already present Gencode annotation file `gencode.v34.annotation.gtf`. The `import_gtf()` function utilizes the a `rtracklayer` package and returns a transcript-level filtered version of the available data.
 
@@ -97,7 +95,7 @@ This concludes the tx2gene formatting.
 
 ---
 
-#### Reading in quantification data
+### Reading in quantification data
 
 The read-in of the quantification counts can be achieved with `import_counts()`, that uses the `tximport` package in the background. This function is able to parse the output of many different quantification tools. Advanced users might be able to tune parameters to parse arbitrary output files from currently not supported tools.
 
@@ -137,7 +135,7 @@ There are ~227k features left for the six samples. Please note, that in contrast
 
 ---
 
-#### Sample metadata
+### Sample metadata
 
 Finally, we need a sample metadata data frame, specifying which sample belongs to which comparison group. This table is also convenient to store and carry over additional metadata.
 
@@ -154,7 +152,7 @@ head(pd, n=5)
 ```
 
 
-### DTU analysis
+## DTU analysis
 
 We have prepared all necessary data to perform the differentially transcript usage (DTU) analysis. DTUrtle only needs two simple commands to perform it. Please be aware that these steps are the most compute intensive and, depending on your data, might take some time to complete. It is recommended to parallelize the computations with the `BBPARAM` parameter, if applicable.
 
@@ -205,11 +203,11 @@ head(dturtle$sig_gene)
 head(dturtle$sig_tx)
 ```
 
-### Result aggregation and visualization
+## Result aggregation and visualization
 
 The `DTUrtle` package contains multiple visualization options, enabling a in-depth inspection.
 
-#### DTU table creation
+### DTU table creation
 
 We will start by aggregating the analysis results to a data frame with `create_dtu_table()`. This function is highly flexible and allows aggregation of gene or transcript level metadata in various ways. By default some useful information are included in the *dtu table*, in this example we further specify to include the `seqnames` column of the gene level metadata (which contains chromosome information) as well as the maximal *expressed in* ratio from the transcript level metadata. 
 
@@ -228,7 +226,7 @@ This table is our basis for creating an **interactive HTML-table** of the result
 
 ---
 
-#### Proportion barplot
+### Proportion barplot
 
 As a first visualization option we will create a barplot of the proportions of each transcript per sample. We can use the function `plot_proportion_barplot()` for this task, which also adds the mean proportion fit per subgroup to the plot (by default as a red line).
 
@@ -260,7 +258,7 @@ head(list.files("./images/"))
 
 ---
 
-#### Proportion heatmap
+### Proportion heatmap
 
 A different visualization option is a heatmap, where additional meta data can be displayed alongside the transcript proportions (`plot_proportion_pheatmap()`). This visualization uses the `pheatmap` package, the user can specify any of the available parameters to customize the results.
 
@@ -291,7 +289,7 @@ head(list.files("./images/"))
 
 ---
 
-#### Transcript overview
+### Transcript overview
 
 Until now, we looked at the different transcripts as abstract entities. Alongside proportional differences, the actual difference in the exon-intron structure of transcripts is of great importance for many research questions. This structure can be visualized with the `plot_transcripts_view()` functionality of *DTUrtle*.
 
@@ -333,7 +331,7 @@ head(list.files("./images/"))
 
 ---
 
-#### Visualize DTU table
+### Visualize DTU table
 
 The `dturtle$dtu_table` is now ready to be visualized as an interactive HTML-table. Please note, that it is optional to add any plots or additional columns to the table. Thus the visualization will work directly after calling `create_dtu_table()`.
 
@@ -392,7 +390,7 @@ plot_dtu_table(dturtle = dturtle, column_formatters = column_formatter_list, min
 </div>
 
 
-### Session info
+## Session info
 
 ```{r sessionInfo, echo=FALSE}
 sessionInfo()

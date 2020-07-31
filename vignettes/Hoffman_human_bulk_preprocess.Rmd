@@ -37,7 +37,7 @@ The *FASTQ*-files can be directly obtained from ENA, alternatively they are also
 
 After downloading a **MD5-check** is strongly encouraged.
 
-### Preparing FASTQ-files
+## Preparing FASTQ-files
 For this vignette, it is assumed that the *FASTQ*-files mentioned above have been downloaded to a directory called `samples`.
 
 After downloading the *FASTQ*-files, we first run a basic quality control step to assess if there might be some quality issues or left over adapter sequences. 
@@ -79,7 +79,7 @@ trim_galore --quality 20  --illumina --length 20 --trim-n --cores 4 -o ../trim/ 
 The trimmed files are the newly created folder `/trim`. Less than 1% of the total base pairs have been removed by the trimming process.
 Optionally one can again perform a `FastQC` and `MultiQC` analysis to confirm that the adapter sequences have been removed.
 
-### Transcript level quantification
+## Transcript level quantification
 
 The files are now ready for transcript level quantification. We will use the tool `Salmon` (Version 1.1.0) for this.
 

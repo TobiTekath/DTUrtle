@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6</span>
       </span>
     </div>
 
@@ -124,9 +124,9 @@
 </ul>
 <p>The <em>FASTQ</em>-files can be directly obtained from ENA, alternatively they are also available as <em>SRA</em>-files from <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA594939">GEO</a>, which can be converted to <em>FASTQ</em>-format.</p>
 <p>After downloading a <strong>MD5-check</strong> is strongly encouraged.</p>
-<div id="preparing-fastq-files" class="section level3">
-<h3 class="hasAnchor">
-<a href="#preparing-fastq-files" class="anchor"></a>Preparing FASTQ-files</h3>
+<div id="preparing-fastq-files" class="section level2">
+<h2 class="hasAnchor">
+<a href="#preparing-fastq-files" class="anchor"></a>Preparing FASTQ-files</h2>
 <p>For this vignette, it is assumed that the <em>FASTQ</em>-files mentioned above have been downloaded to a directory called <code>samples</code>.</p>
 <p>After downloading the <em>FASTQ</em>-files, we first run a basic quality control step to assess if there might be some quality issues or left over adapter sequences. We will use the tools <code>FastQC</code> and <code>MultiQC</code> for this task with the following <em>bash</em> commands:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="bu">cd</span> <span class="st">'YOUR_PATH'</span>/samples</a>
@@ -154,9 +154,9 @@
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ex">trim_galore</span> --quality 20  --illumina --length 20 --trim-n --cores 4 -o ../trim/ --paired bulk_*.fastq.gz</a></code></pre></div>
 <p>The trimmed files are the newly created folder <code>/trim</code>. Less than 1% of the total base pairs have been removed by the trimming process. Optionally one can again perform a <code>FastQC</code> and <code>MultiQC</code> analysis to confirm that the adapter sequences have been removed.</p>
 </div>
-<div id="transcript-level-quantification" class="section level3">
-<h3 class="hasAnchor">
-<a href="#transcript-level-quantification" class="anchor"></a>Transcript level quantification</h3>
+<div id="transcript-level-quantification" class="section level2">
+<h2 class="hasAnchor">
+<a href="#transcript-level-quantification" class="anchor"></a>Transcript level quantification</h2>
 <p>The files are now ready for transcript level quantification. We will use the tool <code>Salmon</code> (Version 1.1.0) for this.</p>
 <p><code>Salmon</code> does not perform a standard genomic alignment, but performs a quasi-mapping directly to the transcriptome. Reads, that could be originating from multiple transcript isoforms, are assigned to equivalence classes, where actual counts are derived by expectation maximization algorithms.</p>
 <p>To run the <code>Salmon</code> quantification, we first need a transcriptomic index. For this example, we will use the <a href="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.transcripts.fa.gz">transcript sequences</a> and <a href="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.gtf.gz">comprehensive gene annotation</a> from <a href="https://www.gencodegenes.org/">Gencode</a> <a href="https://www.gencodegenes.org/human/release_34.html">Version 34</a>.</p>
@@ -182,7 +182,9 @@
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-      </div>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
+</div>
 
 </div>
 

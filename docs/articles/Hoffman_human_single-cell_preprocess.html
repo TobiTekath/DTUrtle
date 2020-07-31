@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6</span>
       </span>
     </div>
 
@@ -114,9 +114,9 @@
 </ul>
 <p>The <em>FASTQ</em>-files can be directly obtained from ENA, alternatively they are also available as <em>SRA</em>-files from <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA594939">GEO</a>, which can be converted to <em>FASTQ</em>-format.</p>
 <p>After downloading a <strong>MD5-check</strong> is strongly encouraged.</p>
-<div id="preparing-fastq-files" class="section level3">
-<h3 class="hasAnchor">
-<a href="#preparing-fastq-files" class="anchor"></a>Preparing FASTQ-files</h3>
+<div id="preparing-fastq-files" class="section level2">
+<h2 class="hasAnchor">
+<a href="#preparing-fastq-files" class="anchor"></a>Preparing FASTQ-files</h2>
 <p>For this vignette, it is assumed that the <em>FASTQ</em>-files mentioned above have been downloaded to a directory called <code>samples</code>.</p>
 <p>After downloading the <em>FASTQ</em>-files, the first step is to rename the files and split them into two files each. This data set was produced using a Illumina SureCell 3’ kit, which produces paired end reads (as all current single-cell protocols). For unknown reasons the original two <em>FASTQ</em>-files per sample have been appended for / during upload. More information about the SureCell format can be found <a href="https://teichlab.github.io/scg_lib_structs/methods_html/SureCell.html">here</a>.</p>
 <p>The read files can be split with the following <em>bash</em> commands:</p>
@@ -151,9 +151,9 @@
 <a class="sourceLine" id="cb2-14" data-line-number="14"><span class="fu">rm</span> sc_Dex2hr.fastq.gz</a></code></pre></div>
 <p>There should be four packed <em>FASTQ</em>-files present in the folder - two per sample.</p>
 </div>
-<div id="determining-valid-cellular-barcodes" class="section level3">
-<h3 class="hasAnchor">
-<a href="#determining-valid-cellular-barcodes" class="anchor"></a>Determining valid cellular barcodes</h3>
+<div id="determining-valid-cellular-barcodes" class="section level2">
+<h2 class="hasAnchor">
+<a href="#determining-valid-cellular-barcodes" class="anchor"></a>Determining valid cellular barcodes</h2>
 <p>As with most single-cell data, the first analysis step is the determination of valid cellular barcodes. As the Illumina SureCell 3’ protocol was used, the R1 reads only contain barcode and UMI information.</p>
 <p>To error-correct the cell barcodes we use <code>umi_tools</code> (Version 1.0.1). The read data was created using the Illumina SureCell protocol, which uses a quite complex barcode / UMI pattern. Luckily, <code>umi_tools</code> can process arbitrary complex barcode / UMI structures via regular expressions. We allow correction of barcodes with up to one error and allow for an edit distance of 1 in each linker segment with the following <em>bash</em> code:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="co">#installation in conda evironment</span></a>
@@ -189,9 +189,9 @@
 <span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span>(<span class="no">dex2hr_white_sub</span>, <span class="st">"dex2hr_whitelist_sub.tsv"</span>, <span class="kw">sep</span> <span class="kw">=</span> <span class="st">"\t"</span>, <span class="kw">quote</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">row.names</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">col.names</span> <span class="kw">=</span> <span class="no">F</span>)</pre></body></html></div>
 <p>The subsetted <em>TSV</em> files contain only the 400 valid barcodes per cell, together with the barcodes that shall be corrected.</p>
 </div>
-<div id="extract-and-correct-barcodes-umis" class="section level3">
-<h3 class="hasAnchor">
-<a href="#extract-and-correct-barcodes-umis" class="anchor"></a>Extract and correct barcodes &amp; UMIs</h3>
+<div id="extract-and-correct-barcodes-umis" class="section level2">
+<h2 class="hasAnchor">
+<a href="#extract-and-correct-barcodes-umis" class="anchor"></a>Extract and correct barcodes &amp; UMIs</h2>
 <p>The actual barcode extraction and correction is again performed with <code>umi_tools</code>. In this process, only the reads of the R2 files are kept, that had a matching barcode in the R1 file. The barcode and UMI sequence are added to the sequence identifier line of each read in the new files. The not matching parts of the R1 reads are kept in the new R1 file. The <code>umi_tools</code> <em>bash</em> command looks like this:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="ex">umi_tools</span> extract --filter-cell-barcode --error-correct-cell --whitelist=etoh_whitelist_sub.tsv --extract-method=regex -p <span class="st">'(?P&lt;discard_1&gt;.{0,20})(?P&lt;cell_1&gt;.{6})(?P&lt;discard_2&gt;TAGCCATCGCATTGC){e&lt;=1}(?P&lt;cell_2&gt;.{6})(?P&lt;discard_3&gt;TACCTCTGAGCTGAA){e&lt;=1}(?P&lt;cell_3&gt;.{6})(?P&lt;discard_4&gt;ACG)(?P&lt;umi_1&gt;.{8})(?P&lt;discard_5&gt;GAC).*'</span> -I ../samples/sc_EtOH_1.fastq.gz -S sc_EtOH_1_extracted.fastq.gz --read2-in ../samples/sc_EtOH_2_matched.fastq.gz --read2-out sc_EtOH_2_extracted.fastq.gz</a>
 <a class="sourceLine" id="cb5-2" data-line-number="2"></a>
@@ -210,9 +210,9 @@
 <p>With this command, we copied the barcode and UMI sequence of each reads sequence identifier to the actual raw sequence line. We also added some quality values for the bases (the actual value is not relevant).</p>
 <p>There should now be an <code>altered</code> R1 <em>FASTQ</em> file per sample, together with an <code>extracted</code> R2 <em>FASTQ</em> file.</p>
 </div>
-<div id="quantification-with-alevin" class="section level3">
-<h3 class="hasAnchor">
-<a href="#quantification-with-alevin" class="anchor"></a>Quantification with Alevin</h3>
+<div id="quantification-with-alevin" class="section level2">
+<h2 class="hasAnchor">
+<a href="#quantification-with-alevin" class="anchor"></a>Quantification with Alevin</h2>
 <p><code>Alevin</code> is the single-cell counterpart of <code>Salmon</code>, one of the standard tools for bulk RNA-seq quantification. It is also integrated into the <code>Salmon</code> (Version 1.1.0) package. As most of the available transcript quantifiers, <code>Alevin/Salmon</code> do not perform a standard genomic alignment, but perform a quasi-mapping directly to the transcriptome. Reads, that could be originating from multiple transcript isoforms, are assigned to equivalence classes, where actual counts are later derived by expectation maximization algorithms.</p>
 <p>To run the <code>Alevin</code> quantification, we first need a transcriptomic index. For this example, we will use the <a href="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.transcripts.fa.gz">transcript sequences</a> and <a href="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.gtf.gz">comprehensive gene annotation</a> from <a href="https://www.gencodegenes.org/">Gencode</a> <a href="https://www.gencodegenes.org/human/release_34.html">Version 34</a>.</p>
 <p>Assume you have downloaded and unpacked the above mentioned files in the analysis root directory. To build the actual index we run this <em>bash</em> code:</p>
@@ -254,7 +254,9 @@
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-      </div>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
+</div>
 
 </div>
 
