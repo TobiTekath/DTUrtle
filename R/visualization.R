@@ -179,7 +179,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
   dtu_formattable <- do.call(formattable::formattable, c(args))
 
   logo_uri <- knitr::image_uri(dturtle_logo())
-  tbl_title <- paste0("DTU: ", paste0(levels(dturtle$group), collapse = " vs. "),
+  tbl_title <- paste0(paste0(levels(dturtle$group), collapse = " vs. "),
                       " (", sum(dturtle$group == levels(dturtle$group)[1]), " vs.
                       ", sum(dturtle$group == levels(dturtle$group)[2]) ,")")
   header_string <- paste0("<div class='header'>",
@@ -216,9 +216,10 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
     min_page_length <- nrow(temp_table)
   }
 
+  table_id <- paste0("DTUrtle_table-", stringi::stri_rand_strings(1,15))
   #TODO: test datatables columns.data
   dtable <- DT::datatable(temp_table, escape = FALSE, filter='top', rownames = F,
-                          extensions = 'Buttons', width = "90%",
+                          extensions = 'Buttons', width = "90%", elementId = table_id,
                           container = container, options = list(
                         dom = "lBfrtip", orderClasses = T, buttons = list(list(
                           extend = 'collection', buttons = c('csv', 'excel'),
@@ -264,10 +265,8 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(), orde
                             "addStyleString('.header .txt { display: flow-root; padding-right: 15%;}');",
                             "addStyleString('.header h2 { font-weight: 900; margin: auto; padding: initial;}');",
                             "addStyleString('.header h4 { margin: auto; padding: initial;}');",
-                            "addStyleString('body { font-size: 120%;}');",
+                            paste0("addStyleString('#",table_id," { font-size: 120%;}');"),
                           "}")))
-
-  # "addStyleString('.header img { position: absolute; height: 75px}');",
 
 
   if(is.null(savepath)){

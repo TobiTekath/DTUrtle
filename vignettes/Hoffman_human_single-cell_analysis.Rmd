@@ -34,6 +34,7 @@ This vignette exemplifies the analysis of **single-cell RNA-seq data with DTUrtl
 
 The following code shows an example of an DTUrtle workflow. Assume we have performed the preprocessing as described [here](https://tobitekath.github.io/DTUrtle/articles/Hoffman_human_single-cell_preprocess.html) and the R working directory is a newly created folder called `dtu_results`.
 
+---
 
 ## Setup
 
@@ -44,6 +45,8 @@ library(DTUrtle)
 #use up to 10 cores for computation
 biocpar <- BiocParallel::MulticoreParam(10)
 ```
+
+---
 
 ## Import and format data
 
@@ -161,11 +164,7 @@ pd <- data.frame("id"=colnames(cts),
 head(pd, n=5)
 ```
 
-
-## Inclusion of Seurat objects
-
-Please see [Workflow with Seurat object](#workflow-with-seurat-object).
-
+---
 
 ## DTU analysis
 
@@ -226,6 +225,8 @@ The `dturtle` object now contains additional elements, including the lists of `s
 head(dturtle$sig_gene)
 head(dturtle$sig_tx)
 ```
+
+---
 
 ## Result aggregation and visualization
 
@@ -395,7 +396,7 @@ plot_dtu_table(dturtle = dturtle, savepath = "my_results.html",
 
 > <div class="alert alert-info">
 >
-> <strong>Note:</strong> ️As seen above, the paths to the plots are relative. Please make sure that the saving directory in `plot_dtu_table` is correctly set and the plots are reachable from that directory with the given path.
+> <strong>Note:</strong> ️As seen above, the paths to the plots are relative. Please make sure that the saving directory in `plot_dtu_table()` is correctly set and the plots are reachable from that directory with the given path.
 >
 > <strong>The links in the following example are just for demonstration purposes and do not work!</strong> 
 >
@@ -416,6 +417,7 @@ plot_dtu_table(dturtle = dturtle, column_formatters = column_formatter_list, min
 ```
 </div>
 
+---
 
 ## Workflow with Seurat object
 
@@ -521,6 +523,8 @@ With this `DTUrtle` object we can proceed in the standard way, i.e. with `postho
 ```{r}
 dturtle_sub <- posthoc_and_stager(dturtle = dturtle_sub, ofdr = 0.05, posthoc = 0.1)
 ```
+
+---
 
 ## Session info
 
