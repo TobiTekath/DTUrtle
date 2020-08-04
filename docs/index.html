@@ -100,10 +100,10 @@
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
 <p>Install from GitHub:</p>
-<div class="sourceCode" id="cb1"><pre class="r">if(!requireNamespace(devtools){
-    install.packages("devtools")
+<div class="sourceCode" id="cb1"><pre class="r"><span class="kw">if</span>(!<span class="fu"><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace</a></span>(<span class="st">"remotes"</span>, <span class="kw">quietly</span> <span class="kw">=</span> <span class="no">T</span>)){
+    <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"remotes"</span>)
 }
-devtools::install_github("TobiTekath/DTUrtle")</pre></div>
+<span class="kw pkg">remotes</span><span class="kw ns">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span>(<span class="st">"TobiTekath/DTUrtle"</span>)</pre></div>
 </div>
 <div id="basic-workflow" class="section level2">
 <h2 class="hasAnchor">

@@ -9,6 +9,7 @@ License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.4.0)
+biocViews:
 Imports: Matrix, tximport, sparseDRIMSeq, stageR, rtracklayer, formattable, DT, Gviz, assertthat, scales, ggplot2, reshape2, BiocParallel, Matrix.utils, pheatmap, methods, GenomicRanges, htmltools, htmlwidgets, knitr, stringi 
 Suggests: GenomeInfoDb, Seurat (>= 3.0.0), webshot, webshot2, magick
 Remotes: github::TobiTekath/sparseDRIMSeq
