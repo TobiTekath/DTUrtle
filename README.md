@@ -9,10 +9,10 @@ single-cell RNA-seq data.**
 Install from GitHub:
 
 ``` r
-if(!requireNamespace(devtools){
-    install.packages("devtools")
+if(!requireNamespace("remotes", quietly = T)){
+    install.packages("remotes")
 }
-devtools::install_github("TobiTekath/DTUrtle")
+remotes::install_github("TobiTekath/DTUrtle")
 ```
 
 ## Basic workflow
