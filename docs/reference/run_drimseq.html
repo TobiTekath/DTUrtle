@@ -44,6 +44,12 @@
 <script src="../pkgdown.js"></script>
 
 
+<!-- docsearch -->
+<script src="../docsearch.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.3/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
+<link href="../docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+
 
 
 <meta property="og:title" content="Main DRIMSeq results — run_drimseq" />
@@ -80,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
       </span>
     </div>
 
@@ -97,11 +103,32 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/index.html">Vignette overview</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Single-cell</li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">Illumina SureCell</li>
+    <li>
       <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
     </li>
     <li>
       <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
     </li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">10X Chromium</li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_preprocess.Rmd">Mouse Tabular Muris single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_analysis.Rmd">Mouse Tabular Muris single-cell RNA-seq analysis</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Bulk</li>
     <li>
       <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
     </li>
@@ -123,6 +150,12 @@
 </li>
       </ul>
       
+      <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
+        </div>
+      </form>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -143,19 +176,20 @@
     <p>Compute the main DRIMSeq results.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>run_drimseq</span>(
-  <span class='no'>counts</span>,
-  <span class='no'>tx2gene</span>,
-  <span class='no'>pd</span>,
-  <span class='kw'>id_col</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>cond_col</span>,
-  <span class='kw'>cond_levels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>filtering_strategy</span> <span class='kw'>=</span> <span class='st'>"bulk"</span>,
-  <span class='kw'>BPPARAM</span> <span class='kw'>=</span> <span class='kw pkg'>BiocParallel</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html'>SerialParam</a></span>(),
-  <span class='kw'>force_dense</span> <span class='kw'>=</span> <span class='no'>T</span>,
-  <span class='kw'>carry_over_metadata</span> <span class='kw'>=</span> <span class='no'>T</span>,
-  <span class='no'>...</span>
-)</pre>
+    <pre class="usage"><span class='fu'>run_drimseq</span><span class='op'>(</span>
+  <span class='va'>counts</span>,
+  <span class='va'>tx2gene</span>,
+  <span class='va'>pd</span>,
+  id_col <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>cond_col</span>,
+  cond_levels <span class='op'>=</span> <span class='cn'>NULL</span>,
+  filtering_strategy <span class='op'>=</span> <span class='st'>"bulk"</span>,
+  BPPARAM <span class='op'>=</span> <span class='fu'>BiocParallel</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html'>SerialParam</a></span><span class='op'>(</span><span class='op'>)</span>,
+  force_dense <span class='op'>=</span> <span class='cn'>T</span>,
+  subset_counts <span class='op'>=</span> <span class='cn'>F</span>,
+  carry_over_metadata <span class='op'>=</span> <span class='cn'>T</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -169,7 +203,7 @@
     </tr>
     <tr>
       <th>tx2gene</th>
-      <td><p>Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in <code>counts</code> and <code>tx2gene</code> was provided in <code><a href='combine_to_matrix.html'>combine_to_matrix()</a></code>, a vector of the colnames of the specific feature and gene identifierss is sufficient.</p></td>
+      <td><p>Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in <code>counts</code> and <code>tx2gene</code> was provided in <code><a href='combine_to_matrix.html'>combine_to_matrix()</a></code>, a vector of the colnames of the specific feature and gene identifiers is sufficient.</p></td>
     </tr>
     <tr>
       <th>pd</th>
@@ -204,12 +238,16 @@
       <td><p>If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying <code>TRUE</code>. Increases memory usage, but also reduces runtime drastically (currently).</p></td>
     </tr>
     <tr>
+      <th>subset_counts</th>
+      <td><p>Force subsetting of the count matrix if not all features of the count matrix are present in the tx2gene table.</p></td>
+    </tr>
+    <tr>
       <th>carry_over_metadata</th>
       <td><p>Specify if compatible additional columns of <code>tx2gene</code> shall be carried over to the gene and transcript level <code>meta_table</code> in the results. Columns with <code>NA</code> values are not carried over.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Arguments passed on to <code><a href='https://rdrr.io/pkg/sparseDRIMSeq/man/dmFilter.html'>sparseDRIMSeq::dmFilter</a></code></p><dl'>
+      <td><p>Arguments passed on to <code><a href='https://rdrr.io/pkg/sparseDRIMSeq/man/dmFilter.html'>sparseDRIMSeq::dmFilter</a></code></p><dl>
     <dt><code>x</code></dt><dd><p><code>dmDSdata</code> or <code>dmSQTLdata</code>
 object.</p></dd>
   
@@ -219,7 +257,7 @@ object.</p></dd>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>dturtle</code> object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:</p><ul>
+    <p><code>dturtle</code> object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accessible list with the following items:</p><ul>
 <li><p><code>meta_table_gene</code>: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression &gt; 0. Can be used to add gene level meta-information for plotting.</p></li>
 <li><p><code>meta_table_tx</code>: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression &gt; 0. Can be used to add transcript level meta-information for plotting.</p></li>
 <li><p><code>meta_table_sample</code>: Data frame of the provided sample level information (<code>pd</code>). Can be used to add sample level meta-information for plotting.</p></li>
@@ -254,13 +292,30 @@ object.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
    </div>
 
   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script>
+<script>
+  docsearch({
+    
+    
+    apiKey: 'a6c9f43b010fdd4b2e64792389fd67d2',
+    indexName: 'dturtle',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+
 
 
   </body>

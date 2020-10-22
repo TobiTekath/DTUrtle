@@ -44,6 +44,12 @@
 <script src="../pkgdown.js"></script>
 
 
+<!-- docsearch -->
+<script src="../docsearch.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.3/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
+<link href="../docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+
 
 
 <meta property="og:title" content="Plot a DTU table to HTML and image — plot_dtu_table" />
@@ -81,7 +87,7 @@ Also automatically links columns of plot names, to be viewable in the table. Cur
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
       </span>
     </div>
 
@@ -98,11 +104,32 @@ Also automatically links columns of plot names, to be viewable in the table. Cur
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/index.html">Vignette overview</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Single-cell</li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">Illumina SureCell</li>
+    <li>
       <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
     </li>
     <li>
       <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
     </li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">10X Chromium</li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_preprocess.Rmd">Mouse Tabular Muris single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_analysis.Rmd">Mouse Tabular Muris single-cell RNA-seq analysis</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Bulk</li>
     <li>
       <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
     </li>
@@ -123,6 +150,12 @@ Also automatically links columns of plot names, to be viewable in the table. Cur
   </a>
 </li>
       </ul>
+      
+      <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
+        </div>
+      </form>
       
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -145,18 +178,18 @@ Also automatically links columns of plot names, to be viewable in the table. Cur
 Also automatically links columns of plot names, to be viewable in the table. Currently you are not allowed to provide a column formatter for plot columns.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_dtu_table</span>(
-  <span class='no'>dturtle</span>,
-  <span class='kw'>columns</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>column_formatters</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
-  <span class='kw'>order_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>num_digits</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>num_digits_format</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>min_page_length</span> <span class='kw'>=</span> <span class='fl'>25</span>,
-  <span class='kw'>savepath</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>create_table_image</span> <span class='kw'>=</span> <span class='no'>F</span>,
-  <span class='no'>...</span>
-)</pre>
+    <pre class="usage"><span class='fu'>plot_dtu_table</span><span class='op'>(</span>
+  <span class='va'>dturtle</span>,
+  columns <span class='op'>=</span> <span class='cn'>NULL</span>,
+  column_formatters <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
+  order_by <span class='op'>=</span> <span class='cn'>NULL</span>,
+  num_digits <span class='op'>=</span> <span class='cn'>NULL</span>,
+  num_digits_format <span class='op'>=</span> <span class='cn'>NULL</span>,
+  min_page_length <span class='op'>=</span> <span class='fl'>25</span>,
+  savepath <span class='op'>=</span> <span class='cn'>NULL</span>,
+  create_table_image <span class='op'>=</span> <span class='cn'>F</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -167,7 +200,7 @@ Also automatically links columns of plot names, to be viewable in the table. Cur
     </tr>
     <tr>
       <th>columns</th>
-      <td><p>Optinally subset the existing <code>dtu_table</code> of the dturtle object to the columns specified here.</p></td>
+      <td><p>Optionally subset the existing <code>dtu_table</code> of the <code>dturtle</code> object to the columns specified here.</p></td>
     </tr>
     <tr>
       <th>column_formatters</th>
@@ -176,7 +209,7 @@ The formatter functions are either from this package like <code><a href='table_p
     </tr>
     <tr>
       <th>order_by</th>
-      <td><p>One or multiple columns to order the table by. Must be a vector of column names, descending order can be achived by prepending a '-' (e.g. <code><a href='https://rdrr.io/r/base/c.html'>c("-my_col_name")</a></code>).</p></td>
+      <td><p>One or multiple columns to order the table by. Must be a vector of column names, descending order can be achieved by prepending a '-' (e.g. <code><a href='https://rdrr.io/r/base/c.html'>c("-my_col_name")</a></code>).</p></td>
     </tr>
     <tr>
       <th>num_digits</th>
@@ -197,11 +230,11 @@ Can be a single format string to apply same format to all numerical columns, or 
     </tr>
     <tr>
       <th>create_table_image</th>
-      <td><p>Set number of table rows for optionally saving a image represantation of the subsetted HTML table. Utilizes the package <code>webshot</code> or <code>webshot2</code>.</p></td>
+      <td><p>Set number of table rows for optionally saving a image representation of the subsetted HTML table. Utilizes the package <code>webshot</code> or <code>webshot2</code>.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Arguments passed on to <code><a href='https://rdrr.io/pkg/formattable/man/format_table.html'>formattable::format_table</a></code></p><dl'>
+      <td><p>Arguments passed on to <code><a href='https://rdrr.io/pkg/formattable/man/format_table.html'>formattable::format_table</a></code></p><dl>
     <dt><code>x</code></dt><dd><p>a <code>data.frame</code>.</p></dd>
     <dt><code>formatters</code></dt><dd><p>a list of formatter functions or formulas.
 The existing columns of <code>x</code> will be applied the formatter
@@ -246,13 +279,30 @@ and complex values.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
    </div>
 
   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script>
+<script>
+  docsearch({
+    
+    
+    apiKey: 'a6c9f43b010fdd4b2e64792389fd67d2',
+    indexName: 'dturtle',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+
 
 
   </body>

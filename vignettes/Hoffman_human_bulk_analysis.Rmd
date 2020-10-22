@@ -2,6 +2,7 @@
 title: "Analysis of the Hoffman et al. human bulk RNA-seq data"
 author: "Tobias Tekath"
 date: "`r Sys.Date()`"
+description: "Exemplified analysis of human bulk RNA-seq data."
 output: 
   rmarkdown::html_vignette:
     df_print: paged
@@ -100,7 +101,7 @@ This concludes the tx2gene formatting.
 
 ### Reading in quantification data
 
-The read-in of the quantification counts can be achieved with `import_counts()`, that uses the `tximport` package in the background. This function is able to parse the output of many different quantification tools. Advanced users might be able to tune parameters to parse arbitrary output files from currently not supported tools.
+The read-in of the quantification counts can be achieved with `import_counts()`, which uses the `tximport` package in the background. This function is able to parse the output of many different quantification tools. Advanced users might be able to tune parameters to parse arbitrary output files from currently not supported tools.
 
 In the pre-processing vignette we quantified the counts with `Salmon`. The folder structure of the quantification results folder looks like this:
 
@@ -227,6 +228,16 @@ dturtle <- create_dtu_table(dturtle = dturtle, add_gene_metadata = list("chromos
 head(dturtle$dtu_table, n=5)
 ```
 
+The column definitions are as follows:
+
+* "gene_ID": Gene name or identifier used for the analysis.
+* "gene_qvalue": Multiple testing corrected p-value (a.k.a. q-value) comparing all transcripts together between the two groups ("gene level").
+* "minimal_tx_qvalue": The minimal multiple testing corrected p-value from comparing all transcripts  individually between the two groups ("transcript level"). I.e. the q-value of the most significant transcript.
+* "number_tx": The number of analyzed transcripts for the specific gene.
+* "number_significant_tx": The number of significant transcripts from the 'transcript level' analysis.
+* "max(Dex2hr-EtOH)": Maximal proportional difference between the two groups (Dex2hr vs EtOH). E.g. one transcript of 'SMOX' is ~94% more expressed in 'Dex2hr' cells compared to 'EtOH' cells.
+* "chromosome": the chromosome the gene resides on.
+* "tx_expr_in_max": The fraction of cells, the most expressed transcript is expressed in. "Expressed in" is defined as expression>0. 
 
 This table is our basis for creating an **interactive HTML-table** of the results.
 
@@ -299,7 +310,7 @@ head(list.files("./images/"))
 
 Until now, we looked at the different transcripts as abstract entities. Alongside proportional differences, the actual difference in the exon-intron structure of transcripts is of great importance for many research questions. This structure can be visualized with the `plot_transcripts_view()` functionality of *DTUrtle*.
 
-This visualization is based on the *Gviz* package and needs a read-in or a path of a GTF file. In [Import and format data](#import-and-format-data) we already imported a GTF file. This was subset to transcript-level (by the `import_gtf()` function), thus this is **not** sufficient for the visualization. But of course we can reuse the actual GTF file, which should in general match with the one used for the `tx2gene` data frame. 
+This visualization is based on the *Gviz* package and needs a path to a *GTF* file (or a read-in object). In [Import and format data](#import-and-format-data) we already imported a GTF file. This was subset to transcript-level (via the `import_gtf()` function), thus this is **not** sufficient for the visualization. We can reuse the actual *GTF* file though, which should in general match with the one used for the `tx2gene` data frame.
 
 As we have ensured the one_to_one mapping in [Import and format data](#import-and-format-data) and potentially renamed some genes, we should specify the `one_to_one` parameter in this call. 
 
@@ -356,10 +367,10 @@ We create a named list, linking column names to formatter functions:
 
 ```{r}
 column_formatter_list <- list(
-      "gene_qval" = table_pval_tile("white", "orange", digits = 3),
-      "min_tx_qval" = table_pval_tile("white", "orange", digits = 3),
-      "n_tx" = formattable::color_tile('white', "lightblue"),
-      "n_sig_tx" = formattable::color_tile('white', "lightblue"),
+      "gene_qvalue" = table_pval_tile("white", "orange", digits = 3),
+      "minimal_tx_qvalue" = table_pval_tile("white", "orange", digits = 3),
+      "number_tx" = formattable::color_tile('white', "lightblue"),
+      "number_significant_tx" = formattable::color_tile('white', "lightblue"),
       "max(Dex2hr-EtOH)" = table_percentage_bar('lightgreen', "#FF9999", digits=2),
       "tx_expr_in_max" = table_percentage_bar('white', "lightblue", color_break = 0, digits=2))
 

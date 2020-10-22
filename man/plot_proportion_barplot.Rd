@@ -75,6 +75,7 @@ Shows the transcripts proportional change per analysis group, together with the 
 
 Other DTUrtle visualization: 
 \code{\link{create_dtu_table}()},
+\code{\link{plot_dimensional_reduction}()},
 \code{\link{plot_proportion_pheatmap}()},
 \code{\link{plot_transcripts_view}()}
 }

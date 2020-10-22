@@ -20,12 +20,12 @@ plot_dtu_table(
 \arguments{
 \item{dturtle}{\code{dturtle} result object of \code{\link[=create_dtu_table]{create_dtu_table()}}.}
 
-\item{columns}{Optinally subset the existing \code{dtu_table} of the dturtle object to the columns specified here.}
+\item{columns}{Optionally subset the existing \code{dtu_table} of the \code{dturtle} object to the columns specified here.}
 
 \item{column_formatters}{Named list of column_formatters, specifying a formatter function for every column that shall be formatted.
 The formatter functions are either from this package like \code{\link[=table_percentage_bar]{table_percentage_bar()}}, \code{\link[=table_pval_tile]{table_pval_tile()}} or from \code{\link[formattable:00Index]{formattable}}.}
 
-\item{order_by}{One or multiple columns to order the table by. Must be a vector of column names, descending order can be achived by prepending a '-' (e.g. \code{c("-my_col_name")}).}
+\item{order_by}{One or multiple columns to order the table by. Must be a vector of column names, descending order can be achieved by prepending a '-' (e.g. \code{c("-my_col_name")}).}
 
 \item{num_digits}{Number of digits, numerical columns shall be formatted to. Can be a single number to apply to all numerical columns, or a number for each numerical column (in their order).}
 
@@ -36,7 +36,7 @@ Can be a single format string to apply same format to all numerical columns, or 
 
 \item{savepath}{Specify save path, if the HTML table shall be saved to disk. The same path is used to create a table image, if \code{create_table_image} is not \code{FALSE}. The directories will be created if necessary.}
 
-\item{create_table_image}{Set number of table rows for optionally saving a image represantation of the subsetted HTML table. Utilizes the package \code{webshot} or \code{webshot2}.}
+\item{create_table_image}{Set number of table rows for optionally saving a image representation of the subsetted HTML table. Utilizes the package \code{webshot} or \code{webshot2}.}
 
 \item{...}{
   Arguments passed on to \code{\link[formattable:format_table]{formattable::format_table}}

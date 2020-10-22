@@ -93,13 +93,15 @@ run_posthoc <- function(drim, filt){
 }
 
 
-#' Get the transcript-wise proportion differnces of the specified gene
+#' Get the transcript-wise proportion diffrences of the specified gene
 #'
 #' @param gID gene identifier
-#' @param dturtle dturtle object
+#' @param dturtle `dturtle` object
 #'
 #' @return Data frame with the transcript-wise proportion differences.
 get_diff <- function(gID, dturtle){
+    # added as sparseDRIMSeq loading sometimes failed.
+    requireNamespace("sparseDRIMSeq", quietly = T)
     group <- dturtle$group
     y <- data.frame(row.names = rownames(dturtle$drim@fit_full[[gID]]))
     y[levels(group)[1]] <- apply(dturtle$drim@fit_full[[gID]][, which(group==levels(group)[1])], 1, unique)
@@ -109,10 +111,10 @@ get_diff <- function(gID, dturtle){
 }
 
 
-#' Return the maximal absolute difference for all transcripts of the procvided gene
+#' Return the maximal absolute difference for all transcripts of the provided gene
 #'
 #' @param gID gene-identifier
-#' @param dturtle dturtle object
+#' @param dturtle `dturtle` object
 #'
 #' @return The maximal absolute difference value
 getmax <- function(gID, dturtle){
@@ -122,11 +124,11 @@ getmax <- function(gID, dturtle){
 }
 
 
-#' Parse a gtf file and return a transcript level dataframe.
+#' Parse a `GTF` file and return a transcript level dataframe.
 #'
 #' @param gtf_file Path to the gtf/gff file that shall be analysed.
 #'
-#' @return A data frame of the availble transcript level information (e.g. the tx2gene mapping information)
+#' @return A data frame of the available transcript level information (e.g. the tx2gene mapping information)
 #' @export
 #'
 #' @examples ## import_gtf("path_to/your_annotation_file.gtf")
@@ -162,7 +164,7 @@ move_columns_to_front <- function(df, columns){
 #'
 #' Remove the version number of ensembl gene/transcript identifiers.
 #'
-#' Removes everything beyond the first dot ('.') in each provied identifier.
+#' Removes everything beyond the first dot ('.') in each provided identifier.
 #'
 #' @param x Vector of identifiers.
 #'
@@ -179,7 +181,7 @@ rm_version <- function(x){
 #'
 #' Get ratio of expressing samples per gene/transcript.
 #'
-#' Expressing samples are defined as feature expression > 0. Also splits expressing samples by condtion.
+#' Expressing samples are defined as feature expression > 0. Also splits expressing samples by condition.
 #'
 #' @param drim DRIMSeq object
 #' @param type Type of the summarization that shall be performed. Options are:
@@ -197,6 +199,9 @@ ratio_expression_in <- function(drim, type, BPPARAM=BiocParallel::SerialParam())
     }
 
     if(type=="tx"){
+        if(!BiocParallel::bpisup(BPPARAM)){
+            BiocParallel::bpstart(BPPARAM)
+        }
         ret <- data.frame(rep(names(part), lengths(part)),
                           rownames(data),
                           Matrix::rowSums(data!=0)/ncol(data),
@@ -204,15 +209,20 @@ ratio_expression_in <- function(drim, type, BPPARAM=BiocParallel::SerialParam())
                               group_data = data[,drim@samples$sample_id[drim@samples$condition==x],drop=F]
                               return(Matrix::rowSums(group_data!=0)/ncol(group_data))
                           }, BPPARAM = BPPARAM), stringsAsFactors = F)
+        BiocParallel::bpstop(BPPARAM)
         colnames(ret) <- c("gene","tx","exp_in",paste0("exp_in_",cond))
     }else{
         data <-  t(sapply(part, FUN = function(x) Matrix::colSums(data[x,,drop=F])))
+        if(!BiocParallel::bpisup(BPPARAM)){
+            BiocParallel::bpstart(BPPARAM)
+        }
         ret <- data.frame(rownames(data),
                           Matrix::rowSums(data!=0)/ncol(data),
                           BiocParallel::bplapply(cond, FUN = function(x){
                               group_data = data[,drim@samples$sample_id[drim@samples$condition==x],drop=F]
                               return(Matrix::rowSums(group_data!=0)/ncol(group_data))
                           }, BPPARAM = BPPARAM), stringsAsFactors = F)
+        BiocParallel::bpstop(BPPARAM)
         colnames(ret) <- c("gene","exp_in",paste0("exp_in_",cond))
     }
     return(ret)
@@ -272,7 +282,12 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, dr
         assertthat::assert_that(all(columns %in% colnames(df)))
         df <- df[,columns]
     }
-    return(BiocParallel::bpaggregate(df, by=list(rep(names(partitioning), lengths(partitioning))), FUN=FUN,  simplify=simplify, drop=T, BPPARAM = BPPARAM))
+    if(!BiocParallel::bpisup(BPPARAM)){
+        BiocParallel::bpstart(BPPARAM)
+    }
+    ret <- BiocParallel::bpaggregate(df, by=list(rep(names(partitioning), lengths(partitioning))), FUN=FUN,  simplify=simplify, drop=T, BPPARAM = BPPARAM)
+    BiocParallel::bpstop(BPPARAM)
+    return(ret)
 }
 
 

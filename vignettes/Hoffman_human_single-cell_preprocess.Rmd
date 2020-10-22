@@ -1,6 +1,7 @@
 ---
 title: "Pre-processing of the Hoffman et al. human single-cell RNA-seq data"
 author: "Tobias Tekath"
+description: "Exemplified pre-processing of human single-cell RNA-seq data."
 date: "`r Sys.Date()`"
 output: 
   rmarkdown::html_vignette:
@@ -135,7 +136,7 @@ umi_tools extract --filter-cell-barcode --error-correct-cell --whitelist=etoh_wh
 umi_tools extract --filter-cell-barcode --error-correct-cell --whitelist=dex2hr_whitelist_sub.tsv --extract-method=regex -p '(?P<discard_1>.{0,20})(?P<cell_1>.{6})(?P<discard_2>TAGCCATCGCATTGC){e<=1}(?P<cell_2>.{6})(?P<discard_3>TACCTCTGAGCTGAA){e<=1}(?P<cell_3>.{6})(?P<discard_4>ACG)(?P<umi_1>.{8})(?P<discard_5>GAC).*' -I ../samples/sc_Dex2hr_1.fastq.gz -S sc_Dex2hr_1_extracted.fastq.gz --read2-in ../samples/sc_Dex2hr_2_matched.fastq.gz --read2-out sc_Dex2hr_2_extracted.fastq.gz
 ```
 
-The `umi_tools` folder should now contain four gzipped fastq files, two for each sample. 
+The `umi_tools` folder should now contain four gzipped *FASTQ* files, two for each sample. 
 
 ---
 

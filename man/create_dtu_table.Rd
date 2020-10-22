@@ -18,11 +18,22 @@ Names can be specified, which are used as the column names in the final output.}
 
 \item{add_tx_metadata}{A list of tuples for the object's \code{meta_table_tx}, the transcript-level meta data table.
 The tuples must consist of the name of the column in \code{meta_table_tx} and a gene-level summarization function.
-This function shall summarize the trancript-level information in such a way, that only one value for each gene is returned.
+This function shall summarize the transcript-level information in such a way, that only one value for each gene is returned.
 Names can be specified, which are used as the column names in the final output.}
 }
 \value{
-An extended \code{dturtle} object, including the added \code{dtu_table}.
+An extended \code{dturtle} object, including the added \code{dtu_table}. The \code{dtu_table} contains key statistics for all significant DTU genes.
+By default, the \code{dtu_table} contains the following columns:
+\itemize{
+\item "gene_ID": The used gene identifiers (gene name or id)
+\item "gene_qvalue":  Multiple testing corrected p-value (a.k.a. q-value) comparing all transcripts together between the two groups ("gene level").
+\item "minimal_tx_value": The minimal multiple testing corrected p-value from comparing all transcripts individually between the two groups ("transcript level"). I.e. the q-value of the most significant transcript.
+\item "number_tx": The number of analyzed transcripts for the specific gene.
+\item "number_significant_tx": The number of significant transcripts from the 'transcript level' analysis.
+\item "max(\code{Group1}-\code{Group2}")": Maximal proportional difference between the two comparisons groups. The difference is computed by subtracting the fitted mean of \code{Group2} from the fitted mean of \code{Group1} (\code{Group1}-\code{Group2}).
+}
+
+Additional columns from the \code{meta_table_gene} or gene-level summarized columns of \code{meta_table_tx} can optionally be carried over.
 }
 \description{
 Summarize the key results of the DTUrtle analysis to a gene-level data frame.
@@ -34,6 +45,7 @@ This function provides an easy interface to summarize the key DTUrtle results to
 \code{\link[=run_drimseq]{run_drimseq()}} and \code{\link[=posthoc_and_stager]{posthoc_and_stager()}} for DTU object creation. \code{\link[=plot_dtu_table]{plot_dtu_table()}} for table visualization.
 
 Other DTUrtle visualization: 
+\code{\link{plot_dimensional_reduction}()},
 \code{\link{plot_proportion_barplot}()},
 \code{\link{plot_proportion_pheatmap}()},
 \code{\link{plot_transcripts_view}()}

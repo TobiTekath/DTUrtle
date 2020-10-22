@@ -2,7 +2,7 @@
 % Please edit documentation in R/utility_functions.R
 \name{import_gtf}
 \alias{import_gtf}
-\title{Parse a gtf file and return a transcript level dataframe.}
+\title{Parse a \code{GTF} file and return a transcript level dataframe.}
 \usage{
 import_gtf(gtf_file)
 }
@@ -10,10 +10,10 @@ import_gtf(gtf_file)
 \item{gtf_file}{Path to the gtf/gff file that shall be analysed.}
 }
 \value{
-A data frame of the availble transcript level information (e.g. the tx2gene mapping information)
+A data frame of the available transcript level information (e.g. the tx2gene mapping information)
 }
 \description{
-Parse a gtf file and return a transcript level dataframe.
+Parse a \code{GTF} file and return a transcript level dataframe.
 }
 \examples{
 ## import_gtf("path_to/your_annotation_file.gtf")

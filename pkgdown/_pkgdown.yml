@@ -5,6 +5,10 @@ title: DTUrtle
 
 template:
   bootswatch: spacelab
+  params:
+    docsearch:
+      api_key: a6c9f43b010fdd4b2e64792389fd67d2
+      index_name: dturtle
 
 development:
   mode: auto
@@ -23,18 +27,15 @@ reference:
     desc: Aggregate and visualize results
     contents:
       - create_dtu_table
-      - plot_proportion_barplot
-      - plot_proportion_pheatmap
-      - plot_transcripts_view
-      - plot_dtu_table
+      - starts_with("plot_")
 
   - title: Column formatters
-    desc: Formatter functions for plot_dtu_table
+    desc: Formatter functions for `plot_dtu_table()`
     contents:
       - starts_with("table_")
 
   - title: Utility functions
-    desc: Help with data prcessing
+    desc: Help with data processing
     contents:
       - get_by_partition
       - get_proportion_matrix
@@ -42,6 +43,22 @@ reference:
       - one_to_one_mapping
       - rm_version
       - summarize_to_gene
+
+articles:
+- title: Human single-cell (Illumina SureCell)
+  contents:
+  - Hoffman_human_single-cell_preprocess
+  - Hoffman_human_single-cell_analysis
+
+- title: Mouse single-cell (10X Chromium)
+  contents:
+  - Tabular_Muris_mouse_single-cell_preprocess
+  - Tabular_Muris_mouse_single-cell_analysis
+
+- title: Human bulk
+  contents:
+  - Hoffman_human_bulk_preprocess
+  - Hoffman_human_bulk_analysis
 
 navbar:
   title: ~
@@ -51,13 +68,29 @@ navbar:
       href: reference/index.html
     - text: Vignettes
       menu:
+      - text: Vignette overview
+        href: articles/index.html
+      - text: -------
+      - text: Single-cell
+      - desc:
+      - text: Illumina SureCell
       - text: Human single-cell RNA-seq pre-processing
         href: articles/Hoffman_human_single-cell_preprocess.html
       - text: Human single-cell RNA-seq analysis
         href: articles/Hoffman_human_single-cell_analysis.html
+      - desc:
+      - text: 10X Chromium
+      - text: Mouse Tabular Muris single-cell RNA-seq pre-processing
+        href: articles/Tabular_Muris_mouse_single-cell_preprocess.Rmd
+      - text: Mouse Tabular Muris single-cell RNA-seq analysis
+        href: articles/Tabular_Muris_mouse_single-cell_analysis.Rmd
+      - text: -------
+      - text: Bulk
       - text: Human bulk RNA-seq pre-processing
         href: articles/Hoffman_human_bulk_preprocess.html
       - text: Human bulk RNA-seq analysis
         href: articles/Hoffman_human_bulk_analysis.html
+
     - text: News
       href: news/index.html
+

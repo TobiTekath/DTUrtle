@@ -7,6 +7,7 @@
 combine_to_matrix(
   tx_list,
   cell_extensions = NULL,
+  cell_extension_side = "append",
   seurat_obj = NULL,
   tx2gene = NULL,
   assay_name = "dtutx"
@@ -16,6 +17,8 @@ combine_to_matrix(
 \item{tx_list}{List of sparse transcription count matrices, as returned by \code{\link[=import_counts]{import_counts()}} for single-cell data.}
 
 \item{cell_extensions}{Optional vector of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'. Defaults to an increasing integer per sample.}
+
+\item{cell_extension_side}{Define to which side of the barcode the cell extensions shall be added ('append' or 'prepend').}
 
 \item{seurat_obj}{Optional seurat object, where the combined matrix is added as an assay. This has the advantage, that the cells are matched and subsetted if necessary. Currently only Seurat 3 objects are supported.}
 

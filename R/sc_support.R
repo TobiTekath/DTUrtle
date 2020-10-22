@@ -2,7 +2,7 @@
 #'
 #' Perform dmFilter-like filtering for sparse or dense matrices
 #'
-#' Runtime optimised version of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter()}}, which can optionally be executed in parallel.
+#' Runtime optimized version of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter()}}, which can optionally be executed in parallel.
 #'
 #' @param counts Sparse count matrix.
 #' @param tx2gene Feature to gene mapping.
@@ -69,7 +69,11 @@ sparse_filter <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), 
         return(rownames(expr))
     }
 
+    if(!BiocParallel::bpisup(BPPARAM)){
+        BiocParallel::bpstart(BPPARAM)
+    }
     counts_new <- BiocParallel::bplapply(inds, FUN=filter, BPPARAM=BPPARAM)
+    BiocParallel::bpstop(BPPARAM)
     counts_new <- counts[unlist(counts_new),]
     assertthat::assert_that(nrow(counts_new)>0, msg = "No Features left after filtering. Maybe try more relaxed filtering parameter.")
     message("Retain ",nrow(counts_new), " of ",nrow(counts)," features.\nRemoved ", nrow(counts)-nrow(counts_new), " features.")

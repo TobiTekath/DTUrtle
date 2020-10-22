@@ -13,7 +13,7 @@ table_percentage_bar(color1, color2, digits, color_break = 0, ...)
 
 \item{digits}{The number of digits to format the numbers to.}
 
-\item{color_break}{The value, where a color switch should hapen.}
+\item{color_break}{The value, where a color switch should happen.}
 
 \item{...}{Further arguments passed to \code{\link[formattable:style]{style}}.}
 }

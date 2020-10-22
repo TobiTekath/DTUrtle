@@ -47,9 +47,11 @@ and so the length offset matrix should not be used.}
     \item{\code{tx2gene}}{a two-column data.frame linking transcript id (column 1)
 to gene id (column 2).
 the column names are not relevant, but this column order must be used. 
-this argument is required for gene-level summarization for methods
-that provides transcript-level estimates only
-(kallisto, Salmon, Sailfish)}
+this argument is required for gene-level summarization, and the tximport
+vignette describes how to construct this data.frame (see Details below).
+An automated solution to avoid having to create \code{tx2gene} if
+one has quantified with Salmon or alevin with human or mouse transcriptomes
+is to use the \code{tximeta} function from the tximeta Bioconductor package.}
     \item{\code{varReduce}}{whether to reduce per-sample inferential replicates
 information into a matrix of sample variances \code{variance} (default FALSE).
 alevin computes inferential variance by default for bootstrap
@@ -69,7 +71,8 @@ to remove version information to facilitate matching with the tx id in \code{tx2
 (default FALSE)}
     \item{\code{ignoreAfterBar}}{logical, whether to split the tx id on the '|' character
 to facilitate matching with the tx id in \code{tx2gene} (default FALSE)}
-    \item{\code{geneIdCol}}{name of column with gene id. if missing, the \code{tx2gene} argument can be used}
+    \item{\code{geneIdCol}}{name of column with gene id. if missing, the \code{tx2gene}
+argument can be used}
     \item{\code{txIdCol}}{name of column with tx id}
     \item{\code{abundanceCol}}{name of column with abundances (e.g. TPM or FPKM)}
     \item{\code{countsCol}}{name of column with estimated counts}
@@ -87,9 +90,8 @@ non-zero count during sparse import (default is 1)}
 StringTie's output of coverage. Default value (from StringTie) is 75.
 The formula used to calculate counts is:
 \code{cov * transcript length / read length}}
-    \item{\code{forceSlow}}{logical, argument used for testing. Will force the use of
-the slower R code for importing alevin, even if \code{fishpond}
-library is installed. Default is FALSE}
+    \item{\code{alevinArgs}}{named list, with logical elements \code{filterBarcodes},
+\code{tierImport}, \code{forceSlow}. See Details for definitions.}
   }}
 }
 \value{

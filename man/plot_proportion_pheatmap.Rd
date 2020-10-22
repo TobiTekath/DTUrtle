@@ -143,6 +143,7 @@ Highly flexible visualization, relying on the \code{pheatmap} package.
 
 Other DTUrtle visualization: 
 \code{\link{create_dtu_table}()},
+\code{\link{plot_dimensional_reduction}()},
 \code{\link{plot_proportion_barplot}()},
 \code{\link{plot_transcripts_view}()}
 }

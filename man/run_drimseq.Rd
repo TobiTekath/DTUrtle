@@ -14,6 +14,7 @@ run_drimseq(
   filtering_strategy = "bulk",
   BPPARAM = BiocParallel::SerialParam(),
   force_dense = T,
+  subset_counts = F,
   carry_over_metadata = T,
   ...
 )
@@ -25,7 +26,7 @@ run_drimseq(
 \item Seurat object with a transcription level assay as \code{active.assay} (most likely result object from \code{\link[=combine_to_matrix]{combine_to_matrix()}})
 }}
 
-\item{tx2gene}{Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in \code{counts} and \code{tx2gene} was provided in \code{\link[=combine_to_matrix]{combine_to_matrix()}}, a vector of the colnames of the specific feature and gene identifierss is sufficient.}
+\item{tx2gene}{Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in \code{counts} and \code{tx2gene} was provided in \code{\link[=combine_to_matrix]{combine_to_matrix()}}, a vector of the colnames of the specific feature and gene identifiers is sufficient.}
 
 \item{pd}{Data frame with at least a column of sample/cell identifiers (rownames or specified in \code{id_col}) and the comparison group definition (specified in \code{cond_col}).}
 
@@ -46,6 +47,8 @@ run_drimseq(
 
 \item{force_dense}{If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying \code{TRUE}. Increases memory usage, but also reduces runtime drastically (currently).}
 
+\item{subset_counts}{Force subsetting of the count matrix if not all features of the count matrix are present in the tx2gene table.}
+
 \item{carry_over_metadata}{Specify if compatible additional columns of \code{tx2gene} shall be carried over to the gene and transcript level \code{meta_table} in the results. Columns with \code{NA} values are not carried over.}
 
 \item{...}{
@@ -56,7 +59,7 @@ object.}
   }}
 }
 \value{
-\code{dturtle} object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
+\code{dturtle} object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accessible list with the following items:
 \itemize{
 \item \code{meta_table_gene}: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0. Can be used to add gene level meta-information for plotting.
 \item \code{meta_table_tx}: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0. Can be used to add transcript level meta-information for plotting.

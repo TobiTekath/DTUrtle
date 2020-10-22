@@ -1,12 +1,14 @@
 pandoc: 2.3.1
-pkgdown: 1.5.1
+pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
   Hoffman_human_bulk_analysis: Hoffman_human_bulk_analysis.html
   Hoffman_human_bulk_preprocess: Hoffman_human_bulk_preprocess.html
   Hoffman_human_single-cell_analysis: Hoffman_human_single-cell_analysis.html
   Hoffman_human_single-cell_preprocess: Hoffman_human_single-cell_preprocess.html
-last_built: 2020-08-03T11:30Z
+  Tabular_Muris_mouse_single-cell_analysis: Tabular_Muris_mouse_single-cell_analysis.html
+  Tabular_Muris_mouse_single-cell_preprocess: Tabular_Muris_mouse_single-cell_preprocess.html
+last_built: 2020-10-22T10:36Z
 urls:
   reference: https://tobitekath.github.io/DTUrtle/reference
   article: https://tobitekath.github.io/DTUrtle/articles

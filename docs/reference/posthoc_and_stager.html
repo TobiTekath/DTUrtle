@@ -44,6 +44,12 @@
 <script src="../pkgdown.js"></script>
 
 
+<!-- docsearch -->
+<script src="../docsearch.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.3/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
+<link href="../docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+
 
 
 <meta property="og:title" content="Posthoc filtering and two-staged statistical tests — posthoc_and_stager" />
@@ -80,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
       </span>
     </div>
 
@@ -97,11 +103,32 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/index.html">Vignette overview</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Single-cell</li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">Illumina SureCell</li>
+    <li>
       <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
     </li>
     <li>
       <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
     </li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">10X Chromium</li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_preprocess.Rmd">Mouse Tabular Muris single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_analysis.Rmd">Mouse Tabular Muris single-cell RNA-seq analysis</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Bulk</li>
     <li>
       <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
     </li>
@@ -123,6 +150,12 @@
 </li>
       </ul>
       
+      <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
+        </div>
+      </form>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -143,7 +176,7 @@
     <p>Perform optional post-hoc filtering and run two-staged statistical tests.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>posthoc_and_stager</span>(<span class='no'>dturtle</span>, <span class='kw'>ofdr</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>posthoc</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)</pre>
+    <pre class="usage"><span class='fu'>posthoc_and_stager</span><span class='op'>(</span><span class='va'>dturtle</span>, ofdr <span class='op'>=</span> <span class='fl'>0.05</span>, posthoc <span class='op'>=</span> <span class='fl'>0.1</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -158,7 +191,7 @@
     </tr>
     <tr>
       <th>posthoc</th>
-      <td><p>Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing post-hoc filtering. To disbale poshoc filtering 0 or <code>FALSE</code> can be provided.</p></td>
+      <td><p>Specify the minimal standard deviation of a transcripts proportion level that should be kept when performing post-hoc filtering. To disable posthoc filtering 0 or <code>FALSE</code> can be provided.</p></td>
     </tr>
     </table>
 
@@ -167,7 +200,7 @@
     <p>An extended <code>dturtle</code> object. Additional slots include:</p><ul>
 <li><p><code>sig_gene</code>: A character vector of all genes where the first stageR step was significant. Basically the significant genes, that showed signs of DTU.</p></li>
 <li><p><code>sig_tx</code> : A named character vector of transcripts where the second stageR step was significant. Basically the significant transcripts of the significant genes.</p></li>
-<li><p><code>FDR_table</code> : A data frame of the stage-wise adjusted p-values for all genes/transcripts. Might contain NA-values, as transcript level p-values are not avaible when the gene level test was not significant.</p></li>
+<li><p><code>FDR_table</code> : A data frame of the stage-wise adjusted p-values for all genes/transcripts. Might contain NA-values, as transcript level p-values are not available when the gene level test was not significant.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
@@ -198,13 +231,30 @@ The second step tries to identify on singular transcript level the significantly
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
    </div>
 
   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script>
+<script>
+  docsearch({
+    
+    
+    apiKey: 'a6c9f43b010fdd4b2e64792389fd67d2',
+    indexName: 'dturtle',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+
 
 
   </body>

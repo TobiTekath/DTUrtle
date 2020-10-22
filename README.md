@@ -15,12 +15,47 @@ if(!requireNamespace("remotes", quietly = T)){
 remotes::install_github("TobiTekath/DTUrtle")
 ```
 
+As DTUrtle depends on multiple packages, the installation might fail due
+to the complex dependency structure. Normally trying the above command
+multiple times helps (installed packages of the command are kept and
+reduce the dependency complexity). You might also try to install the
+needed Bioconductor packages beforehand:
+
+``` r
+if(!requireNamespace("BiocManager", quietly = T)){
+    install.packages("BiocManager")
+}
+BiocManager::install(c("BiocParallel", "GenomicRanges", "Gviz", "rtracklayer", "stageR", "tximport"))
+```
+
+-----
+
+If you are not on R \>= 4.0 and installation of the newest Gviz version
+fails, you can manually install an older Gviz version, for example
+with:
+
+``` r
+remotes::install_github("https://github.com/ivanek/Gviz/tree/RELEASE_3_10")
+```
+
+DTUrtle does **not** require R \>= 4.0 and should work fine with the
+older Gviz version.
+
+-----
+
 ## Basic workflow
 
-  - **See preprocessing vignettes for exemplified workflow with
+  - **See vignettes for a more detailed workflow with real
 data**
 
 <img src="man/figures/DTUrtle_workflow.svg" height="100%" style="display: block; margin: auto;" />
+
+## Vignettes
+
+Extensive documentation can be found
+[here](https://tobitekath.github.io/DTUrtle/), including multiple
+[Vignettes](https://tobitekath.github.io/DTUrtle/articles/index.html)
+analyzing real world data sets.
 
 ## DTUrtle minimal workflow
 
@@ -35,7 +70,7 @@ library(DTUrtle)
     #Using 4 cores:
     biocpar <- BiocParallel::MulticoreParam(4)
     #or standard serial computation (only 1 core)
-    biocpar <- BiocParallel::SerialParam()
+    #biocpar <- BiocParallel::SerialParam()
 #multiple other options available for computational clusters.
 ```
 
@@ -58,7 +93,7 @@ tx2gene <- import_gtf(gtf_file = "path_to_your_gtf_file.gtf")
 #import transcript-level quantification data, for example from Salmon
 files <- Sys.glob("path_to_your_data/*/quant.sf")
 names(files) <- gsub(".*/","",gsub("/quant.sf","",files))
-cts <- import_counts(files = files, type = "Salmon")
+cts <- import_counts(files = files, type = "salmon")
 
 ##for single-cell data only:
     #import_counts returned a list of matrices -> combine them to one matrix
@@ -71,10 +106,8 @@ pd <- data.frame("id"=colnames(cts), "group"="your_grouping_variable",
 
 ### DTU analysis
 
-  - the `dturtle` object is an easy-to-access list, containing all
-    necessary analysis information and results
-
-<!-- end list -->
+The `dturtle` object is an easy-to-access list, containing all necessary
+analysis information and results
 
 ``` r
 #use DRIMSeq for fitting a Dirichlet-multinomial model
@@ -103,11 +136,13 @@ dturtle <- plot_proportion_barplot(dturtle = dturtle,
                                    savepath = "images", 
                                    add_to_table = "barplot",
                                    BPPARAM = biocpar)
+
 dturtle <- plot_proportion_pheatmap(dturtle = dturtle, 
                                     savepath = "images", 
                                     include_expression = T,
                                     add_to_table = "pheatmap",
                                     BPPARAM = biocpar)
+
 dturtle <- plot_transcripts_view(dturtle = dturtle, 
                                  gtf = "path_to_your_gtf_file.gtf", 
                                  genome = 'hg38', 
@@ -116,15 +151,31 @@ dturtle <- plot_transcripts_view(dturtle = dturtle,
                                  add_to_table = "transcript_view",
                                  BPPARAM = biocpar)
 
+dturtle <- plot_dimensional_redcution(dturtle = dturtle,
+                                      reduction_df = "some_kind_of_dimensional_reduction_coordinates",
+                                      savepath = "images",
+                                      add_to_table = "dimensional_reduction",
+                                      BPPARAM = biocpar)
+
 #create interactive HTML-table from results data frame
     #optional: specify colorful column formatters
     column_formatter_list <- list(
-      "gene_qval" = table_pval_tile("white", "orange", digits = 3),
-      "min_tx_qval" = table_pval_tile("white", "orange", digits = 3),
-      "n_tx" = formattable::color_tile('white', "lightblue"),
-      "n_sig_tx" = formattable::color_tile('white', "lightblue"),
+      "gene_qvalue" = table_pval_tile("white", "orange", digits = 3),
+      "minimal_tx_qvalue" = table_pval_tile("white", "orange", digits = 3),
+      "number_tx" = formattable::color_tile('white', "lightblue"),
+      "number_significant_tx" = formattable::color_tile('white', "lightblue"),
       "max(Condition1-Condition2)" = table_percentage_bar('lightgreen', "#FF9999", digits=2))
 
 plot_dtu_table(dturtle = dturtle, savepath = "my_results.html", 
                column_formatters = column_formatter_list)
 ```
+
+**See
+[Vignettes](https://tobitekath.github.io/DTUrtle/articles/index.html)
+for a more detailed workflow with real data**
+
+### Help & Feedback
+
+If you have questions, need help with your anaylsis or found a bug:
+Please do not hesitate to [get in touch](mailto:tobias.tekath@wwu.de) or
+open a GitHub issue.

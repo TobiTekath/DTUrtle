@@ -1,0 +1,118 @@
+---
+title: "Pre-processing of Tabular Muris mouse single-cell RNA-seq data"
+author: "Tobias Tekath"
+date: "`r Sys.Date()`"
+description: "Exemplified pre-processing of mouse single-cell RNA-seq data."
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Pre-processing of Tabular Muris mouse single-cell RNA-seq data}
+  %\VignetteBuilder{knitr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette exemplifies the pre-processing of **single-cell RNA-seq data for analysis with DTUrtle**. The data used in this vignette is from the Tabular Muris consortium and publicly available as *Bioproject PRJNA432002*. The used files can be downloaded from [here](https://www.ebi.ac.uk/ena/browser/view/PRJNA432002). The corresponding publication for the data set can be found [here](https://doi.org/10.1038/s41586-018-0590-4). 
+
+For this vignette we focus on two of the available single-cell RNA-seq samples:
+
+- [SAMN08712875](https://www.ebi.ac.uk/ena/browser/view/SAMN08712875) which is a 10x Chromium v2 sample from the mammary gland (Mammary_Gland-10X_P7_13)
+- [SAMN08712876](https://www.ebi.ac.uk/ena/browser/view/SAMN08712876) which is a 10x Chromium v2 sample from the mammary gland (Mammary_Gland-10X_P7_12)
+
+There are *BAM*-files directly available from ENA, which will be converted back to *FASTQ*-files in this vignette.
+
+After downloading a **MD5-check** is strongly encouraged.
+
+## Preparing BAM-files
+For this vignette, it is assumed that the *BAM*-files mentioned above have been downloaded to a directory called `samples`.
+
+After downloading the *BAM*-files, which originate from an analysis with the 10x CellRanger pipeline, can be transferred back to the *FASTQ*-format without data loss. For this task we will use the 10x toolkit `bamtofastq` (Version 1.3.1), which can be obtained from [GitHub](https://github.com/10XGenomics/bamtofastq)
+
+Download the `bamtofastq_linux` or `bamtofastq_macos` binaries from the releases page into the `samples` folder and continue with the following *bash* commands:
+
+```{bash eval=FALSE}
+cd $PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/samples
+
+#make downloaded binary executable
+chmod +x bamtofastq_linux
+
+#convert BAMs back to FASTQ - increased read limit to not inflate the number of files.
+./bamtofastq_linux --reads-per-fastq=500000000 10X_P7_12.bam 10X_P7_12
+./bamtofastq_linux --reads-per-fastq=500000000 10X_P7_13.bam 10X_P7_13
+
+
+#optionally: remove BAM files
+rm 10X_P7_12.bam 
+rm 10X_P7_13.bam
+```
+
+There are now two folders with the *FASTQ*-files present in the `samples` folder. Apparently the reads originate from two sequencing lanes each - this was probably done to increase the total sequencing depth and coverage.
+
+## Quantification with Alevin
+
+`Alevin` is the single-cell counterpart of `Salmon`, one of the standard tools for bulk RNA-seq quantification. It is also integrated into the `Salmon` (Version 1.1.0) package. As most of the available transcript quantifiers, `Alevin/Salmon` do not perform a standard genomic alignment, but perform a quasi-mapping directly to the transcriptome. Reads, that could be originating from multiple transcript isoforms, are assigned to equivalence classes, where actual counts are later derived by expectation maximization algorithms.
+
+To run the `Alevin` quantification, we first need a transcriptomic index. For this example, we will use the [transcript sequences](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M24/gencode.vM24.transcripts.fa.gz) and [comprehensive gene annotation](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M24/gencode.vM24.annotation.gtf.gz) from [Gencode](https://www.gencodegenes.org/) [Version M24](https://www.gencodegenes.org/mouse/release_M24.html). 
+
+Assume you have downloaded and unpacked the above mentioned files in the analysis root directory. To build the actual index we run this *bash* code:
+
+```{bash, eval=F}
+#installation in conda evironment
+conda install salmon
+
+#create folder and change directory
+mkdir ../alevin
+cd ../alevin
+
+#build index - `p` specifies the number of threads to use
+salmon index -t ../gencode.vM24.transcripts.fa --gencode -p 4 -i index
+```
+
+To perform the actual quantification, we need one last file specifying the transcript to gene mapping. `Alevin`, unlike `Salmon`, aggregates the quantification counts to gene level by default. For our DTU analysis we require transcript level counts, so we will only provide a `transcript_id` to `transcript_name` mapping. This could also be a `transcript_id` to `transcript_id` mapping file (so each id mapping to itself).
+
+We can create such a mapping file with the help of the `DTUrtle` package in *R*:
+
+```{r, eval=F}
+library(DTUrtle)
+setwd("$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/alevin")
+
+#import information from the GTF file
+tx2gene <- import_gtf(gtf_file = "../gencode.vM24.annotation.gtf")
+
+  ##optional for later name consistency:
+  tx2gene$gene_name <- one_to_one_mapping(name = tx2gene$gene_name, 
+                                          id = tx2gene$gene_id)
+  tx2gene$transcript_name <- one_to_one_mapping(name = tx2gene$transcript_name, 
+                                                id = tx2gene$transcript_id)
+  
+
+write.table(x = tx2gene[,c("transcript_id", "transcript_name")], 
+            file = "txmap.tsv", sep = "\t", quote = F, 
+            row.names = F, col.names = F)
+```
+
+The actual quantification can be performed in *bash* with:
+
+```{bash, eval=F}
+#change back to sample directory for shorter command
+cd ../samples/10X_P7_12/10X_P7_12_MissingLibrary_1_H2H5YDMXX
+salmon alevin -l ISR -i ../../../alevin/index/ -1 bamtofastq_S1_L001_R1_001.fastq.gz bamtofastq_S1_L002_R1_001.fastq.gz -2 bamtofastq_S1_L001_R2_001.fastq.gz bamtofastq_S1_L002_R2_001.fastq.gz --chromium -p 20 --tgMap ../../../alevin/txmap.tsv --dumpFeatures -o ../../../alevin/10X_P7_12
+
+cd ../../10X_P7_13/10X_P7_13_MissingLibrary_1_H2H5YDMXX
+salmon alevin -l ISR -i ../../../alevin/index/ -1 bamtofastq_S1_L001_R1_001.fastq.gz bamtofastq_S1_L002_R1_001.fastq.gz -2 bamtofastq_S1_L001_R2_001.fastq.gz bamtofastq_S1_L002_R2_001.fastq.gz --chromium -p 20 --tgMap ../../../alevin/txmap.tsv --dumpFeatures -o ../../../alevin/10X_P7_13
+```
+
+For this analysis we used the `Alevin` algorithms for cell detection and barcode sequence correction, resulting in transcript level quantification data for 3992 (10X_P7_12) and 4326 cells (10X_P7_13).
+
+---
+
+**This concludes the preprocessing of the data. Please see the corresponding analysis vignette for an usage example of DTUrtle.**

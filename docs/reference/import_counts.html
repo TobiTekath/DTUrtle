@@ -44,6 +44,12 @@
 <script src="../pkgdown.js"></script>
 
 
+<!-- docsearch -->
+<script src="../docsearch.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.3/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
+<link href="../docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+
 
 
 <meta property="og:title" content="Import quantification results — import_counts" />
@@ -81,7 +87,7 @@ Most likely the first step in your DTUrtle analysis." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
       </span>
     </div>
 
@@ -98,11 +104,32 @@ Most likely the first step in your DTUrtle analysis." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/index.html">Vignette overview</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Single-cell</li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">Illumina SureCell</li>
+    <li>
       <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
     </li>
     <li>
       <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
     </li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">10X Chromium</li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_preprocess.Rmd">Mouse Tabular Muris single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_analysis.Rmd">Mouse Tabular Muris single-cell RNA-seq analysis</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Bulk</li>
     <li>
       <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
     </li>
@@ -123,6 +150,12 @@ Most likely the first step in your DTUrtle analysis." />
   </a>
 </li>
       </ul>
+      
+      <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
+        </div>
+      </form>
       
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -145,7 +178,7 @@ Most likely the first step in your DTUrtle analysis." />
 Most likely the first step in your DTUrtle analysis.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>import_counts</span>(<span class='no'>files</span>, <span class='no'>type</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>import_counts</span><span class='op'>(</span><span class='va'>files</span>, <span class='va'>type</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -169,7 +202,7 @@ Most likely the first step in your DTUrtle analysis.</p>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Arguments passed on to <code><a href='https://rdrr.io/pkg/tximport/man/tximport.html'>tximport::tximport</a></code></p><dl'>
+      <td><p>Arguments passed on to <code><a href='https://rdrr.io/pkg/tximport/man/tximport.html'>tximport::tximport</a></code></p><dl>
     <dt><code>txIn</code></dt><dd><p>logical, whether the incoming files are transcript level (default TRUE)</p></dd>
     <dt><code>txOut</code></dt><dd><p>logical, whether the function should just output
 transcript-level (default FALSE)</p></dd>
@@ -193,9 +226,11 @@ and so the length offset matrix should not be used.</p></dd>
     <dt><code>tx2gene</code></dt><dd><p>a two-column data.frame linking transcript id (column 1)
 to gene id (column 2).
 the column names are not relevant, but this column order must be used. 
-this argument is required for gene-level summarization for methods
-that provides transcript-level estimates only
-(kallisto, Salmon, Sailfish)</p></dd>
+this argument is required for gene-level summarization, and the tximport
+vignette describes how to construct this data.frame (see Details below).
+An automated solution to avoid having to create <code>tx2gene</code> if
+one has quantified with Salmon or alevin with human or mouse transcriptomes
+is to use the <code>tximeta</code> function from the tximeta Bioconductor package.</p></dd>
     <dt><code>varReduce</code></dt><dd><p>whether to reduce per-sample inferential replicates
 information into a matrix of sample variances <code>variance</code> (default FALSE).
 alevin computes inferential variance by default for bootstrap
@@ -215,7 +250,8 @@ to remove version information to facilitate matching with the tx id in <code>tx2
 (default FALSE)</p></dd>
     <dt><code>ignoreAfterBar</code></dt><dd><p>logical, whether to split the tx id on the '|' character
 to facilitate matching with the tx id in <code>tx2gene</code> (default FALSE)</p></dd>
-    <dt><code>geneIdCol</code></dt><dd><p>name of column with gene id. if missing, the <code>tx2gene</code> argument can be used</p></dd>
+    <dt><code>geneIdCol</code></dt><dd><p>name of column with gene id. if missing, the <code>tx2gene</code>
+argument can be used</p></dd>
     <dt><code>txIdCol</code></dt><dd><p>name of column with tx id</p></dd>
     <dt><code>abundanceCol</code></dt><dd><p>name of column with abundances (e.g. TPM or FPKM)</p></dd>
     <dt><code>countsCol</code></dt><dd><p>name of column with estimated counts</p></dd>
@@ -233,9 +269,8 @@ non-zero count during sparse import (default is 1)</p></dd>
 StringTie's output of coverage. Default value (from StringTie) is 75.
 The formula used to calculate counts is:
 <code>cov * transcript length / read length</code></p></dd>
-    <dt><code>forceSlow</code></dt><dd><p>logical, argument used for testing. Will force the use of
-the slower R code for importing alevin, even if <code>fishpond</code>
-library is installed. Default is FALSE</p></dd>
+    <dt><code>alevinArgs</code></dt><dd><p>named list, with logical elements <code>filterBarcodes</code>,
+<code>tierImport</code>, <code>forceSlow</code>. See Details for definitions.</p></dd>
   
 </dl></td>
     </tr>
@@ -278,13 +313,30 @@ See also <code><a href='combine_to_matrix.html'>combine_to_matrix()</a></code>, 
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
    </div>
 
   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script>
+<script>
+  docsearch({
+    
+    
+    apiKey: 'a6c9f43b010fdd4b2e64792389fd67d2',
+    indexName: 'dturtle',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+
 
 
   </body>

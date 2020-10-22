@@ -16,7 +16,7 @@ Vector of identifiers without version numbers.
 Remove the version number of ensembl gene/transcript identifiers.
 }
 \details{
-Removes everything beyond the first dot ('.') in each provied identifier.
+Removes everything beyond the first dot ('.') in each provided identifier.
 }
 \examples{
 rm_version(c("ENSG00000000001.5","ENST00000000001.2"))

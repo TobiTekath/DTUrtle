@@ -17,8 +17,10 @@
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Pre-processing of the Hoffman et al. human single-cell RNA-seq data">
-<meta property="og:description" content="DTUrtle">
+<script src="../pkgdown.js"></script><!-- docsearch --><script src="../docsearch.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.3/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous">
+<link href="../docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><meta property="og:title" content="Pre-processing of the Hoffman et al. human single-cell RNA-seq data">
+<meta property="og:description" content="Exemplified pre-processing of human single-cell RNA-seq data.">
 <meta property="og:image" content="https://tobitekath.github.io/DTUrtle/logo.svg">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -38,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
       </span>
     </div>
 
@@ -55,11 +57,32 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/index.html">Vignette overview</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">Single-cell</li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">Illumina SureCell</li>
+    <li>
       <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
     </li>
     <li>
       <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
     </li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">10X Chromium</li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_preprocess.Rmd">Mouse Tabular Muris single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_analysis.Rmd">Mouse Tabular Muris single-cell RNA-seq analysis</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">Bulk</li>
     <li>
       <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
     </li>
@@ -80,7 +103,13 @@
   </a>
 </li>
       </ul>
+<form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
 </div>
+      </form>
+      
+    </div>
 <!--/.nav-collapse -->
   </div>
 <!--/.container -->
@@ -89,13 +118,14 @@
 
       
 
-      </header><div class="row">
+      </header><link href="Hoffman_human_single-cell_preprocess_files/anchor-sections-1.0/anchor-sections.css" rel="stylesheet">
+<script src="Hoffman_human_single-cell_preprocess_files/anchor-sections-1.0/anchor-sections.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Pre-processing of the Hoffman et al. human single-cell RNA-seq data</h1>
                         <h4 class="author">Tobias Tekath</h4>
             
-            <h4 class="date">2020-08-03</h4>
+            <h4 class="date">2020-10-22</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/TobiTekath/DTUrtle/blob/master/vignettes/Hoffman_human_single-cell_preprocess.Rmd"><code>vignettes/Hoffman_human_single-cell_preprocess.Rmd</code></a></small>
       <div class="hidden name"><code>Hoffman_human_single-cell_preprocess.Rmd</code></div>
@@ -170,23 +200,24 @@
 <p>The <em>TSV</em> files contain all found barcode sequences in the samples, together with possible erroneous sequenced barcodes (less than 2 edit distance away) which will be corrected.</p>
 <p>In the publication, only 400 cells of each sample were used in the analysis. For simplicity, we stick to this process. We can get the 400 valid cell barcodes for each sample from the supplementary count files from <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE141834">GEO</a>: <code>GSE141834_scRNAseq_rawCounts.txt.gz</code></p>
 <p>Assume you have downloaded and unpacked the mentioned file. Lists of the valid cell barcodes can be created with this <em>R</em> code:</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span>(<span class="st">"$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/umi_tools"</span>)
+<div class="sourceCode" id="cb4"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span><span class="op">(</span><span class="st">"$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/umi_tools"</span><span class="op">)</span>
 
 <span class="co">#get valid barcodes from raw count table</span>
-<span class="no">raw_expr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span>(<span class="st">"GSE141834_scRNAseq_rawCounts.txt"</span>, <span class="kw">header</span><span class="kw">=</span><span class="no">T</span>, <span class="kw">sep</span><span class="kw">=</span><span class="st">"\t"</span>)
-<span class="no">etoh_selected_cells</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html">gsub</a></span>(<span class="st">".*_"</span>,<span class="st">""</span>,<span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span>(<span class="st">"Dex.00.2_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(<span class="no">raw_expr</span>), <span class="kw">value</span> <span class="kw">=</span> <span class="no">T</span>))
-<span class="no">dex2hr_selected_cells</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html">gsub</a></span>(<span class="st">".*_"</span>,<span class="st">""</span>,<span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span>(<span class="st">"Dex.02.2_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(<span class="no">raw_expr</span>), <span class="kw">value</span> <span class="kw">=</span> <span class="no">T</span>))
+<span class="va">raw_expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="st">"GSE141834_scRNAseq_rawCounts.txt"</span>, header<span class="op">=</span><span class="cn">T</span>, sep<span class="op">=</span><span class="st">"\t"</span><span class="op">)</span>
+<span class="va">etoh_selected_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html">gsub</a></span><span class="op">(</span><span class="st">".*_"</span>,<span class="st">""</span>,<span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span><span class="op">(</span><span class="st">"Dex.00.2_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">raw_expr</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span>
+<span class="va">dex2hr_selected_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html">gsub</a></span><span class="op">(</span><span class="st">".*_"</span>,<span class="st">""</span>,<span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span><span class="op">(</span><span class="st">"Dex.02.2_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">raw_expr</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span>
 
 <span class="co">#read-in created umi_tools whitelists</span>
-<span class="no">etoh_white</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span>(<span class="st">"etoh_whitelist.tsv"</span>, <span class="kw">stringsAsFactors</span> <span class="kw">=</span> <span class="no">F</span>)
-<span class="no">dex2hr_white</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span>(<span class="st">"dex2hr_whitelist.tsv"</span>, <span class="kw">stringsAsFactors</span> <span class="kw">=</span> <span class="no">F</span>)
+<span class="va">etoh_white</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="st">"etoh_whitelist.tsv"</span>, stringsAsFactors <span class="op">=</span> <span class="cn">F</span><span class="op">)</span>
+<span class="va">dex2hr_white</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="st">"dex2hr_whitelist.tsv"</span>, stringsAsFactors <span class="op">=</span> <span class="cn">F</span><span class="op">)</span>
 
 <span class="co">#write subset to file</span>
-<span class="no">etoh_white_sub</span> <span class="kw">&lt;-</span> <span class="no">etoh_white</span>[<span class="no">etoh_white</span>$<span class="no">V1</span> <span class="kw">%in%</span> <span class="no">etoh_selected_cells</span>,]
-<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span>(<span class="no">etoh_white_sub</span>, <span class="st">"etoh_whitelist_sub.tsv"</span>, <span class="kw">sep</span> <span class="kw">=</span> <span class="st">"\t"</span>, <span class="kw">quote</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">row.names</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">col.names</span> <span class="kw">=</span> <span class="no">F</span>)
+<span class="va">etoh_white_sub</span> <span class="op">&lt;-</span> <span class="va">etoh_white</span><span class="op">[</span><span class="va">etoh_white</span><span class="op">$</span><span class="va">V1</span> <span class="op">%in%</span> <span class="va">etoh_selected_cells</span>,<span class="op">]</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span><span class="op">(</span><span class="va">etoh_white_sub</span>, <span class="st">"etoh_whitelist_sub.tsv"</span>, sep <span class="op">=</span> <span class="st">"\t"</span>, quote <span class="op">=</span> <span class="cn">F</span>, row.names <span class="op">=</span> <span class="cn">F</span>, col.names <span class="op">=</span> <span class="cn">F</span><span class="op">)</span>
 
-<span class="no">dex2hr_white_sub</span> <span class="kw">&lt;-</span> <span class="no">dex2hr_white</span>[<span class="no">dex2hr_white</span>$<span class="no">V1</span> <span class="kw">%in%</span> <span class="no">dex2hr_selected_cells</span>,]
-<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span>(<span class="no">dex2hr_white_sub</span>, <span class="st">"dex2hr_whitelist_sub.tsv"</span>, <span class="kw">sep</span> <span class="kw">=</span> <span class="st">"\t"</span>, <span class="kw">quote</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">row.names</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">col.names</span> <span class="kw">=</span> <span class="no">F</span>)</pre></body></html></div>
+<span class="va">dex2hr_white_sub</span> <span class="op">&lt;-</span> <span class="va">dex2hr_white</span><span class="op">[</span><span class="va">dex2hr_white</span><span class="op">$</span><span class="va">V1</span> <span class="op">%in%</span> <span class="va">dex2hr_selected_cells</span>,<span class="op">]</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span><span class="op">(</span><span class="va">dex2hr_white_sub</span>, <span class="st">"dex2hr_whitelist_sub.tsv"</span>, sep <span class="op">=</span> <span class="st">"\t"</span>, quote <span class="op">=</span> <span class="cn">F</span>, row.names <span class="op">=</span> <span class="cn">F</span>, col.names <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></pre></div>
 <p>The subsetted <em>TSV</em> files contain only the 400 valid barcodes per cell, together with the barcodes that shall be corrected.</p>
 </div>
 <div id="extract-and-correct-barcodes-umis" class="section level2">
@@ -197,7 +228,7 @@
 <a class="sourceLine" id="cb5-2" data-line-number="2"></a>
 <a class="sourceLine" id="cb5-3" data-line-number="3"></a>
 <a class="sourceLine" id="cb5-4" data-line-number="4"><span class="ex">umi_tools</span> extract --filter-cell-barcode --error-correct-cell --whitelist=dex2hr_whitelist_sub.tsv --extract-method=regex -p <span class="st">'(?P&lt;discard_1&gt;.{0,20})(?P&lt;cell_1&gt;.{6})(?P&lt;discard_2&gt;TAGCCATCGCATTGC){e&lt;=1}(?P&lt;cell_2&gt;.{6})(?P&lt;discard_3&gt;TACCTCTGAGCTGAA){e&lt;=1}(?P&lt;cell_3&gt;.{6})(?P&lt;discard_4&gt;ACG)(?P&lt;umi_1&gt;.{8})(?P&lt;discard_5&gt;GAC).*'</span> -I ../samples/sc_Dex2hr_1.fastq.gz -S sc_Dex2hr_1_extracted.fastq.gz --read2-in ../samples/sc_Dex2hr_2_matched.fastq.gz --read2-out sc_Dex2hr_2_extracted.fastq.gz</a></code></pre></div>
-<p>The <code>umi_tools</code> folder should now contain four gzipped fastq files, two for each sample.</p>
+<p>The <code>umi_tools</code> folder should now contain four gzipped <em>FASTQ</em> files, two for each sample.</p>
 <hr>
 <p>We plan to use <code>Alevin</code> for transcript level quantification, which does not support the Illumina SureCell protocol by default. We can overcome this limitation by slightly editing the new R1 files with some <em>bash</em> code:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="fu">zgrep</span> <span class="st">"^@"</span> sc_EtOH_1_extracted.fastq.gz <span class="kw">|</span>  <span class="fu">awk</span> -F <span class="st">'_'</span> -v OFS=<span class="st">'\n'</span> <span class="st">'{split($3,a," ");print $0,$2a[1],"+","KKKKKKKKKKKKKKKKKKKKKKKKKK"}'</span> <span class="kw">|</span> <span class="fu">gzip</span> <span class="op">&gt;</span> sc_EtOH_1_altered.fastq.gz</a>
@@ -227,22 +258,23 @@
 <a class="sourceLine" id="cb7-9" data-line-number="9"><span class="ex">salmon</span> index -t ../gencode.v34.transcripts.fa --gencode -p 4 -i index</a></code></pre></div>
 <p>To perform the actual quantification, we need one last file specifying the transcript to gene mapping. <code>Alevin</code>, unlike <code>Salmon</code>, aggregates the quantification counts to gene level by default. For our DTU analysis we require transcript level counts, so we will only provide a <code>transcript_id</code> to <code>transcript_name</code> mapping. This could also be a <code>transcript_id</code> to <code>transcript_id</code> mapping file (so each id mapping to itself).</p>
 <p>We can create such a mapping file with the help of the <code>DTUrtle</code> package in <em>R</em>:</p>
-<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">DTUrtle</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span>(<span class="st">"$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/alevin"</span>)
+<div class="sourceCode" id="cb8"><pre class="downlit">
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/TobiTekath/DTUrtle">DTUrtle</a></span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span><span class="op">(</span><span class="st">"$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/alevin"</span><span class="op">)</span>
 
 <span class="co">#import information from the GTF file</span>
-<span class="no">tx2gene</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/import_gtf.html">import_gtf</a></span>(<span class="kw">gtf_file</span> <span class="kw">=</span> <span class="st">"../gencode.v34.annotation.gtf"</span>)
+<span class="va">tx2gene</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/import_gtf.html">import_gtf</a></span><span class="op">(</span>gtf_file <span class="op">=</span> <span class="st">"../gencode.v34.annotation.gtf"</span><span class="op">)</span>
 
   <span class="co">##optional for later name consistency:</span>
-  <span class="no">tx2gene</span>$<span class="no">gene_name</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/one_to_one_mapping.html">one_to_one_mapping</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="no">tx2gene</span>$<span class="no">gene_name</span>,
-                                          <span class="kw">id</span> <span class="kw">=</span> <span class="no">tx2gene</span>$<span class="no">gene_id</span>)
-  <span class="no">tx2gene</span>$<span class="no">transcript_name</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/one_to_one_mapping.html">one_to_one_mapping</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="no">tx2gene</span>$<span class="no">transcript_name</span>,
-                                                <span class="kw">id</span> <span class="kw">=</span> <span class="no">tx2gene</span>$<span class="no">transcript_id</span>)
+  <span class="va">tx2gene</span><span class="op">$</span><span class="va">gene_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/one_to_one_mapping.html">one_to_one_mapping</a></span><span class="op">(</span>name <span class="op">=</span> <span class="va">tx2gene</span><span class="op">$</span><span class="va">gene_name</span>, 
+                                          id <span class="op">=</span> <span class="va">tx2gene</span><span class="op">$</span><span class="va">gene_id</span><span class="op">)</span>
+  <span class="va">tx2gene</span><span class="op">$</span><span class="va">transcript_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/one_to_one_mapping.html">one_to_one_mapping</a></span><span class="op">(</span>name <span class="op">=</span> <span class="va">tx2gene</span><span class="op">$</span><span class="va">transcript_name</span>, 
+                                                id <span class="op">=</span> <span class="va">tx2gene</span><span class="op">$</span><span class="va">transcript_id</span><span class="op">)</span>
+  
 
-
-<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span>(<span class="kw">x</span> <span class="kw">=</span> <span class="no">tx2gene</span>[,<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"transcript_id"</span>, <span class="st">"transcript_name"</span>)],
-            <span class="kw">file</span> <span class="kw">=</span> <span class="st">"txmap.tsv"</span>, <span class="kw">sep</span> <span class="kw">=</span> <span class="st">"\t"</span>, <span class="kw">quote</span> <span class="kw">=</span> <span class="no">F</span>,
-            <span class="kw">row.names</span> <span class="kw">=</span> <span class="no">F</span>, <span class="kw">col.names</span> <span class="kw">=</span> <span class="no">F</span>)</pre></body></html></div>
+<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">tx2gene</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"transcript_id"</span>, <span class="st">"transcript_name"</span><span class="op">)</span><span class="op">]</span>, 
+            file <span class="op">=</span> <span class="st">"txmap.tsv"</span>, sep <span class="op">=</span> <span class="st">"\t"</span>, quote <span class="op">=</span> <span class="cn">F</span>, 
+            row.names <span class="op">=</span> <span class="cn">F</span>, col.names <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></pre></div>
 <p>The actual quantification can be performed in <em>bash</em> with:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ex">salmon</span> alevin -l A -i index/ -1 ../umi_tools/sc_EtOH_1_altered.fastq.gz -2 ../umi_tools/sc_EtOH_2_extracted.fastq.gz --keepCBFraction 1 --end 5 --umiLength 8 --barcodeLength 18 --dumpFeatures --tgMap txmap.tsv -o sc_EtOH</a>
 <a class="sourceLine" id="cb9-2" data-line-number="2"></a>
@@ -267,14 +299,27 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
 </div>
 
   
-
-
-  </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script><script>
+  docsearch({
+    
+    
+    apiKey: 'a6c9f43b010fdd4b2e64792389fd67d2',
+    indexName: 'dturtle',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+</body>
 </html>

@@ -63,7 +63,7 @@ import_counts <- function(files, type, ...){
                 message("Using 'dtuScaledTPM' for 'countsFromAbundance'.")
                 args$countsFromAbundance <- "dtuScaledTPM"
             }else{
-                message("Using 'scaledTPM' for 'countsFromAbundance'. If you specify a 'tx2gene' file, 'dtuScaledTPM' can be used.")
+                message("Using 'scaledTPM' for 'countsFromAbundance'. If you specify a 'tx2gene' file, the presumably more appropriate 'dtuScaledTPM' can be used.")
                 args$countsFromAbundance <- "scaledTPM"
             }
         }
@@ -91,6 +91,7 @@ import_counts <- function(files, type, ...){
 #'
 #' @param tx_list List of sparse transcription count matrices, as returned by [import_counts()] for single-cell data.
 #' @param cell_extensions Optional vector of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'. Defaults to an increasing integer per sample.
+#' @param cell_extension_side Define to which side of the barcode the cell extensions shall be added ('append' or 'prepend').
 #' @param seurat_obj Optional seurat object, where the combined matrix is added as an assay. This has the advantage, that the cells are matched and subsetted if necessary. Currently only Seurat 3 objects are supported.
 #' @param tx2gene Optional tx2gene or metadata data frame, can only be used in conjunction with a seurat object. Metadata is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the `tx_list` objects must be used.
 #' @param assay_name If the combined matrix should be added to an existing Seurat object, the name of the assay can be specified here.
@@ -98,7 +99,7 @@ import_counts <- function(files, type, ...){
 #' @return Either a combined sparse transcription count matrix or a seurat object which the combined sparse transcription count matrix as an assay.
 #' @family DTUrtle
 #' @export
-combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx2gene=NULL, assay_name="dtutx"){
+combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side="append", seurat_obj=NULL, tx2gene=NULL, assay_name="dtutx"){
 
     if(!is.null(seurat_obj)){
         assertthat::assert_that(requireNamespace("Seurat", quietly = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
@@ -123,6 +124,9 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
     if(!is.null(cell_extensions)){
         assertthat::assert_that(length(cell_extensions)==length(tx_list), msg="cell_extensions must have same length as tx_list!")
     }
+
+    assertthat::assert_that(is.character(cell_extension_side) && length(cell_extension_side)==1 && cell_extension_side %in% c("append", "prepend"), msg="The cell_extension_side must be 'append' or 'prepend'!")
+
 
     dup <- any(duplicated(unlist(lapply(tx_list, FUN = colnames))))
 
@@ -151,14 +155,25 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
         }
 
         if(is.null(cell_extensions)){
-            cell_extensions <- paste0("_", seq_along(tx_list))
+            if(cell_extension_side=="append"){
+                cell_extensions <- paste0("_", seq_along(tx_list))
+            }else{
+                cell_extensions <- paste0(seq_along(tx_list), "_")
+            }
         }
-
-        cell_extensions <- paste0(ifelse(startsWith(cell_extensions, "_"), "", "_"), cell_extensions)
+        if(cell_extension_side=="append"){
+            cell_extensions <- paste0(ifelse(startsWith(cell_extensions, "_"), "", "_"), cell_extensions)
+        }else{
+            cell_extensions <- paste0(cell_extensions, ifelse(endsWith(cell_extensions, "_"), "", "_"))
+        }
         message("Map extensions:\n\t", paste0(names(tx_list), " --> '", cell_extensions, "'\n\t"))
 
         for(i in seq_along(tx_list)){
-            colnames(tx_list[[i]]) <- paste0(colnames(tx_list[[i]]), cell_extensions[[i]])
+            if(cell_extension_side=="append"){
+                colnames(tx_list[[i]]) <- paste0(colnames(tx_list[[i]]), cell_extensions[[i]])
+            }else{
+                colnames(tx_list[[i]]) <- paste0(cell_extensions[[i]], colnames(tx_list[[i]]))
+            }
         }
 
 
@@ -169,7 +184,6 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
             stopstr <- ifelse(length(dup_cells)>10, paste0("Found ", length(dup_cells), " duplicated cellnames even after cellname extension!"), paste0("Found duplicated cellnames even after cellname extension:\n\t", paste0(dup_cells, collapse = "\n\t")))
             stop(stopstr)
         }
-
     }
 
     message("Merging matrices")
@@ -220,7 +234,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #' @param counts Can be either:
 #' 1. (sparse) matrix with feature counts, where the rows correspond to features (e.g. transcripts). One column per sample/cell with the count data for the specified features must be present (The names of these columns must match with the identifiers in `id_col`).
 #' 2. Seurat object with a transcription level assay as `active.assay` (most likely result object from [combine_to_matrix()])
-#' @param tx2gene Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in `counts` and `tx2gene` was provided in [combine_to_matrix()], a vector of the colnames of the specific feature and gene identifierss is sufficient.
+#' @param tx2gene Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object. If a Seurat object is provided in `counts` and `tx2gene` was provided in [combine_to_matrix()], a vector of the colnames of the specific feature and gene identifiers is sufficient.
 #' @param pd Data frame with at least a column of sample/cell identifiers (rownames or specified in `id_col`) and the comparison group definition (specified in `cond_col`).
 #' @param id_col Name of the column in `pd`, where unique sample/cell identifiers are stored. If `NULL` (default), use rownames of `pd`.
 #' @param cond_col Name of the column in `pd`, where the comparison groups/conditions are defined. If more than 2 levels/groups are present, the groups that should be used must be specified in `cond_levels`.
@@ -231,10 +245,11 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #' - `'own'`: Can be used to specify a user-defined strategy via the `...` argument (using the parameters of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter}}).
 #' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
 #' @param force_dense If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying `TRUE`. Increases memory usage, but also reduces runtime drastically (currently).
+#' @param subset_counts Force subsetting of the count matrix if not all features of the count matrix are present in the tx2gene table.
 #' @param carry_over_metadata Specify if compatible additional columns of `tx2gene` shall be carried over to the gene and transcript level `meta_table` in the results. Columns with `NA` values are not carried over.
 #' @inheritDotParams sparseDRIMSeq::dmFilter
 #'
-#' @return `dturtle` object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accesible list with the following items:
+#' @return `dturtle` object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accessible list with the following items:
 #' - `meta_table_gene`: Data frame of the expressed-in ratio of all genes. Expressed-in is defined as expression > 0. Can be used to add gene level meta-information for plotting.
 #' - `meta_table_tx`: Data frame of the expressed-in ratio of all transcripts. Expressed-in is defined as expression > 0. Can be used to add transcript level meta-information for plotting.
 #' - `meta_table_sample`: Data frame of the provided sample level information (`pd`). Can be used to add sample level meta-information for plotting.
@@ -245,7 +260,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, seurat_obj=NULL, tx
 #'
 #' @family DTUrtle
 #' @export
-run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", BPPARAM=BiocParallel::SerialParam(), force_dense=T, carry_over_metadata=T, ...){
+run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", BPPARAM=BiocParallel::SerialParam(), force_dense=T, subset_counts=F, carry_over_metadata=T, ...){
     if(methods::is(counts, "Seurat")){
         assertthat::assert_that(requireNamespace("Seurat", quietly = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
         assertthat::assert_that(utils::packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
@@ -266,8 +281,16 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     assertthat::assert_that(filtering_strategy %in% c("bulk", "sc", "own"), msg = "Please select a valid filtering strategy ('bulk', 'sc' or 'own').")
     assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
     assertthat::assert_that(is.logical(force_dense))
+    assertthat::assert_that(is.logical(subset_counts))
     assertthat::assert_that(is.logical(carry_over_metadata))
-    assertthat::assert_that(all(rownames(counts) %in% tx2gene[[1]]), msg = "Not all rownames of the counts are present in the first tx2gene column. You may want to reorder the tx2gene columns with 'move_columns_to_front()'.")
+    assertthat::assert_that((length(intersect(rownames(counts), tx2gene[[1]]))>0), msg = paste0("The provided counts names and tx2gene names do not match.\n\tCounts names: ",
+                            paste0(rownames(utils::head(counts, n = 5)), collapse = ", "), "\n\tTx2gene names: ", paste0(utils::head(tx2gene, n = 5)[[1]], collapse = ", ")))
+
+    if(subset_counts){
+      counts <- counts[rownames(counts) %in% tx2gene[[1]],,drop=F]
+    }
+
+    assertthat::assert_that(all(rownames(counts) %in% tx2gene[[1]]), msg = "Not all rownames of the counts are present in the first tx2gene column. You may want to reorder the tx2gene columns with 'move_columns_to_front()' or set 'subset_counts' to True.")
 
     tx2gene <- rapply(tx2gene, as.character, classes="factor", how="replace")
     tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
@@ -317,7 +340,6 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
                                            "min_gene_expr" = 5,
                                            "min_samps_feature_prop" = smallest_group,
                                            "min_feature_prop" = 0.05, "run_gene_twice" = T))
-
     },
     own={
         filter_opt_list <- utils::modifyList(filter_opt_list, list(...))
@@ -388,11 +410,11 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 #'
 #' @param dturtle Result object of [run_drimseq()]. Must be of class `dturtle`.
 #' @param ofdr Overall false discovery rate (OFDR) threshold.
-#' @param posthoc Specify the minimal standard deviation of a transcripts porportion level that should be kept when performing post-hoc filtering. To disbale poshoc filtering 0 or `FALSE` can be provided.
+#' @param posthoc Specify the minimal standard deviation of a transcripts proportion level that should be kept when performing post-hoc filtering. To disable posthoc filtering 0 or `FALSE` can be provided.
 #' @return An extended `dturtle` object. Additional slots include:
 #' - `sig_gene`: A character vector of all genes where the first stageR step was significant. Basically the significant genes, that showed signs of DTU.
 #' - `sig_tx` : A named character vector of transcripts where the second stageR step was significant. Basically the significant transcripts of the significant genes.
-#' - `FDR_table` : A data frame of the stage-wise adjusted p-values for all genes/transcripts. Might contain NA-values, as transcript level p-values are not avaible when the gene level test was not significant.
+#' - `FDR_table` : A data frame of the stage-wise adjusted p-values for all genes/transcripts. Might contain NA-values, as transcript level p-values are not available when the gene level test was not significant.
 #'
 #' @family DTUrtle
 #' @export

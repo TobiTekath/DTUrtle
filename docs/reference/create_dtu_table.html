@@ -44,6 +44,12 @@
 <script src="../pkgdown.js"></script>
 
 
+<!-- docsearch -->
+<script src="../docsearch.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.3/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
+<link href="../docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+
 
 
 <meta property="og:title" content="Summarize DTUrtle results — create_dtu_table" />
@@ -80,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
       </span>
     </div>
 
@@ -97,11 +103,32 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/index.html">Vignette overview</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Single-cell</li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">Illumina SureCell</li>
+    <li>
       <a href="../articles/Hoffman_human_single-cell_preprocess.html">Human single-cell RNA-seq pre-processing</a>
     </li>
     <li>
       <a href="../articles/Hoffman_human_single-cell_analysis.html">Human single-cell RNA-seq analysis</a>
     </li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">10X Chromium</li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_preprocess.Rmd">Mouse Tabular Muris single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Tabular_Muris_mouse_single-cell_analysis.Rmd">Mouse Tabular Muris single-cell RNA-seq analysis</a>
+    </li>
+    <li class="divider"></li>
+    <li class="dropdown-header">Bulk</li>
     <li>
       <a href="../articles/Hoffman_human_bulk_preprocess.html">Human bulk RNA-seq pre-processing</a>
     </li>
@@ -123,6 +150,12 @@
 </li>
       </ul>
       
+      <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
+        </div>
+      </form>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -143,11 +176,11 @@
     <p>Summarize the key results of the DTUrtle analysis to a gene-level data frame.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>create_dtu_table</span>(
-  <span class='no'>dturtle</span>,
-  <span class='kw'>add_gene_metadata</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>pct_gene_expr</span> <span class='kw'>=</span> <span class='st'>"exp_in"</span>),
-  <span class='kw'>add_tx_metadata</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>max_pct_tx_expr</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"exp_in"</span>, <span class='no'>max</span>))
-)</pre>
+    <pre class="usage"><span class='fu'>create_dtu_table</span><span class='op'>(</span>
+  <span class='va'>dturtle</span>,
+  add_gene_metadata <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>pct_gene_expr <span class='op'>=</span> <span class='st'>"exp_in"</span><span class='op'>)</span>,
+  add_tx_metadata <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>max_pct_tx_expr <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"exp_in"</span>, <span class='va'>max</span><span class='op'>)</span><span class='op'>)</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -165,14 +198,24 @@ Names can be specified, which are used as the column names in the final output.<
       <th>add_tx_metadata</th>
       <td><p>A list of tuples for the object's <code>meta_table_tx</code>, the transcript-level meta data table.
 The tuples must consist of the name of the column in <code>meta_table_tx</code> and a gene-level summarization function.
-This function shall summarize the trancript-level information in such a way, that only one value for each gene is returned.
+This function shall summarize the transcript-level information in such a way, that only one value for each gene is returned.
 Names can be specified, which are used as the column names in the final output.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An extended <code>dturtle</code> object, including the added <code>dtu_table</code>.</p>
+    <p>An extended <code>dturtle</code> object, including the added <code>dtu_table</code>. The <code>dtu_table</code> contains key statistics for all significant DTU genes.
+By default, the <code>dtu_table</code> contains the following columns:</p><ul>
+<li><p>"gene_ID": The used gene identifiers (gene name or id)</p></li>
+<li><p>"gene_qvalue":  Multiple testing corrected p-value (a.k.a. q-value) comparing all transcripts together between the two groups ("gene level").</p></li>
+<li><p>"minimal_tx_value": The minimal multiple testing corrected p-value from comparing all transcripts individually between the two groups ("transcript level"). I.e. the q-value of the most significant transcript.</p></li>
+<li><p>"number_tx": The number of analyzed transcripts for the specific gene.</p></li>
+<li><p>"number_significant_tx": The number of significant transcripts from the 'transcript level' analysis.</p></li>
+<li><p>"max(<code>Group1</code>-<code>Group2</code>")": Maximal proportional difference between the two comparisons groups. The difference is computed by subtracting the fitted mean of <code>Group2</code> from the fitted mean of <code>Group1</code> (<code>Group1</code>-<code>Group2</code>).</p></li>
+</ul>
+
+<p>Additional columns from the <code>meta_table_gene</code> or gene-level summarized columns of <code>meta_table_tx</code> can optionally be carried over.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>This function provides an easy interface to summarize the key DTUrtle results together with user-defined meta data columns to a gene-level data frame.</p>
@@ -180,6 +223,7 @@ Names can be specified, which are used as the column names in the final output.<
 
     <div class='dont-index'><p><code><a href='run_drimseq.html'>run_drimseq()</a></code> and <code><a href='posthoc_and_stager.html'>posthoc_and_stager()</a></code> for DTU object creation. <code><a href='plot_dtu_table.html'>plot_dtu_table()</a></code> for table visualization.</p>
 <p>Other DTUrtle visualization: 
+<code><a href='plot_dimensional_reduction.html'>plot_dimensional_reduction</a>()</code>,
 <code><a href='plot_proportion_barplot.html'>plot_proportion_barplot</a>()</code>,
 <code><a href='plot_proportion_pheatmap.html'>plot_proportion_pheatmap</a>()</code>,
 <code><a href='plot_transcripts_view.html'>plot_transcripts_view</a>()</code></p></div>
@@ -199,13 +243,30 @@ Names can be specified, which are used as the column names in the final output.<
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
    </div>
 
   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script>
+<script>
+  docsearch({
+    
+    
+    apiKey: 'a6c9f43b010fdd4b2e64792389fd67d2',
+    indexName: 'dturtle',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+
 
 
   </body>

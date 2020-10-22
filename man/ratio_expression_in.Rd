@@ -24,5 +24,5 @@ Data frame with the expressed-in ratios.
 Get ratio of expressing samples per gene/transcript.
 }
 \details{
-Expressing samples are defined as feature expression > 0. Also splits expressing samples by condtion.
+Expressing samples are defined as feature expression > 0. Also splits expressing samples by condition.
 }

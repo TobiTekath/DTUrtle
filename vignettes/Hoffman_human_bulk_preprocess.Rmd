@@ -2,6 +2,7 @@
 title: "Pre-processing of the Hoffman et al. human bulk RNA-seq data"
 author: "Tobias Tekath"
 date: "`r Sys.Date()`"
+description: "Exemplified pre-processing of human bulk RNA-seq data."
 output: 
   rmarkdown::html_vignette:
     toc: true

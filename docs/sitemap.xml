@@ -55,6 +55,9 @@
     <loc>https://tobitekath.github.io/DTUrtle/reference/partitioning_to_dataframe.html</loc>
   </url>
   <url>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/plot_dimensional_reduction.html</loc>
+  </url>
+  <url>
     <loc>https://tobitekath.github.io/DTUrtle/reference/plot_dtu_table.html</loc>
   </url>
   <url>
@@ -116,5 +119,11 @@
   </url>
   <url>
     <loc>https://tobitekath.github.io/DTUrtle/articles/Hoffman_human_single-cell_preprocess.html</loc>
+  </url>
+  <url>
+    <loc>https://tobitekath.github.io/DTUrtle/articles/Tabular_Muris_mouse_single-cell_analysis.html</loc>
+  </url>
+  <url>
+    <loc>https://tobitekath.github.io/DTUrtle/articles/Tabular_Muris_mouse_single-cell_preprocess.html</loc>
   </url>
 </urlset>
