@@ -25,6 +25,8 @@ knitr::opts_chunk$set(
 )
 if(dir.exists(root_dir)){
   knitr::opts_knit$set(root.dir = root_dir)
+  #remove previous results
+  unlink(paste0(root_dir,"/*"),recursive=T)
 }
 ```
 

@@ -81,9 +81,9 @@ navbar:
       - desc:
       - text: 10X Chromium
       - text: Mouse Tabular Muris single-cell RNA-seq pre-processing
-        href: articles/Tabular_Muris_mouse_single-cell_preprocess.Rmd
+        href: articles/Tabular_Muris_mouse_single-cell_preprocess.html
       - text: Mouse Tabular Muris single-cell RNA-seq analysis
-        href: articles/Tabular_Muris_mouse_single-cell_analysis.Rmd
+        href: articles/Tabular_Muris_mouse_single-cell_analysis.html
       - text: -------
       - text: Bulk
       - text: Human bulk RNA-seq pre-processing
