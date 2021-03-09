@@ -4,16 +4,18 @@
 \alias{prop_matrix}
 \title{Actual computation of proportion matrices}
 \usage{
-prop_matrix(mtx, partitioning = NULL)
+prop_matrix(mtx, partitioning = NULL, tx2gene = NULL)
 }
 \arguments{
 \item{mtx}{A (sparse) transcript-level matrix}
 
 \item{partitioning}{A DRIMSeq partitioning list, specifying which transcripts belong to which genes.}
+
+\item{tx2gene}{A data frame, specifying which transcripts belong to which genes.}
 }
 \value{
 A (sparse) matrix of transcript proportions
 }
 \description{
-Actual computation of proportion matrices
+Please provide either a partitioning or a tx2gene data frame.
 }

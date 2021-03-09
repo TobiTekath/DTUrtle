@@ -86,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.3</span>
       </span>
     </div>
 
@@ -186,9 +186,12 @@
   include_labels <span class='op'>=</span> <span class='cn'>T</span>,
   reduction_to_use <span class='op'>=</span> <span class='st'>"umap"</span>,
   indicate_significant_tx <span class='op'>=</span> <span class='cn'>T</span>,
-  plot_colors <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"grey"</span>, <span class='st'>"firebrick"</span><span class='op'>)</span>,
-  point_alpha <span class='op'>=</span> <span class='fl'>0.2</span>,
+  plot_colors <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"grey"</span>, <span class='st'>"#9ECAE1"</span>, <span class='st'>"#6BAED6"</span>, <span class='st'>"#4292C6"</span>, <span class='st'>"#2171B5"</span>, <span class='st'>"#08519C"</span>,
+    <span class='st'>"#08306B"</span><span class='op'>)</span>,
+  plot_scale <span class='op'>=</span> <span class='st'>"fixed"</span>,
+  point_alpha <span class='op'>=</span> <span class='fl'>1</span>,
   point_size <span class='op'>=</span> <span class='cn'>NULL</span>,
+  text_size <span class='op'>=</span> <span class='fl'>11</span>,
   label_size <span class='op'>=</span> <span class='fl'>3</span>,
   label_colors <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"#7CAE00"</span>, <span class='st'>"#00BFC4"</span><span class='op'>)</span>,
   label_y_expansion <span class='op'>=</span> <span class='fl'>0.2</span>,
@@ -243,6 +246,10 @@
       <td><p>Specify a vector of minimum 2 colors that build the color scale.</p></td>
     </tr>
     <tr>
+      <th>plot_scale</th>
+      <td><p>Specify how the scales of each facet should act. Values are "fixed", "free_x", "free_y" or "free", to either have the same fixed scale, a free x- or y-axis or both axis free.</p></td>
+    </tr>
+    <tr>
       <th>point_alpha</th>
       <td><p>Specify an alpha level for the single cells / samples.</p></td>
     </tr>
@@ -251,8 +258,12 @@
       <td><p>Specify the size of the points representing a single cell / sample. If <code>NULL</code>, chosen automatically.</p></td>
     </tr>
     <tr>
+      <th>text_size</th>
+      <td><p>Specify basic text size (in pt) to use in plot.</p></td>
+    </tr>
+    <tr>
       <th>label_size</th>
-      <td><p>If <code>include_labels=T</code>, set size of labels.</p></td>
+      <td><p>If <code>include_labels=T</code>, set size of labels (in mm).</p></td>
     </tr>
     <tr>
       <th>label_colors</th>
@@ -308,7 +319,8 @@ specifying dimensions in pixels.</p></dd>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Returns list of saved plots, for adding to the DTU table. If no <code>savepath</code> is provided, returns a list of the created plots for further processing.</p>
+    <p>Returns list of saved plots, for adding to the DTU table. If no <code>savepath</code> is provided, returns a list of the created plots for further processing.
+If <code>indicate_significant_tx</code> is TRUE, a list of <code>grob</code> objects will be returned, otherwise a list of <code>ggplot</code> objects. <code>grob</code> can be visualized for example with <code><a href='https://rdrr.io/r/grid/grid.draw.html'>grid::grid.draw()</a></code>.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Needs a pre-computed dimensional reduction with at least 2 dimensions. Currently only able to visualize in 2D. Sorts values to show highest expressing cells/samples on top.</p>

@@ -4,12 +4,14 @@
 \alias{get_proportion_matrix}
 \title{Compute proportion matrix}
 \usage{
-get_proportion_matrix(obj, genes = NULL)
+get_proportion_matrix(obj, tx2gene = NULL, genes = NULL)
 }
 \arguments{
 \item{obj}{(sparse) matrix or \code{dturtle} object.}
 
-\item{genes}{Specify the genes to subset the data to, if a \code{dturtle} object is provided.}
+\item{tx2gene}{Provide a tx2gene data frame, specifying which transcripts (first column) belong to which gene (second column).}
+
+\item{genes}{If a \code{dturtle} object is provided, specify the genes you want to get proportions of.}
 }
 \value{
 A (sparse) matrix of transcript proportions
@@ -18,5 +20,7 @@ A (sparse) matrix of transcript proportions
 Compute a matrix of transcript proportions per gene. Either a (sparse) count matrix or a \code{dturtle} object can be provided.
 }
 \details{
+If a (sparse) matrix of multiple genes is provided, it is advised to also specify a tx2gene data frame.
+If no tx2gene data frame is present, it is assumed all matrix entries belong to the same gene.
 If a \code{dturtle} object is provided, a list of genes the data shall be subsetted to can optionally be given.
 }

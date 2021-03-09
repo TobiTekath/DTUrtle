@@ -1,3 +1,6 @@
+#' @import sparseDRIMSeq
+NULL
+
 #' Import quantification results
 #'
 #' Import the quantification results of many RNA-seq quantifiers, including `alevin` and `bustools` for single-cell data.
@@ -130,60 +133,57 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
 
     dup <- any(duplicated(unlist(lapply(tx_list, FUN = colnames))))
 
-    if(!is.null(seurat_obj)){
-        extensions_in_seur <- sum(grepl(pattern = "_", x = Seurat::Cells(seurat_obj), fixed = T))>length(Seurat::Cells(seurat_obj))*0.1
-        if(!extensions_in_seur&dup){
-            stop("Found no Seurat cellname extension but not unique cellnames. Make your cellnames unique or extend the cellnames in your Seurat object.")
-        }
-        if(extensions_in_seur){
-            message("At least some seurat cellnames show a cellname extension.")
-            if(!is.null(cell_extensions)){
-                warning("Discarding provided cellname extensions and using Seurat object ones.")
-            }
-            cell_extensions <- paste0("_", unique(stringi::stri_split_fixed(str= Seurat::Cells(seurat_obj), pattern = "_", n = 2, simplify = T)[,2]))
-            if(length(cell_extensions)!=length(names(tx_list))){
-                stop("Could not 1:1 map seurat cellname extensions and tx file list.\n",
-                     "Try subsetting the seurat object if you do not want to provide tx information for all samples.")
-            }
-        }
-    }
+    if(dup|!is.null(cell_extensions)|!is.null(seurat_obj)){
+      if(dup){
+        message("Found overall duplicated cellnames. Trying cellname extension per sample.")
+      }
 
-
-    if(dup|!is.null(cell_extensions)){
-        if(dup){
-            message("Found overall duplicated cellnames. Trying cellname extension per sample.")
-        }
-
-        if(is.null(cell_extensions)){
-            if(cell_extension_side=="append"){
-                cell_extensions <- paste0("_", seq_along(tx_list))
-            }else{
-                cell_extensions <- paste0(seq_along(tx_list), "_")
+      if(is.null(cell_extensions)){
+        if(!is.null(seurat_obj)){
+          message("Trying to infer cell extensions from Seurat object")
+          cell_extensions <- strsplit(Seurat::Cells(seurat_obj), split = "_")
+          cell_extensions <- unique(unlist(lapply(cell_extensions, function(x) paste0(x[-which.max(nchar(x))], collapse="_"))))
+          if(length(cell_extensions)==1&&nchar(cell_extensions)==0){
+            message("Could not find cell name extension in Seurat object.")
+            cell_extensions <- NULL
+            if(dup){
+              stop("Duplicated cell names present, but no cell name extension could be found.")
             }
-        }
-        if(cell_extension_side=="append"){
-            cell_extensions <- paste0(ifelse(startsWith(cell_extensions, "_"), "", "_"), cell_extensions)
+          }
+          else if(length(cell_extensions)!=length(names(tx_list))){
+            stop("Could not 1:1 map inferred seurat cellname extensions and tx file list.\n",
+                 "Either provide explicit cell extensions or try subsetting the seurat object, if you do not want to provide tx information for all samples.")
+          }
+        }else if(cell_extension_side=="append"){
+          cell_extensions <- paste0("_", seq_along(tx_list))
         }else{
-            cell_extensions <- paste0(cell_extensions, ifelse(endsWith(cell_extensions, "_"), "", "_"))
+          cell_extensions <- paste0(seq_along(tx_list), "_")
+        }
+      }
+      if(!is.null(cell_extensions)){
+        if(cell_extension_side=="append"){
+          cell_extensions <- paste0(ifelse(startsWith(cell_extensions, "_"), "", "_"), cell_extensions)
+        }else{
+          cell_extensions <- paste0(cell_extensions, ifelse(endsWith(cell_extensions, "_"), "", "_"))
         }
         message("Map extensions:\n\t", paste0(names(tx_list), " --> '", cell_extensions, "'\n\t"))
 
         for(i in seq_along(tx_list)){
-            if(cell_extension_side=="append"){
-                colnames(tx_list[[i]]) <- paste0(colnames(tx_list[[i]]), cell_extensions[[i]])
-            }else{
-                colnames(tx_list[[i]]) <- paste0(cell_extensions[[i]], colnames(tx_list[[i]]))
-            }
+          if(cell_extension_side=="append"){
+            colnames(tx_list[[i]]) <- paste0(colnames(tx_list[[i]]), cell_extensions[[i]])
+          }else{
+            colnames(tx_list[[i]]) <- paste0(cell_extensions[[i]], colnames(tx_list[[i]]))
+          }
         }
+      }
 
+      all_cells <- unlist(lapply(tx_list, FUN = colnames))
+      dup_cells <- all_cells[duplicated(all_cells)]
 
-        all_cells <- unlist(lapply(tx_list, FUN = colnames))
-        dup_cells <- all_cells[duplicated(all_cells)]
-
-        if(length(dup_cells)>0){
-            stopstr <- ifelse(length(dup_cells)>10, paste0("Found ", length(dup_cells), " duplicated cellnames even after cellname extension!"), paste0("Found duplicated cellnames even after cellname extension:\n\t", paste0(dup_cells, collapse = "\n\t")))
-            stop(stopstr)
-        }
+      if(length(dup_cells)>0){
+        stopstr <- ifelse(length(dup_cells)>10, paste0("Found ", length(dup_cells), " duplicated cellnames even after cellname extension!"), paste0("Found duplicated cellnames even after cellname extension:\n\t", paste0(dup_cells, collapse = "\n\t")))
+        stop(stopstr)
+      }
     }
 
     message("Merging matrices")
@@ -191,6 +191,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
 
     if(!is.null(seurat_obj)){
         common_cells <- intersect(Seurat::Cells(seurat_obj), colnames(tx_list))
+        assertthat::assert_that(length(common_cells)>0, msg="No common cellnames in Seurat and transcript level counts. Did you try specifyin a cellname extension?")
         uniq_cells <- setdiff(colnames(tx_list), Seurat::Cells(seurat_obj))
         extra_seurat_cells <- setdiff(Seurat::Cells(seurat_obj), colnames(tx_list))
         message("Of ", ncol(tx_list), " cells, ", length(common_cells), " (", round(length(common_cells)/ncol(tx_list)*100), "%) could be found in the provided seurat object.")
@@ -224,10 +225,11 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
     }
 }
 
+#TODO: add_uniform should stay false - have a deeper look at what it does. Added values far to high? Mean fit of 0 counts at ~5? Far less DTU genes.
 
-#' Main DRIMSeq results
+#' Main filtering and DTU statistical computations
 #'
-#' Compute the main DRIMSeq results.
+#' Perform customizable filtering and the main DTU calling with DRIMSeq.
 #'
 #' Run the main DRIMSeq pipeline, including generation of a design matrix, gene/feature filtering and running the statistical computations of DRIMSeq (`dmPrecision()`, `dmFit()` and `dmTest()`)
 #'
@@ -243,10 +245,13 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
 #' - `'bulk'`: Predefined strategy for bulk RNAseq data (default): Features must contribute at least 5% of the total expression in at least 50% of the samples of the smallest group. Additionally the total gene expression must be 5 or more for at least 50% of the samples of the smallest group.
 #' - `'sc'`: Predefined strategy for single-cell RNAseq data: Features must contribute at least 5% of the total expression in at least 5% of the cells of the smallest group.
 #' - `'own'`: Can be used to specify a user-defined strategy via the `...` argument (using the parameters of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter}}).
+#' @param add_pseudocount Define `TRUE` if a very small pseudocount shall be added to transcripts with zero expression in one group. Adding the pseudocount enables statistical analysis for comparisons, where one groups proportion is completely zero.
 #' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
 #' @param force_dense If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying `TRUE`. Increases memory usage, but also reduces runtime drastically (currently).
-#' @param subset_counts Force subsetting of the count matrix if not all features of the count matrix are present in the tx2gene table.
+#' @param subset_feature Subsets the provided count matrix to only specified features. Can be names, indeces or logicals.
+#' @param subset_sample Subsets the provided count matrix to only specified samples. Can be names, indeces or logicals.
 #' @param carry_over_metadata Specify if compatible additional columns of `tx2gene` shall be carried over to the gene and transcript level `meta_table` in the results. Columns with `NA` values are not carried over.
+#' @param filter_only Return filtered (sparse) matrix, without performing DRIMSeq statistical computations.
 #' @inheritDotParams sparseDRIMSeq::dmFilter
 #'
 #' @return `dturtle` object with the key results, that can be used in the DTUrtle steps hereafter. The object is just a easily accessible list with the following items:
@@ -257,10 +262,13 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
 #' - `design`: Design matrix generated from the specified `pd` columns.
 #' - `group`: Vector which sample/cell belongs to which comparison group.
 #' - `used_filtering_options`: List of the used filtering options.
+#' - `add_pseudocount`: Keeps track if pseudocount was added in comparison.
+#'
+#' If `filter_only=TRUE`, only the filtered (sparse) matrix is returned.
 #'
 #' @family DTUrtle
 #' @export
-run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", BPPARAM=BiocParallel::SerialParam(), force_dense=T, subset_counts=F, carry_over_metadata=T, ...){
+run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", add_pseudocount=F, BPPARAM=BiocParallel::SerialParam(), force_dense=T, subset_feature=NULL, subset_sample=NULL, carry_over_metadata=T, filter_only=F, ...){
     if(methods::is(counts, "Seurat")){
         assertthat::assert_that(requireNamespace("Seurat", quietly = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
         assertthat::assert_that(utils::packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
@@ -276,21 +284,37 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     assertthat::assert_that(methods::is(counts, "matrix")|methods::is(counts, "sparseMatrix"))
     assertthat::assert_that(methods::is(tx2gene, "data.frame"))
     assertthat::assert_that(methods::is(pd, "data.frame"))
-    assertthat::assert_that(ncol(tx2gene)>1)
+    assertthat::assert_that(ncol(tx2gene)>1, msg = "'tx2gene' should at least have two columns [feature | gene --- in that order].")
     assertthat::assert_that(cond_col %in% colnames(pd), msg = paste0("Could not find", cond_col, " in column names of pd."))
     assertthat::assert_that(filtering_strategy %in% c("bulk", "sc", "own"), msg = "Please select a valid filtering strategy ('bulk', 'sc' or 'own').")
+    assertthat::assert_that(is.logical(add_pseudocount), msg="`add_pseudocount` must be `TRUE` or `FALSE`.")
     assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
-    assertthat::assert_that(is.logical(force_dense))
-    assertthat::assert_that(is.logical(subset_counts))
-    assertthat::assert_that(is.logical(carry_over_metadata))
+    assertthat::assert_that(is.logical(force_dense), msg="`force_dense` must be `TRUE` or `FALSE`.")
+    assertthat::assert_that(is.null(subset_feature)|length(subset_feature)>0, msg = "`subset_feature` must be `NULL` or of length>=1.")
+    assertthat::assert_that(is.null(subset_sample)|length(subset_sample)>0, msg = "`subset_sample` must be `NULL` or of length>=1.")
+    assertthat::assert_that(is.logical(carry_over_metadata), msg="`carry_over_metadata` must be `TRUE` or `FALSE`.")
     assertthat::assert_that((length(intersect(rownames(counts), tx2gene[[1]]))>0), msg = paste0("The provided counts names and tx2gene names do not match.\n\tCounts names: ",
                             paste0(rownames(utils::head(counts, n = 5)), collapse = ", "), "\n\tTx2gene names: ", paste0(utils::head(tx2gene, n = 5)[[1]], collapse = ", ")))
+    assertthat::assert_that(is.logical(filter_only), msg="The 'filter_only' paramter must be TRUE or FALSE.")
 
-    if(subset_counts){
-      counts <- counts[rownames(counts) %in% tx2gene[[1]],,drop=F]
+
+    if(!is.null(subset_feature)|!is.null(subset_sample)){
+      if(is.null(subset_feature)){
+        subset_feature <- T
+      }
+      if(is.null(subset_sample)){
+        subset_sample <- T
+      }
+      if(is.character(subset_feature)){
+        assertthat::assert_that(all(subset_feature %in% rownames(counts)), msg="Invalid 'subset_feature' names provided.")
+      }
+      if(is.character(subset_sample)){
+        assertthat::assert_that(all(subset_sample %in% colnames(counts)), msg="Invalid 'subset_sample' names provided.")
+      }
+      counts <- counts[subset_feature, subset_sample, drop=F]
     }
 
-    assertthat::assert_that(all(rownames(counts) %in% tx2gene[[1]]), msg = "Not all rownames of the counts are present in the first tx2gene column. You may want to reorder the tx2gene columns with 'move_columns_to_front()' or set 'subset_counts' to True.")
+    assertthat::assert_that(all(rownames(counts) %in% tx2gene[[1]]), msg = "Not all rownames of the counts are present in the first tx2gene column. You may want to reorder the tx2gene columns with 'move_columns_to_front()' or use 'subset_feature' to subset the counts.")
 
     tx2gene <- rapply(tx2gene, as.character, classes="factor", how="replace")
     tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),]
@@ -303,7 +327,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
             cond_levels <- unique(pd[[cond_col]])
     }
     assertthat::assert_that(length(cond_levels)==2, msg = "More than two levels found in 'cond_col'. Please specify the two levels you want to compare in 'cond_levels'.")
-    message("\nComparing ", cond_levels[1], " vs ", cond_levels[2])
+    message("\nComparing in '", cond_col, "': '", cond_levels[1], "' vs '", cond_levels[2], "'")
 
     if(is.null(id_col)){
         samp <- data.frame("sample_id"=row.names(pd), "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd)==cond_col))], row.names = NULL, stringsAsFactors = F)
@@ -311,16 +335,18 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
         samp <- data.frame("sample_id"=pd[[id_col]], "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd) %in% c(id_col, cond_col)))], row.names = NULL, stringsAsFactors = F)
     }
     samp$condition <- factor(samp$condition, levels=cond_levels)
+    samp <- samp[samp$sample_id %in% colnames(counts),,drop=F]
+    counts <- counts[, samp$sample_id, drop=F]
 
     #exclude samples not in comparison
     exclude <- as.vector(samp$sample_id[is.na(samp$condition)])
     if(length(exclude)!=0){
         message("Excluding ", ifelse(length(exclude)<10, paste(exclude, collapse=" "), paste(length(exclude), "cells/samples")), " for this comparison!")
         samp <- samp[!is.na(samp$condition),]
-        counts <- counts[ , !(colnames(counts) %in% exclude)]
+        counts <- counts[, !(colnames(counts) %in% exclude), drop=F]
     }
     message("\nProceed with cells/samples: ",paste0(utils::capture.output(table(samp$condition)), collapse = "\n"))
-    assertthat::assert_that(length(unique(samp$condition))==2, msg="No two sample groups left for comparison. Aborting!")
+    assertthat::assert_that(length(levels(samp$condition))==2, msg="No two sample groups left for comparison. Aborting!")
 
     message("\nFiltering...\n")
     filter_opt_list <- list("min_samps_gene_expr" = 0,
@@ -344,9 +370,16 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     own={
         filter_opt_list <- utils::modifyList(filter_opt_list, list(...))
     })
+    #force garbage collection before RAM intensive computations.
+    x <- gc(verbose=F)
     BiocParallel::bpprogressbar(BPPARAM) <- T
     counts <- do.call(sparse_filter, args = c(list("counts" = counts, "tx2gene" = tx2gene, "BPPARAM" = BPPARAM), filter_opt_list), quote=TRUE)
     BiocParallel::bpprogressbar(BPPARAM) <- F
+
+    if(filter_only){
+      return(counts)
+    }
+
     tx2gene <- tx2gene[match(rownames(counts), tx2gene$feature_id),]
 
     if(methods::is(counts, 'sparseMatrix')&force_dense){
@@ -381,9 +414,9 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     design_full <- stats::model.matrix(~condition, data=samp)
 
     message("\nPerforming statistical tests...\n")
-    drim_test <- sparseDRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, add_uniform=T, verbose=1)
+    drim_test <- sparseDRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, add_uniform=add_pseudocount, verbose=1)
     ### do not add uniform distribution to full fit, as it is not added to null fit
-    drim_test <- sparseDRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=F, verbose=1)
+    drim_test <- sparseDRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=add_pseudocount, verbose=1)
     drim_test <- sparseDRIMSeq::dmTest(drim_test, coef=2, BPPARAM=BPPARAM, verbose=1)
 
     group <- factor(samp$condition, levels = cond_levels, ordered = T)
@@ -393,7 +426,8 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 
     return_obj <- list("meta_table_gene"=exp_in_gn, "meta_table_tx"=exp_in_tx, "meta_table_sample"=samp,
                        "drim"=drim_test, "design_full"=design_full, "group"=group,
-                       "used_filtering_options"=list("DRIM"=filter_opt_list))
+                       "used_filtering_options"=list("DRIM"=filter_opt_list),
+                       "add_pseudocount"=add_pseudocount)
     class(return_obj) <- append("dturtle", class(return_obj))
     return(return_obj)
 }

@@ -53,7 +53,7 @@
 
 
 <meta property="og:title" content="Actual computation of proportion matrices — prop_matrix" />
-<meta property="og:description" content="Actual computation of proportion matrices" />
+<meta property="og:description" content="Please provide either a partitioning or a tx2gene data frame." />
 <meta property="og:image" content="https://tobitekath.github.io/DTUrtle/logo.svg" />
 
 
@@ -86,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.3</span>
       </span>
     </div>
 
@@ -173,10 +173,10 @@
     </div>
 
     <div class="ref-description">
-    <p>Actual computation of proportion matrices</p>
+    <p>Please provide either a partitioning or a tx2gene data frame.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>prop_matrix</span><span class='op'>(</span><span class='va'>mtx</span>, partitioning <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>prop_matrix</span><span class='op'>(</span><span class='va'>mtx</span>, partitioning <span class='op'>=</span> <span class='cn'>NULL</span>, tx2gene <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -188,6 +188,10 @@
     <tr>
       <th>partitioning</th>
       <td><p>A DRIMSeq partitioning list, specifying which transcripts belong to which genes.</p></td>
+    </tr>
+    <tr>
+      <th>tx2gene</th>
+      <td><p>A data frame, specifying which transcripts belong to which genes.</p></td>
     </tr>
     </table>
 

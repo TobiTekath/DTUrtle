@@ -85,7 +85,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.3</span>
       </span>
     </div>
 
@@ -170,9 +170,51 @@
       <small>Source: <a href='https://github.com/TobiTekath/DTUrtle/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="dturtle-0-7-3" class="section level1">
+<h1 class="page-header" data-toc-text="0.7.3">
+<a href="#dturtle-0-7-3" class="anchor"></a>DTUrtle 0.7.3</h1>
+<div id="changes" class="section level2">
+<h2 class="hasAnchor">
+<a href="#changes" class="anchor"></a>Changes</h2>
+<ul>
+<li>readded “GenomicFeatures” as dependency - eases installation.</li>
+<li>measure and show computation time in vignettes.</li>
+<li>extended vignettes.</li>
+<li>extended README.</li>
+<li>
+<code><a href="../reference/plot_proportion_barplot.html">plot_proportion_barplot()</a></code>: define data and mapping already in general ggplot function, to ease editability.</li>
+<li>
+<code><a href="../reference/plot_proportion_barplot.html">plot_proportion_barplot()</a></code>: added global ‘text_size’ parameter.</li>
+<li>
+<code><a href="../reference/plot_dimensional_reduction.html">plot_dimensional_reduction()</a></code>: added ‘plot_scale’ parameter, allowing for free x- or y-axis of facets, or both.</li>
+<li>
+<code><a href="../reference/plot_dimensional_reduction.html">plot_dimensional_reduction()</a></code>: added global ‘text_size’ parameter.</li>
+<li>
+<code><a href="../reference/plot_transcripts_view.html">plot_transcripts_view()</a></code>: added ‘arrow_start’ parameter, to allow adjustment of the transcript annotation start position.</li>
+<li>
+<code><a href="../reference/plot_transcripts_view.html">plot_transcripts_view()</a></code>: changed default parameters and resolution, to get visually more appealing high quality plots.</li>
+<li>
+<code><a href="../reference/import_gtf.html">import_gtf()</a></code>: generalized function and added parameter for returned feature type and return format. Now can create fitting <code><a href="../reference/plot_transcripts_view.html">plot_transcripts_view()</a></code> GTF input.</li>
+<li>
+<code><a href="../reference/run_drimseq.html">run_drimseq()</a></code>: added <code>susbet_feature</code> and <code>subset_sample</code> parameters, replacing <code>subset_counts</code>. Now samples and features can be excluded from analysis on the fly.</li>
+<li>
+<code><a href="../reference/run_drimseq.html">run_drimseq()</a></code>: added <code>add_pseudocount</code> parameter, to enable comparisons of features with zero expression in one comparison group.</li>
+<li>
+<code><a href="../reference/run_drimseq.html">run_drimseq()</a></code>: added <code>filter_only</code> parameter, to return (sparse) count matrix after group-based filtering.</li>
+<li>
+<code><a href="../reference/combine_to_matrix.html">combine_to_matrix()</a></code>: added ability to infer Seurat cellname extension.</li>
+<li>removed dependency of ‘stringi’.</li>
+<li>added ‘sparseDRIMSeq’ to depending packages, to get rid of sometimes not-occuring package load.</li>
+<li>fixed some smaller bugs.</li>
+</ul>
+</div>
+</div>
     <div id="dturtle-0-7-1" class="section level1">
 <h1 class="page-header" data-toc-text="0.7.1">
 <a href="#dturtle-0-7-1" class="anchor"></a>DTUrtle 0.7.1</h1>
+<div id="changes-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#changes-1" class="anchor"></a>Changes</h2>
 <ul>
 <li>add new vignette for Tabula Muris (Mouse) data set.</li>
 <li>
@@ -201,12 +243,13 @@
 <li>minor improvements.</li>
 </ul>
 </div>
+</div>
     <div id="dturtle-0-2-6" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.6">
 <a href="#dturtle-0-2-6" class="anchor"></a>DTUrtle 0.2.6</h1>
-<div id="changes" class="section level2">
+<div id="changes-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes" class="anchor"></a>Changes</h2>
+<a href="#changes-2" class="anchor"></a>Changes</h2>
 <ul>
 <li>add <code>add_to_table</code> parameter to plotting functions, to add plot savepaths directly to <code>dtu_table</code>.</li>
 <li>
@@ -226,9 +269,9 @@
     <div id="dturtle-0-2-5" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.5">
 <a href="#dturtle-0-2-5" class="anchor"></a>DTUrtle 0.2.5</h1>
-<div id="changes-1" class="section level2">
+<div id="changes-3" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-1" class="anchor"></a>Changes</h2>
+<a href="#changes-3" class="anchor"></a>Changes</h2>
 <ul>
 <li>initial first version.</li>
 </ul>

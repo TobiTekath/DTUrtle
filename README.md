@@ -4,6 +4,40 @@
 **Perform differential transcript usage (DTU) analysis of bulk or
 single-cell RNA-seq data.**
 
+## Background
+
+While most RNA-seq data sets are mainly analyzed in regard to
+differential gene expression, the transcript-level nature of the RNA-seq
+reads is often overlooked. The **R package DTUrtle** offers an
+easy-to-use way to perform a differential transcript usage (DTU)
+analysis for bulk or single-cell RNA-seq data, comparing the expression
+proportions of a gene’s distinct transcript isoforms between conditions.
+The results, a list of significantly differential genes and transcript
+isoforms, can be aggregated in an overview table and visualized in
+multiple ways.
+
+## Target audience
+
+No in-depth knowledge about DTU or the statistical background of the
+analysis is needed. If you have data of an RNA-seq experiment at hand
+(or are able to download data from a public repository), you are good to
+go. Three exemplary vignettes for different species and sequencing
+techniques will guide you through your analysis.
+
+## Input data
+
+DTUrtle relies on transcript-level expression counts, which can be
+generated with transcript-level quantifiers like Salmon, Alevin,
+kallisto, etc. or even standard splice-aware genomic aligners like STAR
+(generating a transcript-level BAM with ‘–quantMode TranscriptomeSAM’
+and then quantifying it with Salmon).
+
+Besides the expression counts, a transcript-level annotation file for
+your species is needed (which is also required for the transcript-level
+quantification).
+
+-----
+
 ## Installation
 
 Install from GitHub:
@@ -16,7 +50,7 @@ remotes::install_github("TobiTekath/DTUrtle")
 ```
 
 As DTUrtle depends on multiple packages, the installation might fail due
-to the complex dependency structure. Normally trying the above command
+to the complex dependency structure. Normally, trying the above command
 multiple times helps (installed packages of the command are kept and
 reduce the dependency complexity). You might also try to install the
 needed Bioconductor packages beforehand:
@@ -122,7 +156,7 @@ dturtle <- posthoc_and_stager(dturtle = dturtle, ofdr = 0.05)
 ### Result aggregation and visualization
 
 ``` r
-#highly felxible function to create a results data frame
+#highly flexible function to create a results data frame
 dturtle <- create_dtu_table(dturtle = dturtle)
 
     ## View results data frame
@@ -176,6 +210,6 @@ for a more detailed workflow with real data**
 
 ### Help & Feedback
 
-If you have questions, need help with your anaylsis or found a bug:
+If you have questions, need help with your analysis or found a bug:
 Please do not hesitate to [get in touch](mailto:tobias.tekath@wwu.de) or
 open a GitHub issue.

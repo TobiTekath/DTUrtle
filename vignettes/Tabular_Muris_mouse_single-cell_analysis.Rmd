@@ -28,6 +28,7 @@ if(dir.exists(root_dir)){
   #remove previous results
   unlink(paste0(root_dir,"/*"),recursive=T)
 }
+start_time <- Sys.time()
 ```
 
 
@@ -35,7 +36,7 @@ This vignette exemplifies the analysis of **single-cell RNA-seq data with DTUrtl
 
 ---
 
-The following code shows an example of an DTUrtle workflow. Assume we have performed the preprocessing as described [here](https://tobitekath.github.io/DTUrtle/articles/Tabular_Muris_mouse_single-cell_preprocess.html) and the R working directory is a newly created folder called `dtu_results`.
+The following code shows an example of an DTUrtle workflow. Assume we have performed the pre-processing as described [here](https://tobitekath.github.io/DTUrtle/articles/Tabular_Muris_mouse_single-cell_preprocess.html) and the R working directory is a newly created folder called `dtu_results`.
 
 ---
 
@@ -178,7 +179,7 @@ dim(tabula_muris_metadata)
 head(tabula_muris_metadata, n=5)
 ```
  
-As we have only cell type information available for cells analyzed in Tabula Muris, we subset our dataset to the matching cells.
+As we have only cell type information available for cells analyzed in Tabula Muris, we subset our data set to the matching cells.
 
 ```{r}
 cts <- cts[,rownames(tabula_muris_metadata)]
@@ -186,6 +187,9 @@ dim(cts)
 ```
 
 All 4481 cells from Tabula Muris have been recovered. The `tabula_muris_metadata` data frame can be used as our meta data table.
+
+
+**For an example workflow utilizing the Seurat object directly, please see [Workflow with Seurat object](#workflow-with-seurat-object)**
 
 ---
 
@@ -256,15 +260,20 @@ head(dturtle$sig_tx)
 
 ## Result aggregation and visualization
 
-The `DTUrtle` package contains multiple visualization options, enabling a in-depth inspection.
+The `DTUrtle` package contains multiple visualization options, enabling an in-depth inspection.
 
 ### DTU table creation
 
-We will start by aggregating the analysis results to a data frame with `create_dtu_table()`. This function is highly flexible and allows aggregation of gene or transcript level metadata in various ways. By default some useful information are included in the *dtu table*, in this example we further specify to include the `seqnames` column of the gene level metadata (which contains chromosome information) as well as the maximal *expressed in* ratio from the transcript level metadata. 
+We will start by aggregating the analysis results to a data frame with `create_dtu_table()`. This function is highly flexible and allows aggregation of gene or transcript level metadata in various ways. By default some useful information are included in the *dtu table*, in this example we further specify to include the `seqnames` column of the gene level metadata (which contains chromosome information) as well as the maximal *expressed in* ratio per cell type from the transcript level metadata ("expressed in" specifies the ratio of cells, were the expression of the gene / transcript is > 0). Furthermore we add the a column with the absolute difference between the *expressed in* ratios.
 
 ```{r}
 dturtle <- create_dtu_table(dturtle = dturtle, add_gene_metadata = list("chromosome"="seqnames"), 
-                               add_tx_metadata = list("tx_expr_in_max" = c("exp_in", max)))
+                               add_tx_metadata = list("max_tx_expr_in_T_cell" = c("exp_in_T cell", max),
+                                                      "max_tx_expr_in_luminal_epithelial_cell_of_mammary_gland" = 
+                                                        c("exp_in_luminal epithelial cell of mammary gland", max)))
+
+# add absolute difference between "expressed in" columns.
+dturtle$dtu_table$abs_diff_expr_in <- abs(dturtle$dtu_table$max_tx_expr_in_T_cell-dturtle$dtu_table$max_tx_expr_in_luminal_epithelial_cell_of_mammary_gland)
 ```
 
 
@@ -284,7 +293,6 @@ The column definitions are as follows:
 * "number_significant_tx": The number of significant transcripts from the 'transcript level' analysis.
 * "max(T cell-luminal epithelial cell of mammary gland)": Maximal proportional difference between the two groups (T cell vs luminal epithelial cell of mammary gland). E.g. one transcript of 'Pde4d' is ~82% more expressed in 'luminal epithelial cell of mammary gland' cells compared to 'T cell' cells.
 * "chromosome": the chromosome the gene resides on.
-* "tx_expr_in_max": The fraction of cells, the most expressed transcript is expressed in. "Expressed in" is defined as expression>0. 
 
 Please note, that the columns and their meaning can easily be altered and redefined by the user.
 
@@ -399,11 +407,11 @@ head(list.files("./images/"))
 
 ### Dimensional reduction
 
-Most RNA-seq analysis perform some kind of dimensional reduction method to visualize the samples in two (or three) dimensions. This is most useful for single-cell datasets or bulk experiments with a very high number of samples.
+Most RNA-seq analysis perform some kind of dimensional reduction method to visualize the samples in two (or three) dimensions. This is most useful for single-cell data sets or bulk experiments with a very high number of samples.
 
 For these kind of experiments, *DTUrtle* provides a functionality to visualize the proportional differences in dimensional reduction coordinates. For the visualization with `plot_dimensional_reduction()`, we need a data frame of two coordinates per cell / samples - presumably from a dimensional reduction method like PCA, TSNE or UMAP.
 
-In this example dataset, the `tiss` object (from [Sample metadata](#sample-metadata)) contains usable TSNE coordinates:
+In this example data set, the `tiss` object (from [Sample metadata](#sample-metadata)) contains usable TSNE coordinates:
 
 ```{r}
 head(tiss@dr$tsne@cell.embeddings, n=5)
@@ -414,11 +422,11 @@ We can provide this data frame directly to the `reduction_df` parameter of `plot
 ```{r, fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
 temp <- plot_dimensional_reduction(dturtle = dturtle, 
                            reduction_df = tiss@dr$tsne@cell.embeddings,
-                           plot = "proportions", genes = "Lcn2")
+                           plot = "proportions", genes = "Lcn2", plot_scale = "free_y")
 grid::grid.draw(temp$Lcn2)
 ```
 
-By default significant transcripts are highlighted by a red background name. Because of this modificatrion a `grob` object is returned. If `indicate_significant_tx` is set to `FALSE`, a more common `ggplot2` object is returned.
+By default significant transcripts are highlighted by a red background name. Because of this modification, a `grob` object is returned. If `indicate_significant_tx` is set to `FALSE`, a more common `ggplot2` object is returned.
 
 Besides the actual transcript proportions, it is also possible to display the (log-transformed) expression values of the gene and the single transcripts in the plot.
 
@@ -464,7 +472,9 @@ column_formatter_list <- list(
       "number_tx" = formattable::color_tile('white', "lightblue"),
       "number_significant_tx" = formattable::color_tile('white', "lightblue"),
       "max(T cell-luminal epithelial cell of mammary gland)" = table_percentage_bar('lightgreen', "#FF9999", digits=2),
-      "tx_expr_in_max" = table_percentage_bar('white', "lightblue", color_break = 0, digits=2))
+      "max_tx_expr_in_T_cell" = table_percentage_bar('white', "lightblue", color_break = 0, digits=2),
+      "max_tx_expr_in_luminal_epithelial_cell_of_mammary_gland" = table_percentage_bar('white', "lightblue", color_break = 0, digits=2),
+      "abs_diff_expr_in" = table_percentage_bar('white', "lightblue", color_break = 0, digits=2))
 
 ```
 
@@ -501,7 +511,201 @@ plot_dtu_table(dturtle = dturtle, column_formatters = column_formatter_list, min
 
 ---
 
+## Workflow with Seurat object
+
+As an Seurat object of the data set is already present in the Tabula muris publication, we can directly use this object in some DTUrtle analysis. Additionally, we can create an Seurat object containing both, gene and transcript level quantification data.
+
+### Seurat object and data import
+
+We assume, you have followed this vignette till the [Sample metadata](#sample-metadata) section. The `tiss` Seurat object is still present from 
+
+```{r}
+load("../droplet_Mammary_Gland_seurat_tiss.Robj", verbose=T)
+tiss
+tiss@version
+```
+
+We see the `tiss` object is a Seurat v2 object - DTUrtle can only process Seurat v3 or higher objects.
+
+Luckily, there is a Seurat function to convert a v2 object to the v3 style:
+
+```{r}
+tiss <- Seurat::UpdateSeuratObject(tiss)
+tiss
+tiss@version
+```
+
+This updated object can now be used as input for the DTUrtle function `combine_to_matrix()`. We assume, we still have the `cts_list` object present from the [initial import](#reading-in-quantification-data).
+
+```{r}
+lapply(cts_list, dim)
+```
+
+As in the workflow without the Seurat object, we want to combine the two matrices and subset the matrix to cells where we have metadata for (i.e. the cells present in the Seurat object).
+
+We can achieve both tasks by directly supplying the Seurat object to the `combine_to_matrix()`:
+
+```{r}
+tiss <- combine_to_matrix(tx_list = cts_list, seurat_obj = tiss, tx2gene = tx2gene, cell_extension_side = "prepend")
+```
+
+We supply the list of count matrices per sample (`cts_list`), as well as the Seurat object. When a Seurat object is present, DTUrtle tries to infer the used cellname extensions from the Seurat object - which works in this case as expected and we do not have to provide the cell extensions by our own. 
+Optionally, we can also provide the tx2gene when supplying a Seurat object, than the transcript to gene mapping will be added to the metadata of the newly created Seurat Assay.
+
+```{r}
+tiss
+tiss@active.assay
+```
+
+We see, the active assay of the Seurat object changed (to 'dtutx') and that assay contains way more features than before (as these are transcript level counts).
+
+Adding the a transcript level assay to the Seurat object is quite handy for downstream functionality. The tiss object can now be handled as any other Seurat object, but returns transcript-level results by default.
+
+
+This Seurat object can be used in the downstream DTUrtle pipeline instead of the `cts` object, alternatively we can pull the actual count matrix from the object:
+
+```{r}
+seur_cts <- Seurat::GetAssayData(tiss)
+dim(seur_cts)
+dim(cts)
+```
+
+We can see a subtle difference in the number of features here. This is due to the fact, that the original `cts` was created taking all original 8318 cells into account (and filtering all not expressed features) - while the `seur_cts` object was subset to the 4481 we want to use before excluding not expressed features.
+
+This difference has no downstream effect, as not expressed features are also excluded in the `run_drimseq()` filtering step.
+
+As a sanity check, we can see if these two matrices are identical (at least for common features):
+
+```{r}
+identical(seur_cts, cts[match(rownames(seur_cts), rownames(cts)),])
+```
+
+### Identify cell type specific transcripts
+
+As an example for downstream use of a Seurat object with transcript level information, we can use established Seurat functions to identify cell type specific transcripts. These cell types are annotated in the Seurat object:
+
+```{r}
+table(tiss$cell_ontology_class)
+```
+
+We can identify cell type specific transcripts via Seurats `FindAllMarkers` functionality. Please note, that this marker identification is based on transcript counts, not proportions - thus it does not render a DTU analysis obsolete. It offers a quick way to identify transcripts, which are almost solely expressed in a single cell type.
+
+```{r}
+#set cell types as active ident
+Idents(tiss) <- tiss$cell_ontology_class
+tiss <- NormalizeData(tiss)
+cell_markers <- FindAllMarkers(tiss, only.pos=T)
+```
+
+
+Apparently, we identified quite a lot of transcript as markers:
+
+```{r}
+dim(cell_markers)
+
+head(cell_markers, n = 5)
+```
+We can split the markers by their cell type:
+```{r}
+table(cell_markers$cluster)
+```
+
+We can search for marker transcripts, which were also identified in the DTU analysis (between 'T cell' and 'luminal epithelial cell of mammary gland'):
+```{r}
+#select common transcripts
+dtu_markers <- cell_markers[cell_markers$gene %in% dturtle$sig_tx,]
+table(dtu_markers$cluster)
+```
+
+We see many markers, which have also been identified in the DTU analysis, are for the expected cell types ('luminal epithelial cell of mammary gland' and 'T cell'). This becomes even more prominent, when we take the total amount of markers per cell type into account:
+
+```{r}
+table(dtu_markers$cluster)/table(cell_markers$cluster)
+```
+
+We see an over-representation of markers in the expected cell types.
+
+---
+
+Of great interest would be transcript markers of the same gene for different cell types. This would implicate a cell type specific expression of a transcript isoform.
+
+We can identify such markers by first adding the corresponding gene to the marker list, then looking for genes occurring more than once: 
+
+
+```{r}
+dup_markers <- dtu_markers
+#add corresponding genes and change naming
+dup_markers$tx <- dup_markers$gene
+dup_markers$gene <- tx2gene$gene_name[match(dup_markers$tx, tx2gene$transcript_name)]
+#sort table by gene names
+dup_markers <- dup_markers[order(dup_markers$gene),]
+
+#identify genes occuring more than once
+dups <- table(dup_markers$gene)
+dups <- dups[dups>1]
+
+#subset to duplicate genes
+dup_markers <- dup_markers[dup_markers$gene %in% names(dups),]
+nrow(dup_markers)
+```
+
+Apparently 969 markers are belonging to genes, which occur more than once. We now can look for genes, where the markers are in our cell types of interest:
+
+```{r}
+#identify markers of the same gene, that are in our cell types of interest
+interesting_dups <- aggregate(formula = dup_markers$cluster~dup_markers$gene, FUN=function(x){
+  ("luminal epithelial cell of mammary gland" %in% x & "T cell" %in% x)
+})
+interesting_dups <- interesting_dups[interesting_dups$`dup_markers$cluster`==T,]
+
+
+dup_markers[dup_markers$gene %in% interesting_dups$`dup_markers$gene`,]
+
+```
+
+There are 9 genes, which fulfill our query.
+
+Among them is 'Rps24' (), which expression looks quite promising.
+
+We can again use the DTUrtle visualization function `plot_dimensional_reduction()`, utilizing the already present TSNE dimensional reduction:
+
+```{r, fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
+#pull the TSNE coordinates from the seurat object.
+p <- plot_dimensional_reduction(dturtle = dturtle, reduction_df = tiss, reduction_to_use="tsne", genes = "Rps24")
+grid::grid.draw(p$Rps24)
+```
+
+We see a striking difference for two transcripts: While 'Rps24-210' has a very high expression proportion in 'T cell', 'Rps24-202' seems to be almost specifically expressed in 'luminal epithelial cell of mammary gland'.
+
+To get an overview of 'Rps24' transcript expression of the total data set, we can utilize the Seurat plotting functionality:
+```{r, fig.height=4, fig.width=8, fig.align = "center", out.width="80%"}
+DimPlot(tiss)
+FeaturePlot(tiss, features = c("Rps24-202", "Rps24-210"), order = T)
+```
+
+We see, that the isoforms are not specific for a single cell type, but for multiple. Still we see a striking difference, with a very pronounced expression of 'Rps24-210' in 'T cell', 'B cell', 'macrophages' and a small subcluster of 'stromal cells'.
+
+
+---
+
+For later use we can save the final DTUrtle object to disk:
+
+```{r}
+saveRDS(dturtle, "./dturtle_res.RDS")
+saveRDS(tiss, "./tiss.RDS")
+```
+
+---
+
 ## Session info
+
+Computation time for this vignette:
+
+```{r, echo=FALSE}
+Sys.time()-start_time
+```
+
+---
 
 ```{r sessionInfo, echo=FALSE}
 sessionInfo()

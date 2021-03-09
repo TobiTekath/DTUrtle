@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Main DRIMSeq results — run_drimseq • DTUrtle</title>
+<title>Main filtering and DTU statistical computations — run_drimseq • DTUrtle</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -52,8 +52,8 @@
 
 
 
-<meta property="og:title" content="Main DRIMSeq results — run_drimseq" />
-<meta property="og:description" content="Compute the main DRIMSeq results." />
+<meta property="og:title" content="Main filtering and DTU statistical computations — run_drimseq" />
+<meta property="og:description" content="Perform customizable filtering and the main DTU calling with DRIMSeq." />
 <meta property="og:image" content="https://tobitekath.github.io/DTUrtle/logo.svg" />
 
 
@@ -86,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.3</span>
       </span>
     </div>
 
@@ -167,13 +167,13 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Main DRIMSeq results</h1>
+    <h1>Main filtering and DTU statistical computations</h1>
     <small class="dont-index">Source: <a href='https://github.com/TobiTekath/DTUrtle/blob/master/R/dtu_analysis.R'><code>R/dtu_analysis.R</code></a></small>
     <div class="hidden name"><code>run_drimseq.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Compute the main DRIMSeq results.</p>
+    <p>Perform customizable filtering and the main DTU calling with DRIMSeq.</p>
     </div>
 
     <pre class="usage"><span class='fu'>run_drimseq</span><span class='op'>(</span>
@@ -184,10 +184,13 @@
   <span class='va'>cond_col</span>,
   cond_levels <span class='op'>=</span> <span class='cn'>NULL</span>,
   filtering_strategy <span class='op'>=</span> <span class='st'>"bulk"</span>,
+  add_pseudocount <span class='op'>=</span> <span class='cn'>F</span>,
   BPPARAM <span class='op'>=</span> <span class='fu'>BiocParallel</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html'>SerialParam</a></span><span class='op'>(</span><span class='op'>)</span>,
   force_dense <span class='op'>=</span> <span class='cn'>T</span>,
-  subset_counts <span class='op'>=</span> <span class='cn'>F</span>,
+  subset_feature <span class='op'>=</span> <span class='cn'>NULL</span>,
+  subset_sample <span class='op'>=</span> <span class='cn'>NULL</span>,
   carry_over_metadata <span class='op'>=</span> <span class='cn'>T</span>,
+  filter_only <span class='op'>=</span> <span class='cn'>F</span>,
   <span class='va'>...</span>
 <span class='op'>)</span></pre>
 
@@ -230,6 +233,10 @@
 </ul></td>
     </tr>
     <tr>
+      <th>add_pseudocount</th>
+      <td><p>Define <code>TRUE</code> if a very small pseudocount shall be added to transcripts with zero expression in one group. Adding the pseudocount enables statistical analysis for comparisons, where one groups proportion is completely zero.</p></td>
+    </tr>
+    <tr>
       <th>BPPARAM</th>
       <td><p>If multicore processing should be used, specify a <code>BiocParallelParam</code> object here. Among others, can be <code>SerialParam()</code> (default) for non-multicore processing or <code>MulticoreParam('number_cores')</code> for multicore processing. See <code><a href='https://rdrr.io/pkg/BiocParallel/man/BiocParallel-package.html'>BiocParallel</a></code> for more information.</p></td>
     </tr>
@@ -238,12 +245,20 @@
       <td><p>If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying <code>TRUE</code>. Increases memory usage, but also reduces runtime drastically (currently).</p></td>
     </tr>
     <tr>
-      <th>subset_counts</th>
-      <td><p>Force subsetting of the count matrix if not all features of the count matrix are present in the tx2gene table.</p></td>
+      <th>subset_feature</th>
+      <td><p>Subsets the provided count matrix to only specified features. Can be names, indeces or logicals.</p></td>
+    </tr>
+    <tr>
+      <th>subset_sample</th>
+      <td><p>Subsets the provided count matrix to only specified samples. Can be names, indeces or logicals.</p></td>
     </tr>
     <tr>
       <th>carry_over_metadata</th>
       <td><p>Specify if compatible additional columns of <code>tx2gene</code> shall be carried over to the gene and transcript level <code>meta_table</code> in the results. Columns with <code>NA</code> values are not carried over.</p></td>
+    </tr>
+    <tr>
+      <th>filter_only</th>
+      <td><p>Return filtered (sparse) matrix, without performing DRIMSeq statistical computations.</p></td>
     </tr>
     <tr>
       <th>...</th>
@@ -265,8 +280,10 @@ object.</p></dd>
 <li><p><code>design</code>: Design matrix generated from the specified <code>pd</code> columns.</p></li>
 <li><p><code>group</code>: Vector which sample/cell belongs to which comparison group.</p></li>
 <li><p><code>used_filtering_options</code>: List of the used filtering options.</p></li>
+<li><p><code>add_pseudocount</code>: Keeps track if pseudocount was added in comparison.</p></li>
 </ul>
 
+<p>If <code>filter_only=TRUE</code>, only the filtered (sparse) matrix is returned.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Run the main DRIMSeq pipeline, including generation of a design matrix, gene/feature filtering and running the statistical computations of DRIMSeq (<code>dmPrecision()</code>, <code>dmFit()</code> and <code>dmTest()</code>)</p>

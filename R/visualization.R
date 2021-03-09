@@ -110,7 +110,7 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
 #' @param dturtle `dturtle` result object of [create_dtu_table()].
 #' @param columns Optionally subset the existing `dtu_table` of the `dturtle` object to the columns specified here.
 #' @param column_formatters Named list of column_formatters, specifying a formatter function for every column that shall be formatted.
-#' The formatter functions are either from this package like [table_percentage_bar()], [table_pval_tile()] or from \code{\link[formattable:00Index]{formattable}}.
+#' The formatter functions are either from this package like [table_percentage_bar()], [table_pval_tile()] or from \code{\link[formattable:formattable-package]{formattable}}.
 #' @param order_by One or multiple columns to order the table by. Must be a vector of column names, descending order can be achieved by prepending a '-' (e.g. `c("-my_col_name")`).
 #' @param num_digits Number of digits, numerical columns shall be formatted to. Can be a single number to apply to all numerical columns, or a number for each numerical column (in their order).
 #' @param num_digits_format Digit format string, as in \code{\link[base:formatC]{formatC}}. These format string are used in numerical columns formatting if `num_digits` is provided.
@@ -231,7 +231,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
     min_page_length <- nrow(temp_table)
   }
 
-  table_id <- paste0("DTUrtle_table-", stringi::stri_rand_strings(1,15))
+  table_id <- paste0("DTUrtle_table-", paste0(sample(c(sample(LETTERS, 5), sample(letters, 5), sample(0:9, 5))), collapse = ""))
   #TODO: test datatables columns.data
   options(DT.warn.size=F)
   dtable <- DT::datatable(temp_table, escape = FALSE, filter='top', rownames = F,
@@ -362,6 +362,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
 #' @param meta_gene_id Optionally specify the column name in `meta_table_gene`, which contains real gene identifiers or gene names.
 #' @param group_colors Optionally specify the colours for the two sample groups in the plot. Must be a named vector, with the group names as names.
 #' @param fit_line_color Optionally specify the colour to use for the mean fit line.
+#' @param text_size Specify basic text size (in pt) to use in plot.
 #' @param savepath If you want your files to be saved to disk, specify a save path here. The directories will be created if necessary.
 #' @param filename_ext Optionally specify a file name extension here, which also defines the save image format. The file name will be 'gene_name+extension'.
 #' @param add_to_table If a `savepath` is provided, add the filepaths of the created plots to the corresponding entries in `dtu_table`. The name of the column that shall be created can be specified here.
@@ -373,13 +374,15 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
 #' @export
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
 plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
-                                    group_colors=NULL, fit_line_color="red", savepath=NULL,
+                                    group_colors=NULL, fit_line_color="red",
+                                    text_size=11, label_angle=25, savepath=NULL,
                                     filename_ext="_barplot.png", add_to_table=F,
                                     BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
   assertthat::assert_that(is.null(meta_gene_id)||(methods::is(meta_gene_id, "character")&&meta_gene_id %in% colnames(dturtle$meta_table_gene)), msg = "The provided meta_gene_id column could not be found or is of wrong format.")
   assertthat::assert_that(is.null(group_colors)||(methods::is(group_colors, "list")&&!is.null(names(group_colors))), msg = "The provided group colors must be a named list or NULL.")
   assertthat::assert_that(is.null(fit_line_color)||methods::is(fit_line_color,"character"), msg = "The provided fit_line_color must be of type character or NULL.")
+  assertthat::assert_that(is.numeric(text_size)&&length(text_size)==1, msg = "The text_size object must be a single numeric.")
   assertthat::assert_that(is.null(savepath)||methods::is(savepath,"character"), msg = "The provided savepath must be of type character or NULL.")
   assertthat::assert_that(is.null(savepath)||!(file.exists(savepath)&&!dir.exists(savepath)), msg = "The savepath already exists but is not a directory. Change the savepath to a (already existing) directory.")
   assertthat::assert_that(is.null(savepath)||(is.character(savepath)&&length(savepath)==1), msg = "The savepath object must be a character vector of length 1 or NULL.")
@@ -492,14 +495,12 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
     text_colour <- ifelse(feature_levels %in% dturtle$sig_tx, "red", "dimgrey")
 
     #barplot
-    ggp <- ggplot2::ggplot() +
-      ggplot2::geom_bar(data = prop_samp, ggplot2::aes_string(x = "feature_id", y = "proportion", group = "sample_id", fill = "group"),
-               stat = "identity", position = ggplot2::position_dodge(width = 0.9)) + ggplot2::theme_bw() +
-      suppressWarnings(ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 25, vjust = 1, hjust=1, colour = text_colour), axis.text = ggplot2::element_text(size = 12),
-                     axis.title = ggplot2::element_text(size = 12, face = "bold"), plot.title = ggplot2::element_text(size = 12),
-                     legend.position = "right", legend.title = ggplot2::element_text(size = 12), legend.text = ggplot2::element_text(size = 12))) +
-      ggplot2::scale_fill_manual(name = "Groups", values = group_colors, breaks = names(group_colors)) +
-      ggplot2::labs(title = main, x = "Features", y = "Proportions")
+    ggp <- ggplot2::ggplot(data = prop_samp, mapping = ggplot2::aes_string(x = "feature_id", y = "proportion", group = "sample_id", fill = "group")) +
+      ggplot2::geom_bar(stat = "identity", position = ggplot2::position_dodge(width = 0.9)) + ggplot2::theme_bw(base_size = text_size) +
+      suppressWarnings(ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 25, vjust = 1, hjust=1, colour = text_colour),
+                     axis.title = ggplot2::element_text(face = "bold"))) +
+      ggplot2::scale_fill_manual(name = "Group", values = group_colors, breaks = names(group_colors)) +
+      ggplot2::labs(title = main, x = "Transcripts", y = "Proportions")
 
     if(!is.null(fit_line_color)){
       ggp <- ggp + ggplot2::geom_errorbar(data = prop_fit, ggplot2::aes_string(x = "feature_id", ymin = "proportion", ymax = "proportion", group = "sample_id"),
@@ -625,7 +626,7 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
     if(include_expression){
       anno_col[[paste0(gene, " expr.")]] <- log2(gene_cts[gene,]+1)
     }
-    anno_col <- anno_col[,rev(colnames(anno_col))]
+    anno_col <- anno_col[,rev(colnames(anno_col)),drop=F]
 
     ###pheatmap can not handle booleans
     anno_row <- data.frame("Sig"=as.character(row.names(prop) %in% dturtle$sig_tx), row.names=row.names(prop), stringsAsFactors = F)
@@ -633,7 +634,7 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
     #default arguments for pheatmap
     args <- list(mat=prop, annotation_col=anno_col, annotation_row=anno_row,
                  filename=ifelse(is.null(savepath),NA,file.path(savepath,paste0(make.names(gene),filename_ext))),
-                 show_colnames=ifelse(ncol(prop)>15,F,T), treeheight_row=0)
+                 show_colnames=ifelse(ncol(prop)>15,F,T), treeheight_row=0, silent=T)
     args <- utils::modifyList(args, list(...))
     p <- do.call(pheatmap::pheatmap, c(args))
     if(!is.na(args$filename)){
@@ -675,14 +676,15 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
 #' Reduced intron length is computed by taking the square root, but is not less than the specified `reduce_introns_min_size` length.
 #' If less `GRanges` are found than expected, try setting `one_to_one` to `TRUE` or the used extension character.
 #' When calling this function many times, try importing the GTF-File with `gtf <- rtracklayer::import("PATH_TO_GTF")` once and pass it to the `gtf` parameter to improve performance.
-#' @param gtf Either path to a `gtf/gff` file which will be read or a `granges` object of a already read in `gtf/gff` file. See \code{\link[rtracklayer:import]{rtracklayer::import}} for more information. The tx2gene data frame of [import_gtf()] is **not** sufficient.
+#' @param gtf Either path to a `gtf/gff` file which will be read or a `granges` object of a already read in `gtf/gff` file. Such an object can be created with `import_gtf("GTF_PATH", feature_type=NULL, out_df=FALSE)`. See [import_gtf()] for more information.
 #' @param genome The genome on which to create the ideogram tracks. This has to be a valid `UCSC genome identifier` (e.g. 'hg38', 'mm10', 'danRer11', etc.). Can also be NULL to skip ideogram track generation.
 #' @param one_to_one Specify `TRUE`, if one_to_one mapping of gene/transcript identifiers with their respective names was enforced before (with [one_to_one_mapping()]). If a non default extension character (`ext`) has been used, please specify the used extension character.
 #' @param reduce_introns Logical if intron ranges shall be shrunken down, highlighting the exonic structure.
 #' @param reduce_introns_fill Optionally specify the background color of ranges where introns have been reduced.
 #' @param reduce_introns_min_size Specify the minimal size introns are reduced to (in bp).
-#' @param fontsize_vec Vector of fontsizes to use. The first value is the side annotation text fontsize (in pt), the second the cex factor for the title, the third the cex factor for the feature names.
+#' @param fontsize_vec Vector of fontsizes to use. The first value is the side annotation text fontsize (in pt), the second value the cex factor for the title, the third value the cex factor for the feature & chromosome names.
 #' @param arrow_colors Specify the colors of the arrows indicating the direction of proportional changes. The first color string is for a positive change, the second for a negative one.
+#' @param arrow_start Advanced: Set the x coordinate of the arrow annotations (in NPC)
 #' @param extension_factors Advanced: Specify the extension factors to extend the plotted genomic range. The first value if for the extension of the front (left) side, the second for the back (right).
 #' @param ... Arguments passed down to \code{\link[grDevices:png]{png}} or \code{\link[grDevices:cairo_pdf]{cairo_pdf}} or \code{\link[grDevices:pdf]{pdf}} or \code{\link[grDevices:jpeg]{jpeg}}, depending on `filename_ext` ending and capabilities (cairo_pdf or pdf).
 #'
@@ -694,7 +696,7 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
 plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=NULL, reduce_introns=T,
                                   reduce_introns_fill="grey95", reduce_introns_min_size=50, fontsize_vec=c(10,1.1,0.6),
-                                  arrow_colors=c("#7CAE00", "#00BFC4"), extension_factors=c(0.015, 0.15),
+                                  arrow_colors=c("#7CAE00", "#00BFC4"), arrow_start=0.88, extension_factors=c(0.025, 0.22),
                                   savepath=NULL, filename_ext="_transcripts.png", add_to_table=F, BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
   assertthat::assert_that(methods::is(gtf, "character") && file.exists(gtf) || methods::is(gtf, "GRanges"), msg = "Invalid gtf filepath or object. Must be either a filepath to a gtf file or a previously created granges object.")
@@ -706,6 +708,7 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
   assertthat::assert_that((is.integer(reduce_introns_min_size)||(is.numeric(reduce_introns_min_size) && all(reduce_introns_min_size == trunc(reduce_introns_min_size))))&&reduce_introns_min_size>=0, msg = "The provided reduce_introns_min_size must be a positive integer.")
   assertthat::assert_that(is.numeric(fontsize_vec)&&length(fontsize_vec)==3, msg = "The fontsize_vec object must be a numeric vector of length 3.")
   assertthat::assert_that(methods::is(arrow_colors, "character")&&length(arrow_colors)==2, msg = "The arrow_colors object must be a character vector of length 2.")
+  assertthat::assert_that(is.numeric(arrow_start)&&length(arrow_start)==1, msg="The arrow_start object must be a single numeric.")
   assertthat::assert_that(is.numeric(extension_factors)&&length(extension_factors)==2, msg = "The extension_factors object must be a numeric vector of length 2.")
   assertthat::assert_that(is.null(savepath)||(is.character(savepath)&&length(savepath)==1), msg = "The savepath object must be a character vector of length 1 or NULL.")
   assertthat::assert_that(is.null(savepath)||!(file.exists(savepath)&&!dir.exists(savepath)), msg = "The savepath already exists but is not a directory. Change the savepath to a (already existing) directory.")
@@ -721,7 +724,7 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
 
   if(!methods::is(gtf, "GRanges")){
     message("\nImporting gtf file from disk.")
-    gtf <- rtracklayer::import(gtf)
+    gtf <- import_gtf(gtf_file = gtf, feature_type = NULL, out_df = F)
   }
 
   if(is.null(genes)){
@@ -760,7 +763,7 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
     ideoTracks <- lapply(Gviz::seqlevels(gtf),
                          function(x) {
                            tryCatch({
-                             Gviz::IdeogramTrack(genome = genome, chromosome = x)
+                             Gviz::IdeogramTrack(genome = genome, chromosome = x, cex=fontsize_vec[[3]]*1.2)
                            },
                            error = function(cond) {
                              return(NULL)
@@ -768,10 +771,13 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
                          })
     names(ideoTracks) <- Gviz::seqlevels(gtf)
 
-    if(Reduce('+',(lapply(ideoTracks, is.null)))<6){
-      message(paste0("Could not generate IdeogramTrack for:\n\t",paste0(names(ideoTracks)[unlist(lapply(ideoTracks, is.null))], collapse="\n\t")))
-    }else{
-      message("Could not generate IdeogramTrack for ", Reduce('+',(lapply(ideoTracks, is.null))) ," chromosome identifiers.")
+    if(any(sapply(ideoTracks, is.null))){
+      num_ideo_null <- sum(sapply(ideoTracks, is.null))
+      if(num_ideo_null<6){
+        message(paste0("Could not generate IdeogramTrack for:\n\t",paste0(names(ideoTracks)[sapply(ideoTracks, is.null)], collapse="\n\t")))
+      }else{
+        message("Could not generate IdeogramTrack for ", num_ideo_null ," chromosome identifiers.")
+      }
     }
   }
 
@@ -835,13 +841,13 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
       grtrack <- Gviz::GeneRegionTrack(gtf_tx, transcript = gtf_tx$transcript_id, feature = gtf_tx$type,
                                        exon = gtf_tx$exon_id, gene = gtf_tx$gene_id, symbol = gtf_tx$transcript_name,
                                        transcriptAnnotation="symbol", thinBoxFeature=c("UTR"), col=NULL,
-                                       name = ifelse(tx_id %in% dturtle$sig_tx, "Sig.", ""), rotation.title=0,
+                                       name = ifelse(tx_id %in% dturtle$sig_tx, " Sig.", ""), rotation.title=0,
                                        background.title = ifelse(tx_id %in% dturtle$sig_tx, "orangered", "transparent"),
-                                       cex.group=fontsize_vec[[3]], cex.title=fontsize_vec[[3]])
+                                       cex.group=fontsize_vec[[3]], cex.title=fontsize_vec[[3]], cex.axis=fontsize_vec[[3]])
 
       tx_fitted_mean <- grouped_mean_df[tx_id,]$diff
 
-      anno_text_start <- ggplot2::unit(0.91,"npc")
+      anno_text_start <- ggplot2::unit(arrow_start,"npc")
       grobs <- grid::grobTree(
         grid::textGrob(label = ifelse(tx_fitted_mean>0, intToUtf8(11014), intToUtf8(11015)), name = "arrow",
                        x = anno_text_start, gp=grid::gpar(fontsize=ceiling(fontsize_vec[[1]]*1.5), col=ifelse(tx_fitted_mean>0,arrow_colors[[1]],arrow_colors[[2]]))),
@@ -876,21 +882,19 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
     if(!is.null(savepath)){
       filename <- file.path(savepath, paste0(make.names(gene), filename_ext))
       if(endsWith(filename_ext, ".png")){
-        args <- list(width=900, height=700, filename = filename)
+        args <- list(width=900, height=700, filename = filename, res=160)
         args <- utils::modifyList(args, list(...))
         do.call(grDevices::png, c(args))
       }else if(endsWith(filename_ext, ".pdf")){
+        args <- list(filename = filename, width=9)
+        args <- utils::modifyList(args, list(...))
         if(capabilities("cairo")){
-          args <- list(filename = filename, width=9)
-          args <- utils::modifyList(args, list(...))
           do.call(grDevices::cairo_pdf, c(args))
         }else{
-          args <- list(file = filename, width=9)
-          args <- utils::modifyList(args, list(...))
           do.call(grDevices::pdf, c(args))
         }
       }else{
-        args <- list(width=900, height=700, filename = filename)
+        args <- list(width=900, height=700, filename = filename, quality=100, res=160)
         args <- utils::modifyList(args, list(...))
         do.call(grDevices::jpeg, c(args))
       }
@@ -949,9 +953,10 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
 #' @param reduction_to_use Only relevant if a Seurat object is provided to `reduction_df`. Specify the name of the reduction to use in the object.
 #' @param indicate_significant_tx Specify if significant transcripts should be indicated in the plot by a colored strip. Converts the resulting plots to `grob`.
 #' @param plot_colors Specify a vector of minimum 2 colors that build the color scale.
+#' @param plot_scale Specify how the scales of each facet should act. Values are "fixed", "free_x", "free_y" or "free", to either have the same fixed scale, a free x- or y-axis or both axis free.
 #' @param point_alpha Specify an alpha level for the single cells / samples.
 #' @param point_size Specify the size of the points representing a single cell / sample. If `NULL`, chosen automatically.
-#' @param label_size If `include_labels=T`, set size of labels.
+#' @param label_size If `include_labels=T`, set size of labels (in mm).
 #' @param label_colors If `include_labels=T`, set color of labels of positive or negative proportional differences.
 #' @param label_y_expansion If `include_labels=T`, define the factor the y-axis is extended by. This extension is performed to avoid overlapping of labels and cells / samples.
 #'  Labels are added to bottom of the plots of the second comparison group.
@@ -959,13 +964,14 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
 #' @inheritDotParams ggplot2::ggsave
 #'
 #' @return  Returns list of saved plots, for adding to the DTU table. If no `savepath` is provided, returns a list of the created plots for further processing.
+#' If `indicate_significant_tx` is TRUE, a list of `grob` objects will be returned, otherwise a list of `ggplot` objects. `grob` can be visualized for example with `grid::grid.draw()`.
 #' @family DTUrtle visualization
 #' @export
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
-plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="proportions", include_gene=T, log_expression=T, include_labels=T,
-                                       reduction_to_use="umap", indicate_significant_tx=T,  plot_colors=c("grey", "firebrick"), point_alpha=0.2, point_size=NULL, label_size=3,
-                                       label_colors=c("#7CAE00", "#00BFC4"), label_y_expansion=0.2, savepath=NULL, filename_ext="_dim_reduce.png", add_to_table=F,
-                                       BPPARAM=BiocParallel::SerialParam(), ...){
+plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="proportions", include_gene=T, log_expression=T, include_labels=T, reduction_to_use="umap",
+                                       indicate_significant_tx=T,  plot_colors=c("grey", "#9ECAE1", "#6BAED6", "#4292C6", "#2171B5", "#08519C", "#08306B"),  plot_scale="fixed",
+                                       point_alpha=1, point_size=NULL, text_size=11, label_size=3, label_colors=c("#7CAE00", "#00BFC4"), label_y_expansion=0.2, savepath=NULL,
+                                       filename_ext="_dim_reduce.png", add_to_table=F, BPPARAM=BiocParallel::SerialParam(), ...){
 
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(!is.null(dturtle$drim), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
@@ -987,16 +993,18 @@ plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="
   assertthat::assert_that(is.logical(log_expression), msg = "The log_expression object must be a logical ('TRUE' or 'FALSE').")
   assertthat::assert_that(is.logical(include_labels), msg = "The include_labels object must be a logical ('TRUE' or 'FALSE').")
   assertthat::assert_that(is.character(plot_colors)&&length(plot_colors)>1, msg = "The plot_colors object must be a character vector of length 2 or more.")
+  assertthat::assert_that(is.character(plot_scale)&&plot_scale %in% c("fixed","free_x","free_y","free"), msg="The plot_scale object must be one of the following: 'fixed','free_x','free_y','free'.")
   assertthat::assert_that(is.numeric(point_alpha)&&length(point_alpha)==1, msg = "The point_alpha object must be single numeric.")
   assertthat::assert_that(is.null(point_size)||(is.numeric(point_size)&&length(point_size)==1), msg = "The point_size object must be NULL or a single numeric.")
+  assertthat::assert_that(is.numeric(text_size)&&length(text_size)==1, msg = "The text_size object must be a single numeric.")
   assertthat::assert_that(is.numeric(label_size)&&length(label_size)==1, msg = "The label_size object must be a single numeric.")
   assertthat::assert_that(is.character(label_colors)&&length(label_colors)==2, msg = "The label_colors object must be a character vector of length 2.")
   assertthat::assert_that(is.numeric(label_y_expansion)&&length(label_y_expansion)==1, msg = "The label_y_expansion object must be a numeric of length 1.")
-  assertthat::assert_that(isFALSE(add_to_table)||(is.character(add_to_table)&&length(add_to_table==1)), msg = "The provided add_to_table must be a character or FALSE." )
+  assertthat::assert_that(isFALSE(add_to_table)||(is.character(add_to_table)&&length(add_to_table==1)), msg = "The provided add_to_table must be a character or FALSE.")
   assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
   assertthat::assert_that(is.null(savepath)||methods::is(savepath,"character"), msg = "The provided savepath must be of type character or NULL.")
   assertthat::assert_that(is.null(savepath)||!(file.exists(savepath)&&!dir.exists(savepath)), msg = "The savepath already exists but is not a directory. Change the savepath to a (already existing) directory.")
-  assertthat::assert_that(methods::is(filename_ext, "character"), msg = "The provided filename_ext must be of type character." )
+  assertthat::assert_that(methods::is(filename_ext, "character"), msg = "The provided filename_ext must be of type character.")
 
 
   tx_cts <- dturtle$drim@counts@unlistData
@@ -1083,11 +1091,12 @@ plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="
 
     #sort to have points with highest values on top.
     plot_df <- plot_df[order(plot_df$value),]
-    plot_df$variable <- factor(plot_df$variable, levels = tx_elements)
+    plot_df$variable <- factor(plot_df$variable, levels = unique(plot_df$variable))
 
     ggp <- ggplot2::ggplot(data=plot_df, mapping=ggplot2::aes_string(x="x", y="y", color="value")) +
       ggplot2::geom_point(alpha=point_alpha, size=point_size) +
-      ggplot2::facet_grid(group~variable) + ggplot2::theme_light() +
+      ggplot2::facet_grid(group~variable, scales=plot_scale) +
+      ggplot2::theme_light(base_size = text_size) +
       ggplot2::scale_color_gradientn(colours = plot_colors) +
       ggplot2::labs(title=paste0(gene, " -- ", paste0(levels(dturtle$group), collapse = " vs. ")),
                     x=orig_reduction_df_colnames[1], y=orig_reduction_df_colnames[2], color=plot_value_title) +

@@ -10,6 +10,8 @@ plot_proportion_barplot(
   meta_gene_id = NULL,
   group_colors = NULL,
   fit_line_color = "red",
+  text_size = 11,
+  label_angle = 25,
   savepath = NULL,
   filename_ext = "_barplot.png",
   add_to_table = F,
@@ -27,6 +29,8 @@ plot_proportion_barplot(
 \item{group_colors}{Optionally specify the colours for the two sample groups in the plot. Must be a named vector, with the group names as names.}
 
 \item{fit_line_color}{Optionally specify the colour to use for the mean fit line.}
+
+\item{text_size}{Specify basic text size (in pt) to use in plot.}
 
 \item{savepath}{If you want your files to be saved to disk, specify a save path here. The directories will be created if necessary.}
 

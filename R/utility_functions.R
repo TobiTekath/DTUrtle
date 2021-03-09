@@ -74,9 +74,9 @@ seurat_add_tx2gene <- function(seurat_obj, tx2gene){
 
 
 #TODO: Add more posthoc filters
-#' Posthoc filtering
+#' Pos-thoc filtering
 #'
-#' Perform posthoc filtering.
+#' Perform post-hoc filtering.
 #'
 #' Sets pvalue and adjusted pvalue of 'filtered' elements to 1.
 #' @param drim Result object of DRIMSeq statistical tests.
@@ -124,19 +124,24 @@ getmax <- function(gID, dturtle){
 }
 
 
-#' Parse a `GTF` file and return a transcript level dataframe.
+#' Parse a `GTF` file and return a dataframe of specified features.
 #'
 #' @param gtf_file Path to the gtf/gff file that shall be analysed.
+#' @param feature_type Type of gtf features that shall be returned. Set to `NULL` for all features.
+#' @param out_df Set if returned object shall be converted to data frame.
 #'
-#' @return A data frame of the available transcript level information (e.g. the tx2gene mapping information)
+#' @return If `out_df`=TRUE, a data frame of the available feature information (e.g. the tx2gene mapping information by default). Otherwise a `granges` object.
 #' @export
 #'
 #' @examples ## import_gtf("path_to/your_annotation_file.gtf")
-import_gtf <- function(gtf_file){
+import_gtf <- function(gtf_file, feature_type="transcript", out_df=TRUE){
     assertthat::assert_that(file.exists(gtf_file))
-    gtf_grange <- rtracklayer::import(gtf_file)
-    df <- as.data.frame(gtf_grange[gtf_grange$type=="transcript"])
-    return(df)
+    gtf_grange <- rtracklayer::import(gtf_file, feature.type=feature_type)
+    if(out_df){
+        return(as.data.frame(gtf_grange))
+    }else{
+        return(gtf_grange)
+    }
 }
 
 
@@ -326,29 +331,39 @@ summarize_to_gene <- function(mtx, tx2gene, fun="sum", genes=NULL){
 
 #' Actual computation of proportion matrices
 #'
+#' Please provide either a partitioning or a tx2gene data frame.
+#'
 #' @param mtx A (sparse) transcript-level matrix
 #' @param partitioning A DRIMSeq partitioning list, specifying which transcripts belong to which genes.
+#' @param tx2gene A data frame, specifying which transcripts belong to which genes.
 #'
 #' @return A (sparse) matrix of transcript proportions
-prop_matrix <- function(mtx, partitioning=NULL){
+prop_matrix <- function(mtx, partitioning=NULL, tx2gene=NULL){
     assertthat::assert_that(methods::is(mtx, "matrix")||methods::is(mtx, "sparseMatrix"))
     assertthat::assert_that(methods::is(partitioning, "list")||is.null(partitioning))
+    assertthat::assert_that(is.data.frame(tx2gene)||is.null(tx2gene))
+    assertthat::assert_that(is.null(partitioning)||is.null(tx2gene), msg="Please provide either a partitioning or a tx2gene data frame, not both.")
 
-    if(!is.null(partitioning)){
-        if(sum(lengths(partitioning))!=nrow(mtx)){
-            part_df <- partitioning_to_dataframe(partitioning)
-            part <- part_df[match(rownames(mtx), part_df$tx),]$gene
-        }else{
-            part <- rep(names(partitioning), lengths(partitioning))
+    if(!is.null(partitioning)||!is.null(tx2gene)){
+        if(!is.null(partitioning)){
+            if(sum(lengths(partitioning))!=nrow(mtx)){
+                part_df <- partitioning_to_dataframe(partitioning)
+                part <- part_df$gene[match(rownames(mtx), part_df$tx)]
+            }else{
+                part <- rep(names(partitioning), lengths(partitioning))
+            }
+        }
+        if(!is.null(tx2gene)){
+            part <- tx2gene[[2]][match(rownames(mtx), tx2gene[[1]])]
         }
         col_sums <- Matrix.utils::aggregate.Matrix(x = mtx, groupings = part, fun = "sum")
         col_sums <- col_sums[match(part, rownames(col_sums)),]
+        #only return sparse when sparse input mtx.
         if(methods::is(mtx, "sparseMatrix")){
             return(mtx*(1/col_sums))
         }else{
             return(as.matrix(mtx*(1/col_sums)))
         }
-
     }else{
         res <- mtx %*% Matrix::diag(1/Matrix::colSums(mtx))
         colnames(res) <- colnames(mtx)
@@ -357,22 +372,31 @@ prop_matrix <- function(mtx, partitioning=NULL){
 }
 
 
+
 #' Compute proportion matrix
 #'
 #' Compute a matrix of transcript proportions per gene. Either a (sparse) count matrix or a `dturtle` object can be provided.
 #'
+#' If a (sparse) matrix of multiple genes is provided, it is advised to also specify a tx2gene data frame.
+#' If no tx2gene data frame is present, it is assumed all matrix entries belong to the same gene.
 #' If a `dturtle` object is provided, a list of genes the data shall be subsetted to can optionally be given.
 #'
 #' @param obj (sparse) matrix or `dturtle` object.
-#' @param genes Specify the genes to subset the data to, if a `dturtle` object is provided.
+#' @param tx2gene Provide a tx2gene data frame, specifying which transcripts (first column) belong to which gene (second column).
+#' @param genes If a `dturtle` object is provided, specify the genes you want to get proportions of.
 #'
 #' @return A (sparse) matrix of transcript proportions
 #' @export
-get_proportion_matrix <- function(obj,genes=NULL){
+get_proportion_matrix <- function(obj, tx2gene=NULL, genes=NULL){
     assertthat::assert_that(methods::is(obj, "matrix")||methods::is(obj, "sparseMatrix")||methods::is(obj, "dturtle"), msg = "obj must be a (sparse) matrix or of class 'dturtle'.")
+    assertthat::assert_that(is.null(tx2gene)||(is.data.frame(tx2gene)&&ncol(tx2gene)>1), msg="The tx2gene object must be a data frame with at least two columns or NULL.")
     assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
     if(methods::is(obj, "matrix")||methods::is(obj, "sparseMatrix")){
-        return(prop_matrix(obj))
+        if(is.null(tx2gene)){
+            return(prop_matrix(obj))
+        }else{
+            return(prop_matrix(obj, partitioning = dataframe_to_partitioning(tx2gene)))
+        }
     }else{
         assertthat::assert_that(!is.null(obj$drim), msg="obj does not contain DRIMSeq results.")
         if(!is.null(genes)){
@@ -387,12 +411,26 @@ get_proportion_matrix <- function(obj,genes=NULL){
 
 #' Convert a partitioning list to a data frame.
 #'
-#' @param partitioning The partitioning that shall converted
+#' @param partitioning The partitioning that shall be converted
 #'
 #' @return A data frame with two columns, `tx` and `gene`.
+#' @export
 partitioning_to_dataframe <- function(partitioning){
     assertthat::assert_that(methods::is(partitioning, "list"))
     return(data.frame("tx"=unlist(sapply(partitioning, FUN = names)), "gene"=rep(names(partitioning),lengths(partitioning)), row.names = NULL, stringsAsFactors = F))
+}
+
+
+#' Convert a data frame to a partitioning list.
+#'
+#' @param dataframe The data frame that shall be converted
+#'
+#' @return A partitioning of data frame column 1 by data frame column 2.
+#' @export
+dataframe_to_partitioning <- function(dataframe){
+    assertthat::assert_that(is.data.frame(dataframe))
+    dataframe[[2]] <- factor(dataframe[[2]], levels=unique(dataframe[[2]]))
+    return(split(stats::setNames(seq(nrow(dataframe)), dataframe[[1]]), dataframe[[2]]))
 }
 
 

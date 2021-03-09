@@ -3,3 +3,6 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^.github$
+^README.RMD$
+^NEWS.RMD$

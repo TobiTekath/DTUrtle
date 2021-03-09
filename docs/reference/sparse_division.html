@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Reorder columns — move_columns_to_front • DTUrtle</title>
+<title>Perform 'numerator'/'sparse_matrix', replacing Inf with 0. — sparse_division • DTUrtle</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -52,8 +52,8 @@
 
 
 
-<meta property="og:title" content="Reorder columns — move_columns_to_front" />
-<meta property="og:description" content="Reorder the columns of a data frame." />
+<meta property="og:title" content="Perform 'numerator'/'sparse_matrix', replacing Inf with 0. — sparse_division" />
+<meta property="og:description" content="Too many 'Inf' would break sparse representation." />
 <meta property="og:image" content="https://tobitekath.github.io/DTUrtle/logo.svg" />
 
 
@@ -167,40 +167,34 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Reorder columns</h1>
-    <small class="dont-index">Source: <a href='https://github.com/TobiTekath/DTUrtle/blob/master/R/utility_functions.R'><code>R/utility_functions.R</code></a></small>
-    <div class="hidden name"><code>move_columns_to_front.Rd</code></div>
+    <h1>Perform 'numerator'/'sparse_matrix', replacing Inf with 0.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/TobiTekath/DTUrtle/blob/master/R/sc_support.R'><code>R/sc_support.R</code></a></small>
+    <div class="hidden name"><code>sparse_division.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Reorder the columns of a data frame.</p>
+    <p>Too many 'Inf' would break sparse representation.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>move_columns_to_front</span><span class='op'>(</span><span class='va'>df</span>, <span class='va'>columns</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>sparse_division</span><span class='op'>(</span><span class='va'>numerator</span>, <span class='va'>sparse_matrix</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>df</th>
-      <td><p>The data frame that shall be reordered.</p></td>
+      <th>numerator</th>
+      <td><p>The numerator of the equation</p></td>
     </tr>
     <tr>
-      <th>columns</th>
-      <td><p>One or multiple column names that should be moved to the front of the dataframe. Order is kept.</p></td>
+      <th>sparse_matrix</th>
+      <td><p>The denominator of the equation. Must be a sparse matrix.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Data frame with reordered columns.</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <p>Sparse result matrix.</p>
 
-    <p>Sets the desired <code>columns</code> of the dataframe <code>df</code> to the first columns. Does not change the order of the others.</p>
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'>## move_columns_to_fron(df, c("new_first_column", "new_second_column"))</span>
-</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
