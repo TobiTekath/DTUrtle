@@ -2,7 +2,7 @@
 % Please edit documentation in R/dtu_analysis.R
 \name{run_drimseq}
 \alias{run_drimseq}
-\title{Main DRIMSeq results}
+\title{Main filtering and DTU statistical computations}
 \usage{
 run_drimseq(
   counts,
@@ -12,10 +12,13 @@ run_drimseq(
   cond_col,
   cond_levels = NULL,
   filtering_strategy = "bulk",
+  add_pseudocount = F,
   BPPARAM = BiocParallel::SerialParam(),
   force_dense = T,
-  subset_counts = F,
+  subset_feature = NULL,
+  subset_sample = NULL,
   carry_over_metadata = T,
+  filter_only = F,
   ...
 )
 }
@@ -43,13 +46,19 @@ run_drimseq(
 \item \code{'own'}: Can be used to specify a user-defined strategy via the \code{...} argument (using the parameters of \code{\link[sparseDRIMSeq:dmFilter]{dmFilter}}).
 }}
 
+\item{add_pseudocount}{Define \code{TRUE} if a very small pseudocount shall be added to transcripts with zero expression in one group. Adding the pseudocount enables statistical analysis for comparisons, where one groups proportion is completely zero.}
+
 \item{BPPARAM}{If multicore processing should be used, specify a \code{BiocParallelParam} object here. Among others, can be \code{SerialParam()} (default) for non-multicore processing or \code{MulticoreParam('number_cores')} for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.}
 
 \item{force_dense}{If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying \code{TRUE}. Increases memory usage, but also reduces runtime drastically (currently).}
 
-\item{subset_counts}{Force subsetting of the count matrix if not all features of the count matrix are present in the tx2gene table.}
+\item{subset_feature}{Subsets the provided count matrix to only specified features. Can be names, indeces or logicals.}
+
+\item{subset_sample}{Subsets the provided count matrix to only specified samples. Can be names, indeces or logicals.}
 
 \item{carry_over_metadata}{Specify if compatible additional columns of \code{tx2gene} shall be carried over to the gene and transcript level \code{meta_table} in the results. Columns with \code{NA} values are not carried over.}
+
+\item{filter_only}{Return filtered (sparse) matrix, without performing DRIMSeq statistical computations.}
 
 \item{...}{
   Arguments passed on to \code{\link[sparseDRIMSeq:dmFilter]{sparseDRIMSeq::dmFilter}}
@@ -68,10 +77,13 @@ object.}
 \item \code{design}: Design matrix generated from the specified \code{pd} columns.
 \item \code{group}: Vector which sample/cell belongs to which comparison group.
 \item \code{used_filtering_options}: List of the used filtering options.
+\item \code{add_pseudocount}: Keeps track if pseudocount was added in comparison.
 }
+
+If \code{filter_only=TRUE}, only the filtered (sparse) matrix is returned.
 }
 \description{
-Compute the main DRIMSeq results.
+Perform customizable filtering and the main DTU calling with DRIMSeq.
 }
 \details{
 Run the main DRIMSeq pipeline, including generation of a design matrix, gene/feature filtering and running the statistical computations of DRIMSeq (\code{dmPrecision()}, \code{dmFit()} and \code{dmTest()})

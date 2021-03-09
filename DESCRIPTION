@@ -1,17 +1,17 @@
 Package: DTUrtle
 Type: Package
 URL: https://github.com/TobiTekath/DTUrtle, https://tobitekath.github.io/DTUrtle
-Title: Differential Transcript Usage analysis
-Version: 0.7.1
-Authors@R: c(person(given = "Tobias", family = "Tekath", role = c("aut", "cre"), email = "tobias.tekath@gmail.com"))
-Description: Easily perform Differential Transcript Usage (DTU) analysis for bulk or single-cell RNAseq data utilizing transcript level quantification counts.
-License: GPL (>= 3)
+Title: Differential Transcript Usage analysis of bulk and single-cell RNA-seq data
+Version: 0.7.3
+Authors@R: c(person(given = "Tobias", family = "Tekath", role = c("aut", "cre"), email = "tobias.tekath@wwu.de", comment = c(ORCID = "0000-0002-9315-5452")))
+Description: Easily perform and visualize Differential Transcript Usage (DTU) analysis for bulk or single-cell RNA-seq data, utilizing transcript level quantification counts.
+License: GPL (>= 3) + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Depends: R (>= 3.4.0)
-Imports: Matrix, tximport, sparseDRIMSeq, stageR, rtracklayer, formattable, DT, Gviz, assertthat, scales, ggplot2, reshape2, BiocParallel, Matrix.utils, pheatmap, methods, GenomicRanges, GenomeInfoDb, htmltools, htmlwidgets, knitr, stringi 
+Depends: R (>= 3.4.0), sparseDRIMSeq
+Imports: Matrix, tximport, stageR, rtracklayer, GenomicFeatures, formattable, DT, Gviz, assertthat, scales, ggplot2, reshape2, BiocParallel, Matrix.utils, pheatmap, methods, GenomicRanges, GenomeInfoDb, htmltools, htmlwidgets, knitr 
 Suggests: Seurat (>= 3.0.0), webshot, webshot2, magick
-Remotes: github::TobiTekath/sparseDRIMSeq, bioc::BiocParallel, bioc::GenomicRanges, bioc::Gviz, bioc::rtracklayer, bioc::stageR, bioc::tximport
+Remotes: github::TobiTekath/sparseDRIMSeq, bioc::BiocParallel, bioc::GenomicRanges, bioc::Gviz, bioc::rtracklayer, bioc::stageR, bioc::tximport, github::rstudio/webshot2
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr

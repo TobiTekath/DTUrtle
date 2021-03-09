@@ -23,7 +23,7 @@ plot_dtu_table(
 \item{columns}{Optionally subset the existing \code{dtu_table} of the \code{dturtle} object to the columns specified here.}
 
 \item{column_formatters}{Named list of column_formatters, specifying a formatter function for every column that shall be formatted.
-The formatter functions are either from this package like \code{\link[=table_percentage_bar]{table_percentage_bar()}}, \code{\link[=table_pval_tile]{table_pval_tile()}} or from \code{\link[formattable:00Index]{formattable}}.}
+The formatter functions are either from this package like \code{\link[=table_percentage_bar]{table_percentage_bar()}}, \code{\link[=table_pval_tile]{table_pval_tile()}} or from \code{\link[formattable:formattable-package]{formattable}}.}
 
 \item{order_by}{One or multiple columns to order the table by. Must be a vector of column names, descending order can be achieved by prepending a '-' (e.g. \code{c("-my_col_name")}).}
 

@@ -1,7 +1,45 @@
 DTUrtle News
 ================
 
+# DTUrtle 0.7.3
+
+## Changes
+
+  - readded “GenomicFeatures” as dependency - eases installation.
+  - measure and show computation time in vignettes.
+  - extended vignettes.
+  - extended README.
+  - `plot_proportion_barplot()`: define data and mapping already in
+    general ggplot function, to ease editability.
+  - `plot_proportion_barplot()`: added global ‘text\_size’ parameter.
+  - `plot_dimensional_reduction()`: added ‘plot\_scale’ parameter,
+    allowing for free x- or y-axis of facets, or both.
+  - `plot_dimensional_reduction()`: added global ‘text\_size’ parameter.
+  - `plot_transcripts_view()`: added ‘arrow\_start’ parameter, to allow
+    adjustment of the transcript annotation start position.
+  - `plot_transcripts_view()`: changed default parameters and
+    resolution, to get visually more appealing high quality plots.
+  - `import_gtf()`: generalized function and added parameter for
+    returned feature type and return format. Now can create fitting
+    `plot_transcripts_view()` GTF input.
+  - `run_drimseq()`: added `susbet_feature` and `subset_sample`
+    parameters, replacing `subset_counts`. Now samples and features can
+    be excluded from analysis on the fly.
+  - `run_drimseq()`: added `add_pseudocount` parameter, to enable
+    comparisons of features with zero expression in one comparison
+    group.
+  - `run_drimseq()`: added `filter_only` parameter, to return (sparse)
+    count matrix after group-based filtering.
+  - `combine_to_matrix()`: added ability to infer Seurat cellname
+    extension.
+  - removed dependency of ‘stringi’.
+  - added ‘sparseDRIMSeq’ to depending packages, to get rid of sometimes
+    not-occuring package load.
+  - fixed some smaller bugs.
+
 # DTUrtle 0.7.1
+
+## Changes
 
   - add new vignette for Tabula Muris (Mouse) data set.
   - `combine_to_matrix()`: added `cell_extension_side` parameter to

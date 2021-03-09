@@ -15,7 +15,8 @@ plot_transcripts_view(
   reduce_introns_min_size = 50,
   fontsize_vec = c(10, 1.1, 0.6),
   arrow_colors = c("#7CAE00", "#00BFC4"),
-  extension_factors = c(0.015, 0.15),
+  arrow_start = 0.88,
+  extension_factors = c(0.025, 0.22),
   savepath = NULL,
   filename_ext = "_transcripts.png",
   add_to_table = F,
@@ -28,7 +29,7 @@ plot_transcripts_view(
 
 \item{genes}{Character vector of genes to plot. If \code{NULL}, defaults to all found significant genes (\code{sig_genes}).}
 
-\item{gtf}{Either path to a \code{gtf/gff} file which will be read or a \code{granges} object of a already read in \code{gtf/gff} file. See \code{\link[rtracklayer:import]{rtracklayer::import}} for more information. The tx2gene data frame of \code{\link[=import_gtf]{import_gtf()}} is \strong{not} sufficient.}
+\item{gtf}{Either path to a \code{gtf/gff} file which will be read or a \code{granges} object of a already read in \code{gtf/gff} file. Such an object can be created with \code{import_gtf("GTF_PATH", feature_type=NULL, out_df=FALSE)}. See \code{\link[=import_gtf]{import_gtf()}} for more information.}
 
 \item{genome}{The genome on which to create the ideogram tracks. This has to be a valid \verb{UCSC genome identifier} (e.g. 'hg38', 'mm10', 'danRer11', etc.). Can also be NULL to skip ideogram track generation.}
 
@@ -40,9 +41,11 @@ plot_transcripts_view(
 
 \item{reduce_introns_min_size}{Specify the minimal size introns are reduced to (in bp).}
 
-\item{fontsize_vec}{Vector of fontsizes to use. The first value is the side annotation text fontsize (in pt), the second the cex factor for the title, the third the cex factor for the feature names.}
+\item{fontsize_vec}{Vector of fontsizes to use. The first value is the side annotation text fontsize (in pt), the second value the cex factor for the title, the third value the cex factor for the feature & chromosome names.}
 
 \item{arrow_colors}{Specify the colors of the arrows indicating the direction of proportional changes. The first color string is for a positive change, the second for a negative one.}
+
+\item{arrow_start}{Advanced: Set the x coordinate of the arrow annotations (in NPC)}
 
 \item{extension_factors}{Advanced: Specify the extension factors to extend the plotted genomic range. The first value if for the extension of the front (left) side, the second for the back (right).}
 

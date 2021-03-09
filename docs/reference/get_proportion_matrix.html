@@ -86,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.3</span>
       </span>
     </div>
 
@@ -176,7 +176,7 @@
     <p>Compute a matrix of transcript proportions per gene. Either a (sparse) count matrix or a <code>dturtle</code> object can be provided.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_proportion_matrix</span><span class='op'>(</span><span class='va'>obj</span>, genes <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>get_proportion_matrix</span><span class='op'>(</span><span class='va'>obj</span>, tx2gene <span class='op'>=</span> <span class='cn'>NULL</span>, genes <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -186,8 +186,12 @@
       <td><p>(sparse) matrix or <code>dturtle</code> object.</p></td>
     </tr>
     <tr>
+      <th>tx2gene</th>
+      <td><p>Provide a tx2gene data frame, specifying which transcripts (first column) belong to which gene (second column).</p></td>
+    </tr>
+    <tr>
       <th>genes</th>
-      <td><p>Specify the genes to subset the data to, if a <code>dturtle</code> object is provided.</p></td>
+      <td><p>If a <code>dturtle</code> object is provided, specify the genes you want to get proportions of.</p></td>
     </tr>
     </table>
 
@@ -196,7 +200,9 @@
     <p>A (sparse) matrix of transcript proportions</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>If a <code>dturtle</code> object is provided, a list of genes the data shall be subsetted to can optionally be given.</p>
+    <p>If a (sparse) matrix of multiple genes is provided, it is advised to also specify a tx2gene data frame.
+If no tx2gene data frame is present, it is assumed all matrix entries belong to the same gene.
+If a <code>dturtle</code> object is provided, a list of genes the data shall be subsetted to can optionally be given.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

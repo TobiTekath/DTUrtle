@@ -86,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.3</span>
       </span>
     </div>
 
@@ -187,7 +187,8 @@
   reduce_introns_min_size <span class='op'>=</span> <span class='fl'>50</span>,
   fontsize_vec <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>10</span>, <span class='fl'>1.1</span>, <span class='fl'>0.6</span><span class='op'>)</span>,
   arrow_colors <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"#7CAE00"</span>, <span class='st'>"#00BFC4"</span><span class='op'>)</span>,
-  extension_factors <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.015</span>, <span class='fl'>0.15</span><span class='op'>)</span>,
+  arrow_start <span class='op'>=</span> <span class='fl'>0.88</span>,
+  extension_factors <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.025</span>, <span class='fl'>0.22</span><span class='op'>)</span>,
   savepath <span class='op'>=</span> <span class='cn'>NULL</span>,
   filename_ext <span class='op'>=</span> <span class='st'>"_transcripts.png"</span>,
   add_to_table <span class='op'>=</span> <span class='cn'>F</span>,
@@ -208,7 +209,7 @@
     </tr>
     <tr>
       <th>gtf</th>
-      <td><p>Either path to a <code>gtf/gff</code> file which will be read or a <code>granges</code> object of a already read in <code>gtf/gff</code> file. See <code><a href='https://rdrr.io/pkg/rtracklayer/man/export.html'>rtracklayer::import</a></code> for more information. The tx2gene data frame of <code><a href='import_gtf.html'>import_gtf()</a></code> is <strong>not</strong> sufficient.</p></td>
+      <td><p>Either path to a <code>gtf/gff</code> file which will be read or a <code>granges</code> object of a already read in <code>gtf/gff</code> file. Such an object can be created with <code><a href='import_gtf.html'>import_gtf("GTF_PATH", feature_type=NULL, out_df=FALSE)</a></code>. See <code><a href='import_gtf.html'>import_gtf()</a></code> for more information.</p></td>
     </tr>
     <tr>
       <th>genome</th>
@@ -232,11 +233,15 @@
     </tr>
     <tr>
       <th>fontsize_vec</th>
-      <td><p>Vector of fontsizes to use. The first value is the side annotation text fontsize (in pt), the second the cex factor for the title, the third the cex factor for the feature names.</p></td>
+      <td><p>Vector of fontsizes to use. The first value is the side annotation text fontsize (in pt), the second value the cex factor for the title, the third value the cex factor for the feature &amp; chromosome names.</p></td>
     </tr>
     <tr>
       <th>arrow_colors</th>
       <td><p>Specify the colors of the arrows indicating the direction of proportional changes. The first color string is for a positive change, the second for a negative one.</p></td>
+    </tr>
+    <tr>
+      <th>arrow_start</th>
+      <td><p>Advanced: Set the x coordinate of the arrow annotations (in NPC)</p></td>
     </tr>
     <tr>
       <th>extension_factors</th>

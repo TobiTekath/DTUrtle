@@ -28,6 +28,7 @@ if(dir.exists(root_dir)){
   #remove previous results
   unlink(paste0(root_dir,"/*"),recursive=T)
 }
+start_time <- Sys.time()
 ```
 
 
@@ -432,6 +433,14 @@ plot_dtu_table(dturtle = dturtle, column_formatters = column_formatter_list, min
 
 ---
 
+For later use we can save the final DTUrtle object to disk:
+
+```{r}
+saveRDS(dturtle, "./dturtle_res.RDS")
+```
+
+---
+
 ## Workflow with Seurat object
 
 Some users might already have analyzed their (gene-level) single-cell data and performed clustering, dimensional reduction etc. For these users, *DTUrtle* offers direct support for *Seurat* objects (Seurat V3 or newer).
@@ -539,8 +548,23 @@ dturtle_sub <- posthoc_and_stager(dturtle = dturtle_sub, ofdr = 0.05, posthoc = 
 
 ---
 
+For later use we can save the final DTUrtle object to disk:
+
+```{r}
+saveRDS(dturtle_sub, "./dturtle_sub_res.RDS")
+```
+
+---
+
 ## Session info
 
+Computation time for this vignette:
+
+```{r, echo=FALSE}
+Sys.time()-start_time
+```
+
+---
 ```{r sessionInfo, echo=FALSE}
 sessionInfo()
 ```

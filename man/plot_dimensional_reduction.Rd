@@ -14,9 +14,12 @@ plot_dimensional_reduction(
   include_labels = T,
   reduction_to_use = "umap",
   indicate_significant_tx = T,
-  plot_colors = c("grey", "firebrick"),
-  point_alpha = 0.2,
+  plot_colors = c("grey", "#9ECAE1", "#6BAED6", "#4292C6", "#2171B5", "#08519C",
+    "#08306B"),
+  plot_scale = "fixed",
+  point_alpha = 1,
   point_size = NULL,
+  text_size = 11,
   label_size = 3,
   label_colors = c("#7CAE00", "#00BFC4"),
   label_y_expansion = 0.2,
@@ -48,11 +51,15 @@ plot_dimensional_reduction(
 
 \item{plot_colors}{Specify a vector of minimum 2 colors that build the color scale.}
 
+\item{plot_scale}{Specify how the scales of each facet should act. Values are "fixed", "free_x", "free_y" or "free", to either have the same fixed scale, a free x- or y-axis or both axis free.}
+
 \item{point_alpha}{Specify an alpha level for the single cells / samples.}
 
 \item{point_size}{Specify the size of the points representing a single cell / sample. If \code{NULL}, chosen automatically.}
 
-\item{label_size}{If \code{include_labels=T}, set size of labels.}
+\item{text_size}{Specify basic text size (in pt) to use in plot.}
+
+\item{label_size}{If \code{include_labels=T}, set size of labels (in mm).}
 
 \item{label_colors}{If \code{include_labels=T}, set color of labels of positive or negative proportional differences.}
 
@@ -93,6 +100,7 @@ specifying dimensions in pixels.}
 }
 \value{
 Returns list of saved plots, for adding to the DTU table. If no \code{savepath} is provided, returns a list of the created plots for further processing.
+If \code{indicate_significant_tx} is TRUE, a list of \code{grob} objects will be returned, otherwise a list of \code{ggplot} objects. \code{grob} can be visualized for example with \code{grid::grid.draw()}.
 }
 \description{
 Visualize proportions or expression in dimensional reduction coordinates.

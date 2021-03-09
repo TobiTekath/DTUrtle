@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Differential Transcript Usage analysis • DTUrtle</title>
+<title>Differential Transcript Usage analysis of bulk and single-cell RNA-seq data • DTUrtle</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
@@ -19,8 +19,8 @@
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><!-- docsearch --><script src="docsearch.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.3/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous">
 <link href="docsearch.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><meta property="og:title" content="Differential Transcript Usage analysis">
-<meta property="og:description" content="Easily perform Differential Transcript Usage (DTU) analysis for bulk or single-cell RNAseq data utilizing transcript level quantification counts.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><meta property="og:title" content="Differential Transcript Usage analysis of bulk and single-cell RNA-seq data">
+<meta property="og:description" content="Easily perform and visualize Differential Transcript Usage (DTU) analysis for bulk or single-cell RNA-seq data, utilizing transcript level quantification counts.">
 <meta property="og:image" content="https://tobitekath.github.io/DTUrtle/logo.svg">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.3</span>
       </span>
     </div>
 
@@ -125,6 +125,23 @@
 <a href="#dturtle" class="anchor"></a>DTUrtle <img src="reference/figures/logo.svg" align="right" alt="" width="250">
 </h1></div>
 <p><strong>Perform differential transcript usage (DTU) analysis of bulk or single-cell RNA-seq data.</strong></p>
+<div id="background" class="section level2">
+<h2 class="hasAnchor">
+<a href="#background" class="anchor"></a>Background</h2>
+<p>While most RNA-seq data sets are mainly analysed in regard to differential gene expression, the transcript-level nature of the RNA-seq reads is often overlooked. The <strong>R package DTUrtle</strong> offers an easy-to-use way to perform a differential transcript usage (DTU) analysis in bulk or single-cell RNA-seq data, comparing the expression proportions of a genes different transcript isoforms between conditions. The results, a list of significantly differential genes and transcripts isoforms, can be aggregated in an overview table and visualized in multiple ways.</p>
+</div>
+<div id="target-audience" class="section level2">
+<h2 class="hasAnchor">
+<a href="#target-audience" class="anchor"></a>Target audience</h2>
+<p>No in-depth knowledge about DTU or the statistical analysis behind it is needed. If you have read data of an RNA-seq experiment at hand (or are able to download one from a public repository), you are good to go. Three exemplary vignettes for different species and sequencing techniques will guide you through your analysis.</p>
+</div>
+<div id="input-data" class="section level2">
+<h2 class="hasAnchor">
+<a href="#input-data" class="anchor"></a>Input data</h2>
+<p>DTUrtle relies on transcript-level expression counts, which can be generated with transcript-level quantifiers like Salmon, Alevin, kallisto, etc. or even standard splice-aware genomic aligners like STAR (generating a transcript level BAM with ‘–quantMode TranscriptomeSAM’ and then quantifying it with Salmon).</p>
+<p>Besides the expression counts, a transcript-level annotation file for your species is needed (which is also already needed by the quantifying tools).</p>
+<hr>
+</div>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
@@ -224,7 +241,7 @@
 <h3 class="hasAnchor">
 <a href="#result-aggregation-and-visualization" class="anchor"></a>Result aggregation and visualization</h3>
 <div class="sourceCode" id="cb7"><pre class="downlit">
-<span class="co">#highly felxible function to create a results data frame</span>
+<span class="co">#highly flexible function to create a results data frame</span>
 <span class="va">dturtle</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/create_dtu_table.html">create_dtu_table</a></span><span class="op">(</span>dturtle <span class="op">=</span> <span class="va">dturtle</span><span class="op">)</span>
 
     <span class="co">## View results data frame</span>
@@ -275,7 +292,7 @@
 <div id="help-feedback" class="section level3">
 <h3 class="hasAnchor">
 <a href="#help-feedback" class="anchor"></a>Help &amp; Feedback</h3>
-<p>If you have questions, need help with your anaylsis or found a bug: Please do not hesitate to <a href="mailto:tobias.tekath@wwu.de">get in touch</a> or open a GitHub issue.</p>
+<p>If you have questions, need help with your analysis or found a bug: Please do not hesitate to <a href="mailto:tobias.tekath@wwu.de">get in touch</a> or open a GitHub issue.</p>
 </div>
 </div>
 </div>
@@ -292,13 +309,14 @@
 <div class="license">
 <h2>License</h2>
 <ul class="list-unstyled">
-<li>GPL (&gt;= 3)</li>
+<li>GPL (&gt;= 3) + file <a href="LICENSE-text.html">LICENSE</a>
+</li>
 </ul>
 </div>
 <div class="developers">
 <h2>Developers</h2>
 <ul class="list-unstyled">
-<li>Tobias Tekath <br><small class="roles"> Author, maintainer </small>  </li>
+<li>Tobias Tekath <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0002-9315-5452" target="orcid.widget" aria-label="ORCID"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
 </ul>
 </div>
 

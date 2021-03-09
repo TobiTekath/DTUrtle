@@ -86,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.3</span>
       </span>
     </div>
 
@@ -182,6 +182,8 @@
   meta_gene_id <span class='op'>=</span> <span class='cn'>NULL</span>,
   group_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
   fit_line_color <span class='op'>=</span> <span class='st'>"red"</span>,
+  text_size <span class='op'>=</span> <span class='fl'>11</span>,
+  label_angle <span class='op'>=</span> <span class='fl'>25</span>,
   savepath <span class='op'>=</span> <span class='cn'>NULL</span>,
   filename_ext <span class='op'>=</span> <span class='st'>"_barplot.png"</span>,
   add_to_table <span class='op'>=</span> <span class='cn'>F</span>,
@@ -211,6 +213,10 @@
     <tr>
       <th>fit_line_color</th>
       <td><p>Optionally specify the colour to use for the mean fit line.</p></td>
+    </tr>
+    <tr>
+      <th>text_size</th>
+      <td><p>Specify basic text size (in pt) to use in plot.</p></td>
     </tr>
     <tr>
       <th>savepath</th>

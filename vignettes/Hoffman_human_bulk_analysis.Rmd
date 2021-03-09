@@ -28,6 +28,7 @@ if(dir.exists(root_dir)){
   #remove previous results
   unlink(paste0(root_dir,"/*"),recursive=T)
 }
+start_time <- Sys.time()
 ```
 
 
@@ -214,7 +215,7 @@ head(dturtle$sig_tx)
 
 ## Result aggregation and visualization
 
-The `DTUrtle` package contains multiple visualization options, enabling a in-depth inspection.
+The `DTUrtle` package contains multiple visualization options, enabling an in-depth inspection.
 
 ### DTU table creation
 
@@ -249,15 +250,17 @@ This table is our basis for creating an **interactive HTML-table** of the result
 
 As a first visualization option we will create a barplot of the proportions of each transcript per sample. We can use the function `plot_proportion_barplot()` for this task, which also adds the mean proportion fit per subgroup to the plot (by default as a red line).
 
-As an example, we will create the plot for the gene *SGSM1*, which is one of the significant genes found in the analysis. We will optionally provide the gene_id for *SGSM1*, which is stored in the column `gene_id.1` of `dturtle$meta_table_gene`.
+As an example, we will create the plot for the gene *TSC22D3* (a Glucocorticoid-Induced Leucine Zipper), which is one of the significant genes found in the analysis. Additionally, it is identified in [Hoffman et al.](https://doi.org/10.1038/s42003-020-0837-0) as one of the Dexamethasone / Glucocorticoid Receptor target genes, which also shows differential expression already after 2 hours of Dex treatment.
+
+We will optionally provide the gene_id for *TSC22D3*, which is stored in the column `gene_id.1` of `dturtle$meta_table_gene`.
 
 
 ```{r fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
-temp <- plot_proportion_barplot(dturtle = dturtle, genes = "SGSM1", meta_gene_id = "gene_id.1")
-temp$SGSM1
+temp <- plot_proportion_barplot(dturtle = dturtle, genes = "TSC22D3", meta_gene_id = "gene_id.1")
+temp$TSC22D3
 ```
 
-We see, that most of the proportional differences for *SGSM1* are driven by 2 of the 3 transcripts (*SGSM1-206* and *SGSM1-203*). These transcripts are also the significant transcripts found in the analysis (as they are marked in red). *SGSM1-203* seems to be almost exclusively expressed in samples with *dexamethasone* treatment.
+We see, that there are striking proportional differences for the three transcripts of *TSC22D3*. Due to *Dexamethasone* treatment, there seems to be a shift to almost exclusive expression of *TSC22D3-206*. This transcript has also been identified as a significant transcript in the analysis (as the name is marked in red). From the top annotation we can also see, that the mean total expression of *TSC22D3* is higher in the `Dex2hr` group (as expected) - but also the coefficient of variation (CV) is higher, indicating a higher variance between the samples.
 
 For the interactive HTML-table we would need to save the images to disk (in the to-be-created sub folder "images" of the current working directory). There is also a convenience option, to directly add the file paths to the `dtu_table`. As multiple plots are created, we can provide a `BiocParallel` object to speed up the creation. If no specific genes are provided, all significant genes will be plotted.
 
@@ -283,12 +286,12 @@ A different visualization option is a heatmap, where additional meta data can be
 
 
 ```{r fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
-temp <- plot_proportion_pheatmap(dturtle = dturtle, genes = "SGSM1", 
+temp <- plot_proportion_pheatmap(dturtle = dturtle, genes = "TSC22D3", 
                                  include_expression = T, treeheight_col=20)
-temp$SGSM1
+temp$TSC22D3
 ```
 
-By default, row and column annotations are added. This plot helps to examine the transcript composition of groups of cells. We can differentiate 3 sample sub-groups for *SGSM1*. While two samples of the *EtOH* and *Dex2hr* group are very alike, respectively, it seems like *D2hr_rep3* and *EtOH_rep2* are more alike to each other than the rest of the samples.
+By default, row and column annotations are added. This plot helps to examine the transcript composition of groups of cells. We can see a quite uniform expression pattern between the two conditions. From the column annotation we can see, that the *TSC22D3* total expression in the sample *bulk_D2hr_rep1* is quite lower than in the rest.
 
 Again, we can save the plots to disk and add them to the `dtu_table`:
 
@@ -318,7 +321,7 @@ As we have ensured the one_to_one mapping in [Import and format data](#import-an
 
 ```{r fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
 plot_transcripts_view(dturtle = dturtle, 
-                              genes = "SGSM1", 
+                              genes = "TSC22D3", 
                               gtf = "../gencode.v34.annotation.gtf", 
                               genome = 'hg38',
                               one_to_one = T)
@@ -326,9 +329,9 @@ plot_transcripts_view(dturtle = dturtle,
 
 
 
-This visualization shows the structure of the transcripts of *SGSM1*. Our two significant transcripts (*SGSM1-203* and *SGSM1-206*) are quite different, with *SGSM1-203* being much shorter with alternative transcript start and end points. The arrows on the right side indicate the mean fitted proportional change in the comparison groups, thus showing a over-expression of *SGSM1-203* in `Dex2hr` compared to `EtOH`.
+This visualization shows the structure of the transcripts of *TSC22D3*. Our significant transcripts (*TSC22D3-206*) is quite different to the other mainly expressed transcript (*TSC22D3-203*). *TSC22D3-206* has a different frist exon than *TSC22D3-203*, whichs first exon is quite far away from the conserved transcript body. The arrows on the right side indicate the mean fitted proportional change in the comparison groups, thus showing a over-expression of *TSC22D3-206* in `Dex2hr` compared to `EtOH`.
 
-The grey areas indicate intron sequences, which have been compressed in this representation to highlight the exon structure. Only consensus introns are compressed to a defined minimal size. This can also be turned off with `reduce_introns=FALSE`
+The grey areas indicate intron sequences, which have been compressed in this representation to highlight the exon structure. Only consensus introns are compressed to a defined minimal size. This can be turned off with `reduce_introns=FALSE`
 
 Analogous as before, we can save plots to disk and add them to the `dtu_table`:
 
@@ -361,7 +364,7 @@ head(dturtle$dtu_table)
 ```
 
 
-Before creating the actual table, we can optionally define column formatter functions, which colour the specified columns. The colouring might help with to quickly dissect the results.
+Before creating the actual table, we can optionally define column formatter functions, which color the specified columns. The coloring might help with to quickly dissect the results.
 
 *DTUrtle* come with some pre-defined column formatter functions (for p-values and percentages), other formatter functions from the `formattable` package can also be used. Advanced users might also define their own functions.
 
@@ -408,10 +411,26 @@ plot_dtu_table(dturtle = dturtle, column_formatters = column_formatter_list, min
 ```
 </div>
 
+---
+
+For later use we can save the final DTUrtle object to disk:
+
+```{r}
+saveRDS(dturtle, "./dturtle_res.RDS")
+```
 
 ---
 
+
 ## Session info
+
+Computation time for this vignette:
+
+```{r, echo=FALSE}
+Sys.time()-start_time
+```
+
+---
 
 ```{r sessionInfo, echo=FALSE}
 sessionInfo()

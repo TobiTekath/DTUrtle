@@ -7,7 +7,7 @@
 partitioning_to_dataframe(partitioning)
 }
 \arguments{
-\item{partitioning}{The partitioning that shall converted}
+\item{partitioning}{The partitioning that shall be converted}
 }
 \value{
 A data frame with two columns, \code{tx} and \code{gene}.

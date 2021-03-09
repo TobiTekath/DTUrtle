@@ -2,7 +2,7 @@
 % Please edit documentation in R/utility_functions.R
 \name{run_posthoc}
 \alias{run_posthoc}
-\title{Posthoc filtering}
+\title{Pos-thoc filtering}
 \usage{
 run_posthoc(drim, filt)
 }
@@ -15,7 +15,7 @@ run_posthoc(drim, filt)
 A filtered \code{sparseDRIMSeq::results()} data frame.
 }
 \description{
-Perform posthoc filtering.
+Perform post-hoc filtering.
 }
 \details{
 Sets pvalue and adjusted pvalue of 'filtered' elements to 1.
