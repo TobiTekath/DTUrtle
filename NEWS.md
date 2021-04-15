@@ -1,6 +1,18 @@
 DTUrtle News
 ================
 
+# DTUrtle 0.7.4
+
+## Changes
+
+  - `plot_transcripts_view()`: added `tested_transcripts_only`
+    parameter, to allow better control which transcripts of a gene
+    should be displayed. Also allows to create plot for genes which have
+    been excluded from the analysis.
+  - `plot_transcripts_view()`: changed default value of
+    `reduce_introns_fill` to ‘white’ to get visually more appealing
+    plots by default.
+
 # DTUrtle 0.7.3
 
 ## Changes

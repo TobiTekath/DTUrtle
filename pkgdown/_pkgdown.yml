@@ -37,10 +37,12 @@ reference:
   - title: Utility functions
     desc: Help with data processing
     contents:
+      - dataframe_to_partitioning
       - get_by_partition
       - get_proportion_matrix
       - move_columns_to_front
       - one_to_one_mapping
+      - partitioning_to_dataframe
       - rm_version
       - summarize_to_gene
 

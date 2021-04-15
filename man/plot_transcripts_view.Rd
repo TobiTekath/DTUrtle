@@ -10,8 +10,9 @@ plot_transcripts_view(
   gtf,
   genome,
   one_to_one = NULL,
+  tested_transcripts_only = "mixed",
   reduce_introns = T,
-  reduce_introns_fill = "grey95",
+  reduce_introns_fill = "white",
   reduce_introns_min_size = 50,
   fontsize_vec = c(10, 1.1, 0.6),
   arrow_colors = c("#7CAE00", "#00BFC4"),
@@ -34,6 +35,9 @@ plot_transcripts_view(
 \item{genome}{The genome on which to create the ideogram tracks. This has to be a valid \verb{UCSC genome identifier} (e.g. 'hg38', 'mm10', 'danRer11', etc.). Can also be NULL to skip ideogram track generation.}
 
 \item{one_to_one}{Specify \code{TRUE}, if one_to_one mapping of gene/transcript identifiers with their respective names was enforced before (with \code{\link[=one_to_one_mapping]{one_to_one_mapping()}}). If a non default extension character (\code{ext}) has been used, please specify the used extension character.}
+
+\item{tested_transcripts_only}{Specify, if only transcripts which were tested in DTU analysis should be plotted. This are only the not-filtered transcripts of significant genes.
+Defaults to \code{mixed}, meaning if a gene has no tested transcripts (i.e. it was not significant), it defaults to all non-filtered transcripts of this gene. Can also be \code{FALSE} to allow all transcripts, or \code{TRUE} to exclude all untested transcripts.}
 
 \item{reduce_introns}{Logical if intron ranges shall be shrunken down, highlighting the exonic structure.}
 

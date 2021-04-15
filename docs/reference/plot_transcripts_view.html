@@ -86,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.4</span>
       </span>
     </div>
 
@@ -182,8 +182,9 @@
   <span class='va'>gtf</span>,
   <span class='va'>genome</span>,
   one_to_one <span class='op'>=</span> <span class='cn'>NULL</span>,
+  tested_transcripts_only <span class='op'>=</span> <span class='st'>"mixed"</span>,
   reduce_introns <span class='op'>=</span> <span class='cn'>T</span>,
-  reduce_introns_fill <span class='op'>=</span> <span class='st'>"grey95"</span>,
+  reduce_introns_fill <span class='op'>=</span> <span class='st'>"white"</span>,
   reduce_introns_min_size <span class='op'>=</span> <span class='fl'>50</span>,
   fontsize_vec <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>10</span>, <span class='fl'>1.1</span>, <span class='fl'>0.6</span><span class='op'>)</span>,
   arrow_colors <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"#7CAE00"</span>, <span class='st'>"#00BFC4"</span><span class='op'>)</span>,
@@ -218,6 +219,11 @@
     <tr>
       <th>one_to_one</th>
       <td><p>Specify <code>TRUE</code>, if one_to_one mapping of gene/transcript identifiers with their respective names was enforced before (with <code><a href='one_to_one_mapping.html'>one_to_one_mapping()</a></code>). If a non default extension character (<code>ext</code>) has been used, please specify the used extension character.</p></td>
+    </tr>
+    <tr>
+      <th>tested_transcripts_only</th>
+      <td><p>Specify, if only transcripts which were tested in DTU analysis should be plotted. This are only the not-filtered transcripts of significant genes.
+Defaults to <code>mixed</code>, meaning if a gene has no tested transcripts (i.e. it was not significant), it defaults to all non-filtered transcripts of this gene. Can also be <code>FALSE</code> to allow all transcripts, or <code>TRUE</code> to exclude all untested transcripts.</p></td>
     </tr>
     <tr>
       <th>reduce_introns</th>

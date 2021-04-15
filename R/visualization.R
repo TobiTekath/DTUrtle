@@ -532,8 +532,8 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
         message("Add_to_table failed, none of the genes could be found in the table.")
         return(ret)
       }
-      dturtle$dtu_table[[add_to_table]] <- ""
-      dturtle$dtu_table[names(ret), add_to_table] <- ret
+      dturtle$dtu_table[[add_to_table]] <- ret[match(rownames(dturtle$dtu_table), names(ret))]
+      dturtle$dtu_table[[add_to_table]][is.na(dturtle$dtu_table[[add_to_table]])] <- ""
       return(dturtle)
     }
   }
@@ -660,8 +660,8 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
         message("Add_to_table failed, none of the genes could be found in the table.")
         return(ret)
       }
-      dturtle$dtu_table[[add_to_table]] <- ""
-      dturtle$dtu_table[names(ret), add_to_table] <- ret
+      dturtle$dtu_table[[add_to_table]] <- ret[match(rownames(dturtle$dtu_table), names(ret))]
+      dturtle$dtu_table[[add_to_table]][is.na(dturtle$dtu_table[[add_to_table]])] <- ""
       return(dturtle)
     }
   }
@@ -679,6 +679,8 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
 #' @param gtf Either path to a `gtf/gff` file which will be read or a `granges` object of a already read in `gtf/gff` file. Such an object can be created with `import_gtf("GTF_PATH", feature_type=NULL, out_df=FALSE)`. See [import_gtf()] for more information.
 #' @param genome The genome on which to create the ideogram tracks. This has to be a valid `UCSC genome identifier` (e.g. 'hg38', 'mm10', 'danRer11', etc.). Can also be NULL to skip ideogram track generation.
 #' @param one_to_one Specify `TRUE`, if one_to_one mapping of gene/transcript identifiers with their respective names was enforced before (with [one_to_one_mapping()]). If a non default extension character (`ext`) has been used, please specify the used extension character.
+#' @param tested_transcripts_only Specify, if only transcripts which were tested in DTU analysis should be plotted. This are only the not-filtered transcripts of significant genes.
+#' Defaults to `mixed`, meaning if a gene has no tested transcripts (i.e. it was not significant), it defaults to all non-filtered transcripts of this gene. Can also be `FALSE` to allow all transcripts, or `TRUE` to exclude all untested transcripts.
 #' @param reduce_introns Logical if intron ranges shall be shrunken down, highlighting the exonic structure.
 #' @param reduce_introns_fill Optionally specify the background color of ranges where introns have been reduced.
 #' @param reduce_introns_min_size Specify the minimal size introns are reduced to (in bp).
@@ -694,8 +696,8 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
 #' @family DTUrtle visualization
 #' @export
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
-plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=NULL, reduce_introns=T,
-                                  reduce_introns_fill="grey95", reduce_introns_min_size=50, fontsize_vec=c(10,1.1,0.6),
+plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=NULL, tested_transcripts_only="mixed", reduce_introns=T,
+                                  reduce_introns_fill="white", reduce_introns_min_size=50, fontsize_vec=c(10,1.1,0.6),
                                   arrow_colors=c("#7CAE00", "#00BFC4"), arrow_start=0.88, extension_factors=c(0.025, 0.22),
                                   savepath=NULL, filename_ext="_transcripts.png", add_to_table=F, BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
@@ -703,6 +705,7 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
   assertthat::assert_that(!missing(genome), msg = "Please specify a UCSC genome identifier in `genome` (e.g. 'hg38', 'mm10', 'danRer11', etc.). Can also be NULL to skip ideogram track generation.")
   assertthat::assert_that(is.null(genome)||methods::is(genome, "character") && length(genome)==1, msg = "The genome object must be a character vector of length 1 or NULL.")
   assertthat::assert_that(is.null(one_to_one)||isTRUE(one_to_one)||(methods::is(one_to_one, "character")&&length(one_to_one)==1), msg = "The one_to_one object must be a character vector of length 1, TRUE or NULL.")
+  assertthat::assert_that(length(tested_transcripts_only)==1&&tested_transcripts_only %in% c("mixed",T,F), msg = "The tested_transcripts_only object must be 'mixed', TRUE or FALSE.")
   assertthat::assert_that(is.logical(reduce_introns), msg = "The reduce_introns objects must be logical.")
   assertthat::assert_that(methods::is(reduce_introns_fill, "character")&&length(reduce_introns_fill)==1, msg = "The reduce_introns_fill objects must be a character vector of length 1")
   assertthat::assert_that((is.integer(reduce_introns_min_size)||(is.numeric(reduce_introns_min_size) && all(reduce_introns_min_size == trunc(reduce_introns_min_size))))&&reduce_introns_min_size>=0, msg = "The provided reduce_introns_min_size must be a positive integer.")
@@ -747,10 +750,14 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
     suppressMessages(gtf@elementMetadata$transcript_name[!is.na(gtf@elementMetadata$transcript_name)] <- one_to_one_mapping(name = gtf@elementMetadata$transcript_name[!is.na(gtf@elementMetadata$transcript_name)], id = gtf@elementMetadata$transcript_id[!is.na(gtf@elementMetadata$transcript_name)], ext = one_to_one))
   }
 
-  valid_genes <- genes[genes %in% gtf@elementMetadata[[gtf_genes_column]]&&genes %in% dturtle$drim@results_gene$gene_id]
+  valid_genes <- genes[genes %in% gtf@elementMetadata[[gtf_genes_column]]]
   message("\nFound gtf GRanges for ", length(valid_genes), " of ", length(genes), " provided genes.")
   if(length(valid_genes)<length(genes)){
     message("\n\tIf you ensured one_to_one mapping of the transcript and/or gene id in the former DTU analysis, try to set 'one_to_one' to TRUE or the used extension character.")
+  }
+  if(length(valid_genes)==0){
+    message("\nNo plottable genes found!\n")
+    return()
   }
 
   gtf <- gtf[GenomicRanges::elementMetadata(gtf)[,gtf_genes_column] %in% valid_genes]
@@ -790,19 +797,33 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
     BiocParallel::bpstart(BPPARAM)
   }
   plot_list <- BiocParallel::bplapply(valid_genes, function(gene){
-
     gene_gtf <- gtf[gtf@elementMetadata[[gtf_genes_column]]==gene,]
     gene_info <- as.data.frame(gene_gtf[gene_gtf$type=="gene",])
-    tested_tx <- dturtle$FDR_table$txID[dturtle$FDR_table$geneID == gene & !is.na(dturtle$FDR_table$transcript)]
+
+    #which transcripts are displayed
+    if(tested_transcripts_only %in% c("mixed",T)){
+      tested_tx <- dturtle$FDR_table$txID[dturtle$FDR_table$geneID == gene & !is.na(dturtle$FDR_table$transcript)]
+      if(length(tested_tx)==0){
+        if(tested_transcripts_only=="mixed"){
+          tested_tx <- dturtle$FDR_table$txID[dturtle$FDR_table$geneID == gene]
+        }else{
+          message("Skipping ", gene, " --- no transcripts to plot. You may want to adjust the `tested_transcripts_only` parameter.")
+          return()
+        }
+      }
+    }else{
+      tested_tx <- gene_gtf@elementMetadata[[gtf_tx_column]][gene_gtf$type=="transcript"]
+    }
     gtf_trans <- gene_gtf[gene_gtf@elementMetadata[[gtf_tx_column]] %in% tested_tx & !gene_gtf$type %in% c("transcript","gene")]
+
+    if(length(gtf_trans)==0){
+      message("Skipping ", gene, " --- no transcripts to plot. You may want to adjust the `tested_transcripts_only` parameter.")
+      return()
+    }
+
     temp <- Gviz::seqlevels(gtf_trans)
     temp[!startsWith(temp, "chr")] <- paste0("chr",temp[!startsWith(temp, "chr")])
     GenomeInfoDb::seqlevels(gtf_trans) <- temp
-
-    if(length(gtf_trans)==0){
-      message("Skipping ", gene, " --- no info to plot.")
-      return()
-    }
 
     track_list <- list()
     grtrack_list <- c()
@@ -826,8 +847,8 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
 
     #fitted mean per group
     grouped_mean_df <- get_diff(gene, dturtle)
-    grouped_mean_df <- grouped_mean_df[tested_tx,]
-
+    grouped_mean_df <- grouped_mean_df[tested_tx,,drop=F]
+    rownames(grouped_mean_df) <- tested_tx
     #order transcripts by fitted mean diff
     #cave: do not reorder grtrack_list with overlayplots - custom tracks will not follow new ordering!
     tested_tx <- rownames(grouped_mean_df)[order(abs(grouped_mean_df$diff), decreasing = T)]
@@ -845,27 +866,27 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
                                        background.title = ifelse(tx_id %in% dturtle$sig_tx, "orangered", "transparent"),
                                        cex.group=fontsize_vec[[3]], cex.title=fontsize_vec[[3]], cex.axis=fontsize_vec[[3]])
 
-      tx_fitted_mean <- grouped_mean_df[tx_id,]$diff
 
-      anno_text_start <- ggplot2::unit(arrow_start,"npc")
-      grobs <- grid::grobTree(
-        grid::textGrob(label = ifelse(tx_fitted_mean>0, intToUtf8(11014), intToUtf8(11015)), name = "arrow",
-                       x = anno_text_start, gp=grid::gpar(fontsize=ceiling(fontsize_vec[[1]]*1.5), col=ifelse(tx_fitted_mean>0,arrow_colors[[1]],arrow_colors[[2]]))),
-        grid::textGrob(label = paste0(" ",scales::percent(tx_fitted_mean, accuracy = .01)), name = "text",
-                       x = 2*grid::grobWidth("arrow") + anno_text_start, gp = grid::gpar(fontsize=fontsize_vec[[1]]))
-      )
-
-      track_annotation <- Gviz::CustomTrack(plottingFunction=function(GdObject, prepare, ...){ if(!prepare) grid::grid.draw(GdObject@variables$grobs); return(invisible(GdObject))}, variables = list(grobs=grobs))
-      overlay <- Gviz::OverlayTrack(trackList=list(grtrack, track_annotation))
-
+      tx_fitted_mean <- grouped_mean_df[tx_id,"diff"]
+      if(!is.na(tx_fitted_mean)){
+        anno_text_start <- ggplot2::unit(arrow_start,"npc")
+        grobs <- grid::grobTree(
+          grid::textGrob(label = ifelse(tx_fitted_mean>0, intToUtf8(11014), intToUtf8(11015)), name = "arrow",
+                         x = anno_text_start, gp=grid::gpar(fontsize=ceiling(fontsize_vec[[1]]*1.5), col=ifelse(tx_fitted_mean>0,arrow_colors[[1]],arrow_colors[[2]]))),
+          grid::textGrob(label = paste0(" ",scales::percent(tx_fitted_mean, accuracy = .01)), name = "text",
+                         x = 2*grid::grobWidth("arrow") + anno_text_start, gp = grid::gpar(fontsize=fontsize_vec[[1]]))
+        )
+        track_annotation <- Gviz::CustomTrack(plottingFunction=function(GdObject, prepare, ...){ if(!prepare) grid::grid.draw(GdObject@variables$grobs); return(invisible(GdObject))}, variables = list(grobs=grobs))
+        overlay <- Gviz::OverlayTrack(trackList=list(grtrack, track_annotation))
+      }else{
+        overlay <- Gviz::OverlayTrack(trackList=list(grtrack))
+      }
       #overlay is not keeping GeneRegion style parameters!
       overlay@dp@pars <- utils::modifyList(overlay@dp@pars, overlay@trackList[[1]]@dp@pars)
-
       grtrack_list <- c(grtrack_list, overlay)
     }
 
     #highlight reduced intron segments
-
     if(reduce_introns){
       new_intron_starts <- GenomicRanges::start(reduction_obj$reduced_regions)-cumsum(c(0, GenomicRanges::width(reduction_obj$reduced_regions)[-length(reduction_obj$reduced_regions)]))+cumsum(c(0, reduction_obj$reduced_regions$new_width[-length(reduction_obj$reduced_regions)]))
       if(length(new_intron_starts)>0){
@@ -877,7 +898,13 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
 
     ###need extra space in the back
     extension_front <- (max(tx_ranges$end)-min(tx_ranges$start))*max(nchar(tested_tx))*extension_factors[[1]]
-    extension_back <- (max(tx_ranges$end)-min(tx_ranges$start))*extension_factors[[2]]
+    #if any difference arrows have been added
+    if(!all(is.na(grouped_mean_df$diff))){
+      extension_back <- (max(tx_ranges$end)-min(tx_ranges$start))*extension_factors[[2]]
+    }else{
+      extension_back <- 0
+    }
+
 
     if(!is.null(savepath)){
       filename <- file.path(savepath, paste0(make.names(gene), filename_ext))
@@ -930,8 +957,8 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
         message("Add_to_table failed, none of the genes could be found in the table.")
         return(ret)
       }
-      dturtle$dtu_table[[add_to_table]] <- ""
-      dturtle$dtu_table[names(ret), add_to_table] <- ret
+      dturtle$dtu_table[[add_to_table]] <- ret[match(rownames(dturtle$dtu_table), names(ret))]
+      dturtle$dtu_table[[add_to_table]][is.na(dturtle$dtu_table[[add_to_table]])] <- ""
       return(dturtle)
     }
   }
@@ -1156,8 +1183,8 @@ plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="
         message("Add_to_table failed, none of the genes could be found in the table.")
         return(ret)
       }
-      dturtle$dtu_table[[add_to_table]] <- ""
-      dturtle$dtu_table[names(ret), add_to_table] <- ret
+      dturtle$dtu_table[[add_to_table]] <- ret[match(rownames(dturtle$dtu_table), names(ret))]
+      dturtle$dtu_table[[add_to_table]][is.na(dturtle$dtu_table[[add_to_table]])] <- ""
       return(dturtle)
     }
   }
