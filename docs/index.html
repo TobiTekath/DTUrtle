@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
       </span>
     </div>
 
@@ -80,6 +80,16 @@
     </li>
     <li>
       <a href="articles/Tabular_Muris_mouse_single-cell_analysis.html">Mouse Tabular Muris single-cell RNA-seq analysis</a>
+    </li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">Smart-seq2</li>
+    <li>
+      <a href="articles/Wuidart_mouse_single-cell_preprocess.html">Mouse single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="articles/Wuidart_mouse_single-cell_analysis.html">Mouse single-cell RNA-seq analysis</a>
     </li>
     <li class="divider">
     <li class="dropdown-header">Bulk</li>
@@ -124,21 +134,21 @@
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#dturtle" class="anchor"></a>DTUrtle <img src="reference/figures/logo.svg" align="right" alt="" width="250">
 </h1></div>
-<p><strong>Perform differential transcript usage (DTU) analysis of bulk or single-cell RNA-seq data.</strong></p>
+<p><strong>Perform differential transcript usage (DTU) analysis of bulk or single-cell RNA-seq data and visualize the results.</strong></p>
 <div id="background" class="section level2">
 <h2 class="hasAnchor">
 <a href="#background" class="anchor"></a>Background</h2>
-<p>While most RNA-seq data sets are mainly analyzed in regard to differential gene expression, the transcript-level nature of the RNA-seq reads is often overlooked. The <strong>R package DTUrtle</strong> offers an easy-to-use way to perform a differential transcript usage (DTU) analysis for bulk or single-cell RNA-seq data, comparing the expression proportions of a gene’s distinct transcript isoforms between conditions. The results, a list of significantly differential genes and transcript isoforms, can be aggregated in an overview table and visualized in multiple ways.</p>
+<p>While most RNA-seq data sets are mainly analyzed in regard to differential gene expression, the transcript-level nature of the RNA-seq reads is often overlooked. The <strong>R package DTUrtle</strong> offers an easy-to-use way to perform a differential transcript usage (DTU) analysis for bulk or single-cell RNA-seq data, comparing the expression proportions of a gene’s distinct transcript isoforms between conditions. The results, a list of significantly differential genes and transcript isoforms, can be aggregated in an overview table and visualized in multiple ways. As a DTU analysis is best accompanied by a differential gene expression (DGE) analysis, DTUrtle also offers a basic DGE calling workflow for bulk and single-cell RNA-seq data.</p>
 </div>
 <div id="target-audience" class="section level2">
 <h2 class="hasAnchor">
 <a href="#target-audience" class="anchor"></a>Target audience</h2>
 <p>No in-depth knowledge about DTU or the statistical background of the analysis is needed. If you have data of an RNA-seq experiment at hand (or are able to download data from a public repository), you are good to go. Three exemplary vignettes for different species and sequencing techniques will guide you through your analysis.</p>
 </div>
-<div id="input-data" class="section level2">
+<div id="required-input-data" class="section level2">
 <h2 class="hasAnchor">
-<a href="#input-data" class="anchor"></a>Input data</h2>
-<p>DTUrtle relies on transcript-level expression counts, which can be generated with transcript-level quantifiers like Salmon, Alevin, kallisto, etc. or even standard splice-aware genomic aligners like STAR (generating a transcript-level BAM with ‘–quantMode TranscriptomeSAM’ and then quantifying it with Salmon).</p>
+<a href="#required-input-data" class="anchor"></a>Required input data</h2>
+<p>DTUrtle relies on transcript-level expression counts, which can be generated with transcript-level quantifiers like Salmon, Alevin, kallisto, etc. from ordinary RNA-seq fastq files. As an alternative, even standard splice-aware genomic aligners like STAR (generating a transcript-level BAM with ‘–quantMode TranscriptomeSAM’ and then quantifying it with Salmon) can be used for data generation.</p>
 <p>Besides the expression counts, a transcript-level annotation file for your species is needed (which is also required for the transcript-level quantification).</p>
 <hr>
 </div>
@@ -156,12 +166,12 @@
 <span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">{</span>
     <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span>
 <span class="op">}</span>
-<span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocManager/man/install.html">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"BiocParallel"</span>, <span class="st">"GenomicRanges"</span>, <span class="st">"Gviz"</span>, <span class="st">"rtracklayer"</span>, <span class="st">"stageR"</span>, <span class="st">"tximport"</span><span class="op">)</span><span class="op">)</span></pre></div>
+<span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocManager/man/install.html">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"BiocParallel"</span>, <span class="st">"GenomicRanges"</span>, <span class="st">"Gviz"</span>, <span class="st">"rtracklayer"</span>, <span class="st">"stageR"</span>, <span class="st">"tximport"</span>, <span class="st">"DESeq2"</span><span class="op">)</span><span class="op">)</span></pre></div>
 <hr>
 <p>If you are not on R &gt;= 4.0 and installation of the newest Gviz version fails, you can manually install an older Gviz version, for example with:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit">
 <span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"https://github.com/ivanek/Gviz/tree/RELEASE_3_10"</span><span class="op">)</span></pre></div>
-<p>DTUrtle does <strong>not</strong> require R &gt;= 4.0 and should work fine with the older Gviz version.</p>
+<p>DTUrtle does <strong>not</strong> require R &gt;= 4.0 and should work fine with older Gviz versions.</p>
 <hr>
 </div>
 <div id="basic-workflow" class="section level2">
@@ -211,7 +221,7 @@
     <span class="va">tx2gene</span><span class="op">$</span><span class="va">transcript_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/one_to_one_mapping.html">one_to_one_mapping</a></span><span class="op">(</span>name <span class="op">=</span> <span class="va">tx2gene</span><span class="op">$</span><span class="va">transcript_name</span>, 
                                                   id <span class="op">=</span> <span class="va">tx2gene</span><span class="op">$</span><span class="va">transcript_id</span><span class="op">)</span>
 
-<span class="co">#import transcript-level quantification data, for example from Salmon</span>
+<span class="co">#import transcript-level quantification data, for example from Salmon, and perform appropriate scaling</span>
 <span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.glob.html">Sys.glob</a></span><span class="op">(</span><span class="st">"path_to_your_data/*/quant.sf"</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">files</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html">gsub</a></span><span class="op">(</span><span class="st">".*/"</span>,<span class="st">""</span>,<span class="fu"><a href="https://rdrr.io/r/base/grep.html">gsub</a></span><span class="op">(</span><span class="st">"/quant.sf"</span>,<span class="st">""</span>,<span class="va">files</span><span class="op">)</span><span class="op">)</span>
 <span class="va">cts</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/import_counts.html">import_counts</a></span><span class="op">(</span>files <span class="op">=</span> <span class="va">files</span>, type <span class="op">=</span> <span class="st">"salmon"</span><span class="op">)</span>
@@ -229,7 +239,7 @@
 <a href="#dtu-analysis" class="anchor"></a>DTU analysis</h3>
 <p>The <code>dturtle</code> object is an easy-to-access list, containing all necessary analysis information and results</p>
 <div class="sourceCode" id="cb6"><pre class="downlit">
-<span class="co">#use DRIMSeq for fitting a Dirichlet-multinomial model</span>
+<span class="co">#use DRIMSeq for fitting a Dirichlet-multinomial model --- appropriate parameters are chosen based on the selected filtering_strategy ('bulk' or 'sc')</span>
 <span class="va">dturtle</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_drimseq.html">run_drimseq</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="va">cts</span>, tx2gene <span class="op">=</span> <span class="va">tx2gene</span>, pd<span class="op">=</span><span class="va">pd</span>, id_col <span class="op">=</span> <span class="st">"id"</span>,
                     cond_col <span class="op">=</span> <span class="st">"group"</span>, filtering_strategy <span class="op">=</span> <span class="st">"bulk"</span>, 
                     BPPARAM <span class="op">=</span> <span class="va">biocpar</span><span class="op">)</span>
@@ -237,10 +247,35 @@
 <span class="co">#run posthoc filtering and two-staged statistical correction with stageR</span>
 <span class="va">dturtle</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/posthoc_and_stager.html">posthoc_and_stager</a></span><span class="op">(</span>dturtle <span class="op">=</span> <span class="va">dturtle</span>, ofdr <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></pre></div>
 </div>
+<div id="optional-dge-analysis" class="section level3">
+<h3 class="hasAnchor">
+<a href="#optional-dge-analysis" class="anchor"></a>(optional) DGE analysis</h3>
+<p>Alongside the DTU analysis, a DGE analysis might be of interest. The transcript-level count matrices have been scaled for the DTU analysis, but for a DGE analysis preferably un-normalized counts are used. Therefore the counts are re-imported and summarized to gene-level.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit">
+<span class="co">#import counts and summarize to gene-level --- simply reuse the already selected files.</span>
+<span class="va">cts_dge</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/import_dge_counts.html">import_dge_counts</a></span><span class="op">(</span><span class="va">files</span>, type<span class="op">=</span><span class="st">"salmon"</span>, tx2gene<span class="op">=</span><span class="va">tx2gene</span><span class="op">)</span>
+
+<span class="co">##for single-cell data only:</span>
+    <span class="co">#import_counts returned a list of matrices -&gt; combine them to one matrix</span>
+    <span class="va">cts_dge</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/combine_to_matrix.html">combine_to_matrix</a></span><span class="op">(</span>tx_list <span class="op">=</span> <span class="va">cts_dge</span><span class="op">)</span>
+
+<span class="co">#perform the DGE calling with DESeq2 --- appropriate parameters are chosen based on the selected dge_calling_strategy ('bulk' or 'sc')</span>
+<span class="va">dturtle</span><span class="op">$</span><span class="va">dge_analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_deseq2.html">run_deseq2</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="va">cts_dge</span>, pd <span class="op">=</span> <span class="va">pd</span>, id_col <span class="op">=</span> <span class="st">"id"</span>, cond_col <span class="op">=</span> <span class="st">"group"</span>, lfc_threshold <span class="op">=</span> <span class="fl">0.5</span>,
+                                   sig_threshold <span class="op">=</span> <span class="fl">0.01</span>, dge_calling_strategy <span class="op">=</span> <span class="st">"bulk"</span>, BPPARAM <span class="op">=</span> <span class="va">biocpar</span><span class="op">)</span></pre></div>
+</div>
+<div id="optional-estimate-influence-of-a-potential-priming-bias" class="section level3">
+<h3 class="hasAnchor">
+<a href="#optional-estimate-influence-of-a-potential-priming-bias" class="anchor"></a>(optional) Estimate influence of a potential priming bias</h3>
+<p>If a prime-biased (single-cell) RNA-seq protocol was used, the ability to detect DTU in certain transcripts might be impaired. DTUrtle offers the calculation of a novel detection probability score to infer, which transcripts might be hard to detect with the given data - and thus might not pop-up in the DTU analysis. Suppose we have 3’-biased data (as generated by many prominent single-cell protocols), we can infer the effect of this bias on the transcripts by:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit">
+<span class="co">#Attention: calculation for all available genes might be time consuming.</span>
+<span class="va">priming_bias_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/priming_bias_detection_probability.html">priming_bias_detection_probability</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="va">cts</span>, gtf <span class="op">=</span> <span class="st">"path_to_your_gtf_file.gtf"</span>, tx2gene <span class="op">=</span> <span class="va">tx2gene</span>, one_to_one <span class="op">=</span> <span class="cn">T</span>,
+                                                      priming_enrichment <span class="op">=</span> <span class="st">"3"</span>, BPPARAM <span class="op">=</span> <span class="va">biocpar</span><span class="op">)</span></pre></div>
+</div>
 <div id="result-aggregation-and-visualization" class="section level3">
 <h3 class="hasAnchor">
 <a href="#result-aggregation-and-visualization" class="anchor"></a>Result aggregation and visualization</h3>
-<div class="sourceCode" id="cb7"><pre class="downlit">
+<div class="sourceCode" id="cb9"><pre class="downlit">
 <span class="co">#highly flexible function to create a results data frame</span>
 <span class="va">dturtle</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/create_dtu_table.html">create_dtu_table</a></span><span class="op">(</span>dturtle <span class="op">=</span> <span class="va">dturtle</span><span class="op">)</span>
 

@@ -1,6 +1,26 @@
 DTUrtle News
 ================
 
+# DTUrtle 0.8.1
+
+## Changes
+
+  - remodeled a lot of code - preserving functionality if not stated
+    otherwise.
+  - added basic DGE-calling methods:
+      - `import_dge_counts()`: import quantification data and summarize
+        to gene-level.
+      - `run_deseq2()`: perform DGE analysis with DESeq2.
+  - added `priming_bias_detection_probability()` functionality, to
+    estimate the potential influence of a prime-biased sequencing
+    protocol on the DTU detection ability.
+  - added Vignettes for a Smart-seq2 single-cell data set from Wuidart
+    et al.
+  - Vignettes: added sections showcasing DGE calling and priming bias
+    detection probability calculation.
+  - new Dependency: `DESeq2`
+  - new Suggests: `glmGamPoi`, `apeglm`
+
 # DTUrtle 0.7.4
 
 ## Changes

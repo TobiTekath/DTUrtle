@@ -86,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
       </span>
     </div>
 
@@ -126,6 +126,16 @@
     </li>
     <li>
       <a href="../articles/Tabular_Muris_mouse_single-cell_analysis.html">Mouse Tabular Muris single-cell RNA-seq analysis</a>
+    </li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">Smart-seq2</li>
+    <li>
+      <a href="../articles/Wuidart_mouse_single-cell_preprocess.html">Mouse single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Wuidart_mouse_single-cell_analysis.html">Mouse single-cell RNA-seq analysis</a>
     </li>
     <li class="divider"></li>
     <li class="dropdown-header">Bulk</li>
@@ -282,7 +292,7 @@ Defaults to <code>mixed</code>, meaning if a gene has no tested transcripts (i.e
 
     <p>Reduced intron length is computed by taking the square root, but is not less than the specified <code>reduce_introns_min_size</code> length.
 If less <code>GRanges</code> are found than expected, try setting <code>one_to_one</code> to <code>TRUE</code> or the used extension character.
-When calling this function many times, try importing the GTF-File with <code>gtf &lt;- rtracklayer::import("PATH_TO_GTF")</code> once and pass it to the <code>gtf</code> parameter to improve performance.</p>
+When calling this function many times, try importing the GTF-File with <code>gtf &lt;- import_gtf("GTF_PATH", feature_type=NULL, out_df=FALSE)</code> once and pass it to the <code>gtf</code> parameter to improve performance.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p><code><a href='run_drimseq.html'>run_drimseq()</a></code> and <code><a href='posthoc_and_stager.html'>posthoc_and_stager()</a></code> for DTU object creation. <code><a href='create_dtu_table.html'>create_dtu_table()</a></code> and <code><a href='plot_dtu_table.html'>plot_dtu_table()</a></code> for table visualization.</p>

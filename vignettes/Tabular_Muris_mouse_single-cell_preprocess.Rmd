@@ -2,7 +2,7 @@
 title: "Pre-processing of Tabular Muris mouse single-cell RNA-seq data"
 author: "Tobias Tekath"
 date: "`r Sys.Date()`"
-description: "Exemplified pre-processing of mouse single-cell RNA-seq data."
+description: "Exemplified pre-processing of mouse single-cell RNA-seq data (10X Chromium)."
 output: 
   rmarkdown::html_vignette:
     toc: true

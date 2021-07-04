@@ -1,0 +1,685 @@
+---
+title: "Analysis of the Wuidart et al. mouse single-cell RNA-seq data"
+author: "Tobias Tekath"
+date: "`r Sys.Date()`"
+description: "Exemplified analysis of mouse single-cell RNA-seq data (Smart-seq2)."
+output: 
+  rmarkdown::html_vignette:
+    df_print: paged
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Analysis of the Wuidart et al. mouse single-cell RNA-seq data}
+  %\VignetteBuilder{knitr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+root_dir <- "/data/Smart-seq2/dtu_results"
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  cache = FALSE, 
+  eval = dir.exists(root_dir)
+)
+if(dir.exists(root_dir)){
+  knitr::opts_knit$set(root.dir = root_dir)
+  #remove previous results
+  unlink(paste0(root_dir,"/*"),recursive=T)
+}
+start_time <- Sys.time()
+```
+
+
+This vignette exemplifies the analysis of **single-cell RNA-seq data with DTUrtle**. The data used in this vignette is publicly available as *Bioproject PRJNA433520* and the used *FASTQ*-files can be downloaded from [here](https://www.ebi.ac.uk/ena/browser/view/PRJNA433520). The corresponding publication from Wuidart et al. can be found [here](https://doi.org/10.1038/s41556-018-0095-2).
+
+---
+
+The following code shows an example of an DTUrtle workflow. Assume we have performed the pre-processing as described [here](https://tobitekath.github.io/DTUrtle/articles/Wuidart_mouse_single-cell_preprocess.html) and the R working directory is a newly created folder called `dtu_results`.
+
+---
+
+## Setup
+
+Load the DTUrtle package and set the BiocParallel parameter. It is recommended to perform computations in parallel, if possible. 
+
+```{r message=TRUE, warning=TRUE}
+library(DTUrtle)
+#use up to 10 cores for computation
+biocpar <- BiocParallel::MulticoreParam(10)
+```
+
+---
+
+## Import and format data
+
+We want to start by reading-in our quantification counts, as well as a file specifying which transcript ID or name belongs to which gene ID or name.
+
+### Importing and processing GTF annotation (tx2gene)
+
+To get this transcript to gene (`tx2gene`) mapping, we will utilize the already present Gencode annotation file `gencode.vM24.annotation_spike.gtf`. The `import_gtf()` function utilizes the a `rtracklayer` package and returns a transcript-level filtered version of the available data.
+
+
+```{r}
+tx2gene <- import_gtf(gtf_file = "../gencode.vM24.annotation_spike.gtf")
+```
+
+```{r}
+head(tx2gene, n=3)
+```
+
+This tx2gene file does **not** contain the manually added ERCC spike-in sequences, as these are marked as *exon* in the corresponding ERCC GTF-file.
+Thus we will add these ERCC sequences again to the annotation:
+
+```{r}
+#set featrue_type=NULL to not filter the GTF
+ercc_gtf <- import_gtf(gtf_file = "../ERCC92.gtf", feature_type = NULL)
+#change not necessary transcript-IDs
+ercc_gtf$transcript_id <- ercc_gtf$gene_id
+
+tx2gene <- merge(tx2gene, ercc_gtf, all = T)
+
+#fix missing gene_name and transcript_name for ERCCs
+tx2gene$gene_name[is.na(tx2gene$gene_name)] <- tx2gene$gene_id[is.na(tx2gene$gene_name)]
+tx2gene$transcript_name[is.na(tx2gene$transcript_name)] <- tx2gene$transcript_id[is.na(tx2gene$transcript_name)]
+```
+
+
+There are a lot of columns present in the data frame, but at the moment we are mainly interested in the columns `gene_id`, `gene_name`, `transcript_id` and `transcript_name`. 
+
+---
+
+As we want to use gene and transcript names as the main identifiers in our analysis (so we can directly say: Gene x is differential), we should ensure that each gene / transcript name maps only to a single gene / transcript id.
+
+For this we can use the DTUrtle function `one_to_one_mapping()`, which checks if there are identifiers, which relate to the same name. If this is the case, the names (**not** the identifiers) are slightly altered by appending a number. If *id_x* and *id_y* both have the name *ABC*, the *id_y* name is altered to *ABC_2* by default.  
+
+```{r}
+tx2gene$gene_name <- one_to_one_mapping(name = tx2gene$gene_name, id = tx2gene$gene_id)
+tx2gene$transcript_name <- one_to_one_mapping(name = tx2gene$transcript_name, id = tx2gene$transcript_id)
+```
+
+We see that it was a good idea to ensure the one to one mapping for gene names, as 109 doublets have been corrected.
+
+---
+
+For the `run_drimseq()` `tx2gene` parameter, we need a data frame, where the first column specifies the transcript identifiers and the second column specifying the corresponding gene names. Rather than subsetting the data frame, a column reordering is proposed, so that additional data can still be used in further steps. DTUrtle makes sure to carry over additional data columns in the analysis steps. To reorder the columns of our tx2gene data frame, we can utilize the `move_columns_to_front()` functionality.
+
+```{r}
+tx2gene <- move_columns_to_front(df = tx2gene, columns = c("transcript_name", "gene_name"))
+```
+
+```{r}
+head(tx2gene, n=5)
+```
+
+
+This concludes the tx2gene formatting.
+
+---
+
+### Reading in quantification data
+
+The read-in of the quantification counts can be achieved with `import_counts()`, which uses the `tximport` package in the background. This function is able to parse the output of many different quantification tools. Advanced users might be able to tune parameters to parse arbitrary output files from currently not supported tools.
+
+In the pre-processing vignette we quantified the counts with `Salmon`. The folder structure of the quantification results folder looks like this:
+
+```{r}
+head(list.files("../salmon/"))
+```
+
+We will create a named files vector, pointing to the `quant.sf` file for each sample. The names help to differentiate the samples later on.
+
+```{r}
+files <- Sys.glob("../salmon/*/quant.sf")
+names(files) <- basename(gsub("/quant.sf","",files))
+```
+
+The files object looks like this:
+```{r, echo=F}
+head(files)
+```
+
+The actual import will be performed with `import_counts()`. As we are analyzing bulk RNA-seq data, the raw counts should be scaled regarding transcript length and/or library size prior to analysis. DTUrtle will default to appropriate scaling schemes for your data. It is advised to provide a transcript to gene mapping for the `tx2gene` parameter, as then the `tximport` `dtuScaledTPM` scaling scheme can be applied. This schemes is especially designed for DTU analysis and scales by using the median transcript length among isoforms of a gene, and then the library size.
+
+In contrast to many other single-cell protocols, Smart-seq2 creates full-length reads, i.e. the read fragments are not only originating from the 5'- or 3'-End of the mRNA. This is preferential for DTU analysis, but also implicates that the reads could be prone to some full-length specific biases (see DTUrtle publication for more details). Thus, as for standard bulk RNA-seq analysis, the `dtuScaledTPM` scaling scheme should be applied (in contrast for example for 3'- 10X Chromium reads).
+
+The raw counts from `Salmon` are named in regard to the `transcript_id`, thus we will provide an appropriate tx2gene parameter here. Downstream we want to use the `transcript_name` rather than the `transcript_id`, so we change the row names of the counts:
+
+```{r}
+cts <- import_counts(files, type = "salmon", tx2gene=tx2gene[,c("transcript_id", "gene_name")])
+rownames(cts) <- tx2gene$transcript_name[match(rownames(cts), tx2gene$transcript_id)]
+```
+
+
+```{r}
+dim(cts)
+```
+
+There are ~141k features left for the 384 samples/cells. Please note, that in contrast to the single-cell workflow utilizing `combine_to_matrix()`, these counts also include features with no expression. These will be filtered out by the DTUrtle filtering step in `run_drimseq()`.
+
+---
+
+### Sample metadata
+
+Finally, we need a sample metadata data frame, specifying which sample belongs to which comparison group. This table is also convenient to store and carry over additional metadata.
+
+We can reuse the ENA Bioproject report table from [here](https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA433520&result=read_run&fields=study_accession,sample_accession,scientific_name,fastq_md5,fastq_ftp,sample_title&format=tsv&download=true):
+
+```{r}
+pd <- read.table("../filereport_read_run_PRJNA433520_tsv.txt", sep = "\t", header = T, stringsAsFactors = F)
+
+#especially the columns run_accession and sample_title are of interest
+pd <- pd[,c("run_accession", "sample_title")]
+
+```
+
+```{r}
+head(pd, n=10)
+```
+
+We see, the first two samples are control samples consisting out of reads of 50 cells each, while the other samples are reads from a single cell.
+We can create a group assignment based on this information:
+
+```{r}
+pd$group <- gsub("50 Cell |Single | [ATCG]{8}-[ATCG]{8}", "", pd$sample_title)
+table(pd$group)
+```
+
+---
+
+### Cell filtering
+
+We perform the same cell filtering as described in Wuidart et al., i.e. we exclude cells that have fewer than 10^5 counts, show expression of fewer than 2500 unique genes, have more than 20% counts belonging to ERCC sequences, or have more than 8% counts belonging to mitochondrial sequences.
+
+```{r}
+#number of counts
+pd$n_reads <- colSums(cts)[match(pd$run_accession, colnames(cts))]
+
+#number of expressed genes --- summarize transcript level counts to gene level.
+cts_gene <- summarize_to_gene(mtx = cts, tx2gene = tx2gene)
+pd$unq_gene <- colSums(cts_gene!=0)[match(pd$run_accession, colnames(cts_gene))]
+
+#proportion of ERCC counts
+ercc_genes <-  rownames(cts)[startsWith(rownames(cts), "ERCC")]
+pd$prop_ercc <- (colSums(cts[ercc_genes,])[match(pd$run_accession, colnames(cts))])/pd$n_reads
+
+#proportion of MT counts
+mt_genes <- unique(tx2gene$transcript_name[tx2gene$seqnames %in% c("chrM")])
+pd$prop_MT <- (colSums(cts[mt_genes,])[match(pd$run_accession, colnames(cts))])/pd$n_reads
+
+#create vector of cells not passing the filters.
+excl_cells <- pd$run_accession[pd$n_reads<10^5|pd$unq_gene<2500|pd$prop_ercc>0.2|pd$prop_MT>0.08]
+length(excl_cells)
+```
+
+Of the initial 384 cells, 108 are already on the exclude list because of these thresholds. In Wuidart et al. further constraints are placed: "BCs and EMPs that showed no expression of either K5 or K14, and LCs that did not express K8 were further excluded. Cells coming from a row F of the 384-well plate that showed systematic mixing of LC and BC markers were excluded from further analysis due to a likely pipetting error."
+
+'K5', 'K14' and 'K8' probably refer to the Keratin genes 'Krt5', 'Krt14' and 'Krt8', respectively. As the plate design of the experiment was not published, and therefore we do not know which cells where in row F, we try to impute the cells with mixed signals.
+
+```{r}
+#get expression of Keratin genes 'Krt5', 'Krt14' and 'Krt8'
+pd$krt5_expr <- colSums(cts_gene["Krt5",,drop=F])[match(pd$run_accession, colnames(cts_gene))]
+pd$krt14_expr <- colSums(cts_gene["Krt14",,drop=F])[match(pd$run_accession, colnames(cts_gene))]
+pd$krt8_expr <- colSums(cts_gene["Krt8",,drop=F])[match(pd$run_accession, colnames(cts_gene))]
+
+#we set a threshold of 1 count for 'expression'
+excl_bc_emp <- pd$run_accession[pd$group %in% c("Basal Cell", "Embryonal Progenitor Cell") & (pd$krt5_expr<1 | pd$krt14_expr<1)]
+excl_lc <- pd$run_accession[pd$group %in% c("Luminal Cell") & pd$krt8_expr<1]
+
+#look how combined control samples express Keratin genes:
+pd[startsWith(pd$group, "Control"),c("sample_title", "krt5_expr", "krt14_expr", "krt8_expr")]
+
+#exclude cells with krt5 & krt14 > 10 and krt8 > 1000
+excl_mixed <- pd$run_accession[pd$group %in% c("Basal Cell", "Embryonal Progenitor Cell", "Luminal Cell") & (pd$krt5_expr>10 | pd$krt14_expr>10) & pd$krt8_expr>1000]
+message(paste0("Exclude ",length(excl_mixed), " cells because of mixed signal."))
+
+excl_cells <- unique(c(excl_cells, excl_bc_emp, excl_lc, excl_mixed))
+length(excl_cells)
+```
+
+Combining all the given constraints, we have 165 cells on our exclude list. Thus, we continue with 219 cells, which is very close to the reported 221 cells passing the filter scheme in Wuidart et al. Lastly we can also exclude the 92 ERCC genes from the `cts` matrix, as they are not longer of interest.
+
+```{r}
+#actually subset the data
+pd <- pd[!pd$run_accession %in% excl_cells,]
+cts <- cts[!rownames(cts) %in% ercc_genes,!colnames(cts) %in% excl_cells]
+
+dim(pd)
+dim(cts)
+table(pd$group)
+```
+
+Interestingly, our combined control samples do not pass the first filtering scheme - all because of too high Mitochondrial proportions. 
+
+---
+
+### (optional) Estimate influence of priming-bias
+
+Although the Smart-seq2 protocol should produce reads spread over the full-length of a mRNA, at least in this specific data set we can exhibit a non-trivial 3'bias. This means, that in this data set preferentially reads of the 3'-end of an mRNA were generated, and therefore DTU effects of some specific transcripts might not be detectable.
+DTUrtle offers a novel scoring scheme, called "detection probability", to assess which transcripts might be prone to be impaired by such a bias. This score can be computed with the DTUrtle function `priming_bias_detection_probability()`.
+
+The score calculation can be summarized like this: For each gene, a reference transcript is chosen (based on the expression data, selecting the major proportionally expressed transcript as reference). Each other transcript of a gene is now compared to this reference transcript, calculating where the first detectable exon-level difference occurs between the transcript entities - and at what relative coordinate this difference is located (looking from the priming enriched end). Based on this information, a `detection probability` is calculated, with 1 indicating no influence of the prime-biased reads on the detection ability and 0 indicating a very heavy influence. Thus, DTU effects for transcripts with a low score would be expected less likely to be detectable with the given data. 
+ 
+We can add this score information to an already existing table, like the tx2gene table (`add_to_table = tx2gene`). As we need exon-level information for the calculation, we should provide an unfiltered GTF GRanges or data frame object - or alternatively a file path.
+
+```{r}
+unfilt_gtf <- import_gtf("../gencode.vM24.annotation_spike.gtf", feature_type = NULL, out_df = F)
+#set priming_enrichment to '3', as we expect reads enriched towards the 3' end of the mRNA.
+tx2gene <- priming_bias_detection_probability(counts = cts, tx2gene = tx2gene, gtf = unfilt_gtf, one_to_one = T,
+                                              priming_enrichment = "3", add_to_table = tx2gene, BPPARAM = biocpar)
+```
+
+The function tells us, that for 92 genes no information in the GTF is available - these are the 92 ERCC 'genes', which are of no interest for this calculation.
+
+The newly added columns are `detection_probability` and `used_as_ref`:
+
+```{r}
+head(tx2gene[,c("transcript_name", "gene_name", "detection_probability", "used_as_ref")])
+```
+
+We can calculate, that a potential 3'-bias would not influence the majority of annotated transcripts, relevant for the DTU analysis:
+```{r}
+#only genes with at least two transcript isoforms are relevant for DTU analysis
+dtu_relevant_genes <- unique(tx2gene$gene_name[duplicated(tx2gene$gene_name)])
+summary(tx2gene$detection_probability[tx2gene$gene_name %in% dtu_relevant_genes])
+```
+
+---
+
+## DTU analysis
+
+We have prepared all necessary data to perform the differentially transcript usage (DTU) analysis. DTUrtle only needs two simple commands to perform it. Please be aware that these steps are the most compute intensive and, depending on your data, might take some time to complete. It is recommended to parallelize the computations with the `BBPARAM` parameter, if applicable.
+
+First, we want to set-up and perform the statistical analysis with DRIMSeq, a DTU specialized statistical framework utilizing a Dirichlet-multinomial model. This can be done with the `run_drimseq()` command. We use the previously imported data as parameters, specifying which column in the cell metadata data frame contains ids and which the group information we want. We should also specify which of the groups should be compared (if there are more than two) and in which order. The order given in the `cond_levels` parameter also specifies the comparison formula.
+
+In this example we choose two specific cell types (from the column `groups`) and specify the `run_accession` as id column. The messages of `run_drimseq` tell us, that 69 cells are excluded in this comparison - which are the Embryonal Progenitor Cells.
+
+> <div class="alert alert-info">
+>
+> <strong>Note:</strong>  By default `run_drimseq()` converts sparse count matrix to a dense format for statistical computations (`force_dense=TRUE`). While this increases memory usage, it currently also reduces the run time.
+The computations can be performed keeping the sparse counts by setting `force_dense=FALSE`.
+>
+> </div>
+
+
+```{r}
+dturtle <- run_drimseq(counts = cts, tx2gene = tx2gene, pd=pd, id_col = "run_accession",
+                    cond_col = "group", cond_levels = c("Luminal Cell", "Basal Cell"), filtering_strategy = "sc", 
+                    BPPARAM = biocpar)
+```
+
+As in all statistical procedures, it is of favor to perform as few tests as possible but as much tests as necessary, to maintain a high statistical power. This is achieved by filtering the data to remove inherently uninteresting items, for example very lowly expressed genes or features. DTUrtle includes a powerful and customizable filtering functionality for this task, which is an optimized version of the `dmFilter()` function of the DRIMSeq package. 
+
+Above we used a predefined filtering strategy for bulk data, requiring that features contribute at least 5% of the total expression in at least 50% of the cells of the smallest group. Also the total gene expression must be 5 or more for at least 50% of the samples of the smallest group.
+Additionally, all genes are filtered, which only have a single transcript left, as they can not be analyzed in DTU analysis. The filtering options can be extended or altered by the user.
+
+```{r}
+dturtle$used_filtering_options
+```
+
+The resulting `dturtle` object will be used as our main results object, storing all necessary and interesting data of the analysis. It is a simple and easy-accessible list, which can be easily extended / altered by the user. By default three different meta data tables are generated:
+ - `meta_table_gene`: Contains gene level meta data.
+ - `meta_table_tx`: Contains transcript level meta data.
+ - `meta_table_sample`: Contains sample level meta data (as the created `pd` data frame)
+ 
+These meta data tables are used in for visualization purposes and can be extended by the user.
+
+```{r}
+dturtle$meta_table_gene[1:5,1:5]
+```
+
+
+---
+
+As proposed in [Love et al. (2018)](https://doi.org/10.12688/f1000research.15398.3), we will use a two-stage statistical testing procedure together with a post-hoc filtering on the standard deviations in proportions (`posthoc_and_stager()`). We will use *stageR* to determine genes, that show a overall significant change in transcript proportions. For these significant genes, we will try to pinpoint specific transcripts, which significantly drive this overall change. As a result, we will have a list of `significant genes` (genes showing the overall change) and a list of `significant transcripts` (one or more transcripts of the `significant genes`). Please note, that not every `significant gene` does have one or more `significant transcripts`. It is not always possible to attribute the overall change in proportions to single transcripts. These two list of significant items are computed and corrected against a **overall false discovery rate (OFDR)**.
+
+Additionally, we will apply a post-hoc filtering scheme to improve the targeted OFDR control level. The filtering strategy will discard transcripts, which standard deviation of the proportion per cell/sample is below the specified threshold. For example by setting `posthoc=0.1`, we will exclude all transcripts, which proportional expression (in regard to the total gene expression) deviates by less than 0.1 between cells.
+This filtering step should mostly exclude 'uninteresting' transcripts, which would not have been called as significant either way. 
+
+```{r}
+dturtle <- posthoc_and_stager(dturtle = dturtle, ofdr = 0.05, posthoc = 0.1)
+```
+
+The `dturtle` object now contains additional elements, including the lists of `significant genes` and `significant transcripts`.
+
+```{r}
+head(dturtle$sig_gene)
+head(dturtle$sig_tx)
+```
+
+---
+
+## (optional) DGE analysis
+
+Alongside a DTU analysis, a DGE analysis might be of interest for your research question. DTUrtle offers a basic DGE calling workflow for bulk and single-cell RNA-seq data via DESeq2.
+
+To utilize this workflow, we should re-scale our imported counts. The transcript-level count matrix has been scaled for the DTU analysis, but for a DGE analysis un-normalized counts should be used (as DESeq2 normalizes internally). We can simply re-import the count data, by providing the already defined `files` object to the DGE analysis specific function `import_dge_counts()`. This function will make sure that the counts are imported but not scaled and also summarizes to gene-level.
+
+Our files object looks like this:
+
+```{r}
+head(files)
+```
+
+We re-import the files with the same parameters as before:
+
+```{r}
+cts_dge <- import_dge_counts(files, type="salmon", tx2gene=tx2gene[,c("transcript_id", "gene_name")])
+```
+
+With this data, we can perform the DGE analysis with DESeq2 with the DTUrtle function `run_deseq2()`. DESeq2 is one of the gold-standard tools for DGE calling in bulk RNA-seq data and showed very good performance for single-cell data in multiple benchmarks. The DESeq2 vignette recommends adjusting some parameters for DGE analysis of single-cell data - DTUrtle incorporates these recommendations and adjusts the specific parameters based on the provided `dge_calling_strategy`.
+
+After the DESeq2 DGE analysis, the estimated log2 fold changes are shrunken (preferably with `apeglm`) - to provide a secondary ranking variable beside the statistical significance. If a shrinkage with `apeglm` is performed, `run_deseq2()` defaults to also compute s-values rather than adjusted p-values. The underlying hypothesis for s-values and (standard) p-values differs slightly, with s-values hypothesis being presumably preferential in a real biological context. Far more information about all these topics can be found in the excellent [DESeq2 vignette](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) and the associated publications.
+
+`run_deseq2()` will tell the user, if one or more advised packages are missing. It is strongly advised to follow these recommendations.
+
+```{r}
+dturtle$dge_analysis <- run_deseq2(counts = cts_dge, pd = pd, id_col = "run_accession",
+                                   cond_col = "group", cond_levels = c("Luminal Cell", "Basal Cell"), 
+                                   lfc_threshold = 1, sig_threshold = 0.01, dge_calling_strategy = "sc",
+                                   BPPARAM = biocpar)
+```
+
+We provided a log2 fold change threshold of 1 (on log2 scale), thus preferring an effect size of 2x or more.
+The output of `run_deseq2()` is a list, containing various elements (see `run_deseq2()`'s description). This result list can easily added to an existing DTUrtle object, as shown above.
+
+We can now identify genes which show both a DGE and DTU signal:
+
+```{r}
+dtu_dge_genes <- intersect(dturtle$sig_gene, dturtle$dge_analysis$results_sig$gene)
+length(dtu_dge_genes)
+```
+
+
+---
+
+## Result aggregation and visualization
+
+The `DTUrtle` package contains multiple visualization options, enabling an in-depth inspection.
+
+### DTU table creation
+
+We will start by aggregating the analysis results to a data frame with `create_dtu_table()`. This function is highly flexible and allows aggregation of gene or transcript level metadata in various ways. By default some useful information are included in the *dtu table*, in this example we further specify to include the `seqnames` column of the gene level metadata (which contains chromosome information) as well as the maximal *expressed in* ratio from the transcript level metadata. 
+
+```{r}
+dturtle <- create_dtu_table(dturtle = dturtle, add_gene_metadata = list("chromosome"="seqnames"), 
+                               add_tx_metadata = list("tx_expr_in_max" = c("exp_in", max)))
+```
+
+
+```{r}
+head(dturtle$dtu_table, n=5)
+```
+
+The column definitions are as follows:
+
+* "gene_ID": Gene name or identifier used for the analysis.
+* "gene_qvalue": Multiple testing corrected p-value (a.k.a. q-value) comparing all transcripts together between the two groups ("gene level").
+* "minimal_tx_qvalue": The minimal multiple testing corrected p-value from comparing all transcripts  individually between the two groups ("transcript level"). I.e. the q-value of the most significant transcript.
+* "number_tx": The number of analyzed transcripts for the specific gene.
+* "number_significant_tx": The number of significant transcripts from the 'transcript level' analysis.
+* "max(Luminal Cell-Basal Cell)": Maximal proportional difference between the two groups (Luminal Cell vs Basal Cell). E.g. one transcript of 'Fstl1' is ~85% more expressed in 'Luminal Cell' cells compared to 'Basal Cell' cells.
+* "chromosome": the chromosome the gene resides on.
+* "tx_expr_in_max": The fraction of cells, the most expressed transcript is expressed in. "Expressed in" is defined as expression>0. 
+
+This table is our basis for creating an **interactive HTML-table** of the results.
+
+---
+
+### Proportion barplot
+
+As a first visualization option we will create a barplot of the proportions of each transcript per sample. We can use the function `plot_proportion_barplot()` for this task, which also adds the mean proportion fit per subgroup to the plot (by default as a red line).
+
+As an example, we will create the plot for the gene *Eif1* ("eukaryotic translation initiation factor 1"), which is one of the significant genes found in the analysis.
+
+We will optionally provide the gene_id for *Eif1*, which is stored in the column `gene_id.1` of `dturtle$meta_table_gene`.
+
+
+```{r fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
+temp <- plot_proportion_barplot(dturtle = dturtle, genes = "Eif1", meta_gene_id = "gene_id.1")
+temp$Eif1
+```
+
+We see, that there are striking proportional differences for two of the transcripts of *Eif1*. There seems to be a significant shift in the expression proportions of *Eif1-201* and *Eif1-202* (as the names are marked in red). From the top annotation we can also see, that the mean total expression of *Eif1* is higher in the `Luminal Cell` group - while the expression in the `Basel Cell` group is lower and also varies slightly more (coefficient of variation (CV) is higher).
+
+For the interactive HTML-table we would need to save the images to disk (in the to-be-created sub folder "images" of the current working directory). There is also a convenience option, to directly add the file paths to the `dtu_table`. As multiple plots are created, we can provide a `BiocParallel` object to speed up the creation. If no specific genes are provided, all significant genes will be plotted.
+
+```{r}
+dturtle <- plot_proportion_barplot(dturtle = dturtle, 
+                                   meta_gene_id = "gene_id.1", 
+                                   savepath = "images", 
+                                   add_to_table = "barplot",
+                                   BPPARAM = biocpar)
+```
+
+```{r}
+head(dturtle$dtu_table$barplot)
+head(list.files("./images/"))
+```
+
+
+---
+
+### Proportion heatmap
+
+A different visualization option is a heatmap, where additional meta data can be displayed alongside the transcript proportions (`plot_proportion_pheatmap()`). This visualization uses the `pheatmap` package, the user can specify any of the available parameters to customize the results.
+
+
+```{r fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
+temp <- plot_proportion_pheatmap(dturtle = dturtle, genes = "Eif1",
+                                 sample_meta_table_columns = c("sample_id","condition"),
+                                 include_expression = T, treeheight_col=20)
+temp$Eif1
+```
+
+By default, row and column annotations are added. This plot helps to examine the transcript composition of groups of cells. We can see a block of samples solely expressing *Eif1-201*, majorly from the `Luminal Cell` group.
+
+Again, we can save the plots to disk and add them to the `dtu_table`:
+
+```{r}
+dturtle <- plot_proportion_pheatmap(dturtle = dturtle,
+                                    include_expression = T,
+                                    treeheight_col=20,
+                                    sample_meta_table_columns = c("sample_id","condition"),
+                                    savepath = "images", 
+                                    add_to_table = "pheatmap",
+                                    BPPARAM = biocpar)
+```
+
+```{r}
+head(dturtle$dtu_table$pheatmap)
+head(list.files("./images/"))
+```
+
+---
+
+### Transcript overview
+
+Until now, we looked at the different transcripts as abstract entities. Alongside proportional differences, the actual difference in the exon-intron structure of transcripts is of great importance for many research questions. This structure can be visualized with the `plot_transcripts_view()` functionality of *DTUrtle*.
+
+This visualization is based on the *Gviz* package and needs a path to a *GTF* file (or a read-in object). In [Import and format data](#import-and-format-data) we already imported a GTF file. This was subset to transcript-level (via the `import_gtf()` function), thus this is **not** sufficient for the visualization. We can reuse the actual *GTF* file though, which should in general match with the one used for the `tx2gene` data frame.
+
+As we have ensured the one_to_one mapping in [Import and format data](#import-and-format-data) and potentially renamed some genes, we should specify the `one_to_one` parameter in this call. 
+
+```{r fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
+plot_transcripts_view(dturtle = dturtle, 
+                              genes = "Eif1", 
+                              gtf = "../gencode.vM24.annotation_spike.gtf", 
+                              genome = 'mm10',
+                              one_to_one = T)
+```
+
+
+
+This visualization shows the structure of the transcripts of *Eif1*. Our significant transcripts (*Eif1-201* and *Eif1-202*) are quite different to each other. *Eif1-201* has a different first exon than *Eif1-202*, which first exon is partially consisting of a conserved intron sequence. The arrows on the right side indicate the mean fitted proportional change in the comparison groups, thus showing a over-expression of *Eif1-201* in `Luminal Cell` compared to `Basal Cell`.
+
+The areas between exons indicate intron sequences, which have been compressed in this representation to highlight the exon structure. Only consensus introns are compressed to a defined minimal size. This can be turned off with `reduce_introns=FALSE` or alternatively reduced introns can be highlighted by setting a colorful `reduce_introns_fill`.
+
+Analogous as before, we can save plots to disk and add them to the `dtu_table`:
+
+
+```{r}
+dturtle <- plot_transcripts_view(dturtle = dturtle, 
+                                 gtf = "../gencode.vM24.annotation_spike.gtf", 
+                                 genome = 'mm10', 
+                                 one_to_one = T,
+                                 savepath = "images", 
+                                 add_to_table = "transcript_view",
+                                 BPPARAM = biocpar)
+```
+
+```{r}
+head(dturtle$dtu_table$transcript_view)
+head(list.files("./images/"))
+```
+
+---
+
+### Visualize DTU table
+
+The `dturtle$dtu_table` is now ready to be visualized as an interactive HTML-table. Please note, that it is optional to add any plots or additional columns to the table. Thus the visualization will work directly after calling `create_dtu_table()`.
+
+The `dtu_table` object looks like this:
+
+```{r}
+head(dturtle$dtu_table)
+```
+
+
+Before creating the actual table, we can optionally define column formatter functions, which color the specified columns. The coloring might help with to quickly dissect the results.
+
+*DTUrtle* come with some pre-defined column formatter functions (for p-values and percentages), other formatter functions from the `formattable` package can also be used. Advanced users might also define their own functions.
+
+We create a named list, linking column names to formatter functions:
+
+```{r}
+column_formatter_list <- list(
+      "gene_qvalue" = table_pval_tile("white", "orange", digits = 3),
+      "minimal_tx_qvalue" = table_pval_tile("white", "orange", digits = 3),
+      "number_tx" = formattable::color_tile('white', "lightblue"),
+      "number_significant_tx" = formattable::color_tile('white', "lightblue"),
+      "max(Luminal Cell-Basal Cell)" = table_percentage_bar('lightgreen', "#FF9999", digits=2),
+      "tx_expr_in_max" = table_percentage_bar('white', "lightblue", color_break = 0, digits=2))
+```
+
+This `column_formatter_list` is subsequently provided to `plot_dtu_table()`:
+
+```{r}
+plot_dtu_table(dturtle = dturtle, savepath = "my_results.html", 
+               column_formatters = column_formatter_list)
+```
+
+
+> <div class="alert alert-info">
+>
+> <strong>Note:</strong> ️As seen above, the paths to the plots are relative. Please make sure that the saving directory in `plot_dtu_table()` is correctly set and the plots are reachable from that directory with the given path.
+>
+> <strong>The links in the following example are just for demonstration purposes and do not work!</strong> 
+>
+> </div>
+
+
+<style>
+.vscroll-plot {
+    overflow: auto;
+    resize: both;
+}
+</style>
+
+<div class="vscroll-plot">
+```{r, echo=FALSE}
+plot_dtu_table(dturtle = dturtle, column_formatters = column_formatter_list, min_page_length=10)
+```
+</div>
+
+---
+
+For later use we can save the final DTUrtle object to disk:
+
+```{r}
+saveRDS(dturtle, "./dturtle_res.RDS")
+```
+
+---
+
+## Comparison to Tabula Muris single-cell data
+
+The data set used in the [Tabula Muris vignette](https://tobitekath.github.io/DTUrtle/articles/Tabular_Muris_mouse_single-cell_analysis.html), and this data set are of the same tissue from the same species (mammary gland tissue of mouse). So it is of interest to inspect how big the overlap between called DTU and DGE genes between data sets are, obviously if the same cell types are compared. Notably, we do not expect a complete overlap, as differing sequencing protocols were used, a 10X chromium protocol with high cell-numbers but a rather shallow sequencing depth in the Tabula Muris data set, and the Smart-seq2 protocol with a high sequencing depth, but rather low cell numbers. Furthermore, differing mouse strains and even more importantly, differing developmental stages were analyzed - thus affecting the comparability. Nonetheless, we would common key marker genes to pop up in the analysis of both data sets.
+
+As the analysis presented in the Tabula Muris vignette focuses on cell types, which are not present in both data sets, we have to quickly re-run the DTU and DGE analysis with common cell types. For this we choose the comparison of `luminal cells` versus `basal cells`. For simplicity, we import the counts and meta data table generated in the Tabula Muris vignette (representing the data state before performing the DTU analysis - thus after the last step of the `Sample metadata` part).
+
+```{r}
+tab_mur_cts <- readRDS("../tabula_muris_cts.RDS")
+tab_mur_pd <- readRDS("../tabula_muris_pd.RDS")
+```
+
+### Comparison of DTU results
+
+We simply redo the DTU analysis, just with different cell types that shall be compared:
+
+```{r}
+dtu_tab_mur <- run_drimseq(counts = tab_mur_cts, tx2gene = tx2gene, pd=tab_mur_pd,
+                    cond_col = "cell_ontology_class", cond_levels = c("luminal epithelial cell of mammary gland", "basal cell"), filtering_strategy = "sc", 
+                    BPPARAM = biocpar)
+dtu_tab_mur <- posthoc_and_stager(dturtle = dtu_tab_mur, ofdr = 0.05, posthoc = 0.1)
+```
+
+Now we can simply calculate the amount of overlapping significant DTU genes:
+
+```{r}
+common_dtu_genes <- intersect(dturtle$sig_gene, dtu_tab_mur$sig_gene)
+length(common_dtu_genes)
+```
+
+Lastly, we can compute the fraction of overlapping elements compared to the length of the smaller set (so that we can achieve an actual overlap of 100%):
+
+```{r}
+length(common_dtu_genes)/min(length(dturtle$sig_gene), length(dtu_tab_mur$sig_gene))
+```
+
+
+### Comparison of DGE results
+
+We can do the same for the DGE analysis.
+As the tabula muris data did not underwent scaling for the DTU analysis, we can simply summarize the transcript-level counts to gene-level for DGE calling.
+Please note, that this only works in this special case (no scaling during import because of a 3'-biased UMI-based protocol) - if that is not the case please re-import the data via `import_dge_counts()`.
+
+```{r}
+tab_mur_dge_cts <- summarize_to_gene(tab_mur_cts, tx2gene = tx2gene)
+dge_tab_mur <- run_deseq2(counts = tab_mur_dge_cts, pd=tab_mur_pd, cond_col = "cell_ontology_class",
+                          cond_levels = c("luminal epithelial cell of mammary gland", "basal cell"),
+                          dge_calling_strategy = "sc", lfc_threshold = 1, sig_threshold = 0.01, BPPARAM = biocpar)
+```
+
+Again, we can calculate the amount of overlapping significant DGE genes and the overlap fraction compared to the size of the smaller set:
+
+```{r}
+common_dge_genes <- intersect(dturtle$dge_analysis$results_sig$gene, dge_tab_mur$results_sig$gene)
+length(common_dge_genes)
+length(common_dge_genes)/min(length(dturtle$dge_analysis$results_sig$gene), length(dge_tab_mur$results_sig$gene))
+```
+
+We see the overlap fraction for the DTU analysis results (~34%) is slightly lower than the overlap fraction of the DGE analysis results (~44%). This is somewhat expected, if we consider the problem size to solve in the individual analyses. It is very reassuring though, that the same `luminal cell` marker-transcript genes are again identified in the DTU analysis as before in the Tabular Muris vignette:
+
+```{r}
+all(c("Rps24", "Myl6", "Pde4d") %in% common_dtu_genes)
+```
+
+
+---
+
+## Session info
+
+Computation time for this vignette:
+
+```{r, echo=FALSE}
+Sys.time()-start_time
+```
+
+---
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```
+

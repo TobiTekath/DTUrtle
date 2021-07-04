@@ -85,7 +85,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.7.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
       </span>
     </div>
 
@@ -125,6 +125,16 @@
     </li>
     <li>
       <a href="../articles/Tabular_Muris_mouse_single-cell_analysis.html">Mouse Tabular Muris single-cell RNA-seq analysis</a>
+    </li>
+    <li>
+      <a></a>
+    </li>
+    <li class="dropdown-header">Smart-seq2</li>
+    <li>
+      <a href="../articles/Wuidart_mouse_single-cell_preprocess.html">Mouse single-cell RNA-seq pre-processing</a>
+    </li>
+    <li>
+      <a href="../articles/Wuidart_mouse_single-cell_analysis.html">Mouse single-cell RNA-seq analysis</a>
     </li>
     <li class="divider"></li>
     <li class="dropdown-header">Bulk</li>
@@ -170,12 +180,38 @@
       <small>Source: <a href='https://github.com/TobiTekath/DTUrtle/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="dturtle-0-7-4" class="section level1">
-<h1 class="page-header" data-toc-text="0.7.4">
-<a href="#dturtle-0-7-4" class="anchor"></a>DTUrtle 0.7.4</h1>
+    <div id="dturtle-0-8-1" class="section level1">
+<h1 class="page-header" data-toc-text="0.8.1">
+<a href="#dturtle-0-8-1" class="anchor"></a>DTUrtle 0.8.1</h1>
 <div id="changes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#changes" class="anchor"></a>Changes</h2>
+<ul>
+<li>remodeled a lot of code - preserving functionality if not stated otherwise.</li>
+<li>added basic DGE-calling methods:
+<ul>
+<li>
+<code><a href="../reference/import_dge_counts.html">import_dge_counts()</a></code>: import quantification data and summarize to gene-level.</li>
+<li>
+<code><a href="../reference/run_deseq2.html">run_deseq2()</a></code>: perform DGE analysis with DESeq2.</li>
+</ul>
+</li>
+<li>added <code><a href="../reference/priming_bias_detection_probability.html">priming_bias_detection_probability()</a></code> functionality, to estimate the potential influence of a prime-biased sequencing protocol on the DTU detection ability.</li>
+<li>added Vignettes for a Smart-seq2 single-cell data set from Wuidart et al.</li>
+<li>Vignettes: added sections showcasing DGE calling and priming bias detection probability calculation.</li>
+<li>new Dependency: <code>DESeq2</code>
+</li>
+<li>new Suggests: <code>glmGamPoi</code>, <code>apeglm</code>
+</li>
+</ul>
+</div>
+</div>
+    <div id="dturtle-0-7-4" class="section level1">
+<h1 class="page-header" data-toc-text="0.7.4">
+<a href="#dturtle-0-7-4" class="anchor"></a>DTUrtle 0.7.4</h1>
+<div id="changes-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#changes-1" class="anchor"></a>Changes</h2>
 <ul>
 <li>
 <code><a href="../reference/plot_transcripts_view.html">plot_transcripts_view()</a></code>: added <code>tested_transcripts_only</code> parameter, to allow better control which transcripts of a gene should be displayed. Also allows to create plot for genes which have been excluded from the analysis.</li>
@@ -187,9 +223,9 @@
     <div id="dturtle-0-7-3" class="section level1">
 <h1 class="page-header" data-toc-text="0.7.3">
 <a href="#dturtle-0-7-3" class="anchor"></a>DTUrtle 0.7.3</h1>
-<div id="changes-1" class="section level2">
+<div id="changes-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-1" class="anchor"></a>Changes</h2>
+<a href="#changes-2" class="anchor"></a>Changes</h2>
 <ul>
 <li>readded “GenomicFeatures” as dependency - eases installation.</li>
 <li>measure and show computation time in vignettes.</li>
@@ -226,9 +262,9 @@
     <div id="dturtle-0-7-1" class="section level1">
 <h1 class="page-header" data-toc-text="0.7.1">
 <a href="#dturtle-0-7-1" class="anchor"></a>DTUrtle 0.7.1</h1>
-<div id="changes-2" class="section level2">
+<div id="changes-3" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-2" class="anchor"></a>Changes</h2>
+<a href="#changes-3" class="anchor"></a>Changes</h2>
 <ul>
 <li>add new vignette for Tabula Muris (Mouse) data set.</li>
 <li>
@@ -261,9 +297,9 @@
     <div id="dturtle-0-2-6" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.6">
 <a href="#dturtle-0-2-6" class="anchor"></a>DTUrtle 0.2.6</h1>
-<div id="changes-3" class="section level2">
+<div id="changes-4" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-3" class="anchor"></a>Changes</h2>
+<a href="#changes-4" class="anchor"></a>Changes</h2>
 <ul>
 <li>add <code>add_to_table</code> parameter to plotting functions, to add plot savepaths directly to <code>dtu_table</code>.</li>
 <li>
@@ -283,9 +319,9 @@
     <div id="dturtle-0-2-5" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.5">
 <a href="#dturtle-0-2-5" class="anchor"></a>DTUrtle 0.2.5</h1>
-<div id="changes-4" class="section level2">
+<div id="changes-5" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-4" class="anchor"></a>Changes</h2>
+<a href="#changes-5" class="anchor"></a>Changes</h2>
 <ul>
 <li>initial first version.</li>
 </ul>

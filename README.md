@@ -2,7 +2,7 @@
 # DTUrtle <img src="man/figures/logo.svg" align="right" alt="" width="250"/>
 
 **Perform differential transcript usage (DTU) analysis of bulk or
-single-cell RNA-seq data.**
+single-cell RNA-seq data and visualize the results.**
 
 ## Background
 
@@ -14,7 +14,9 @@ analysis for bulk or single-cell RNA-seq data, comparing the expression
 proportions of a gene’s distinct transcript isoforms between conditions.
 The results, a list of significantly differential genes and transcript
 isoforms, can be aggregated in an overview table and visualized in
-multiple ways.
+multiple ways. As a DTU analysis is best accompanied by a differential
+gene expression (DGE) analysis, DTUrtle also offers a basic DGE calling
+workflow for bulk and single-cell RNA-seq data.
 
 ## Target audience
 
@@ -24,13 +26,14 @@ analysis is needed. If you have data of an RNA-seq experiment at hand
 go. Three exemplary vignettes for different species and sequencing
 techniques will guide you through your analysis.
 
-## Input data
+## Required input data
 
 DTUrtle relies on transcript-level expression counts, which can be
 generated with transcript-level quantifiers like Salmon, Alevin,
-kallisto, etc. or even standard splice-aware genomic aligners like STAR
-(generating a transcript-level BAM with ‘–quantMode TranscriptomeSAM’
-and then quantifying it with Salmon).
+kallisto, etc. from ordinary RNA-seq fastq files. As an alternative,
+even standard splice-aware genomic aligners like STAR (generating a
+transcript-level BAM with ‘–quantMode TranscriptomeSAM’ and then
+quantifying it with Salmon) can be used for data generation.
 
 Besides the expression counts, a transcript-level annotation file for
 your species is needed (which is also required for the transcript-level
@@ -59,7 +62,7 @@ needed Bioconductor packages beforehand:
 if(!requireNamespace("BiocManager", quietly = T)){
     install.packages("BiocManager")
 }
-BiocManager::install(c("BiocParallel", "GenomicRanges", "Gviz", "rtracklayer", "stageR", "tximport"))
+BiocManager::install(c("BiocParallel", "GenomicRanges", "Gviz", "rtracklayer", "stageR", "tximport", "DESeq2"))
 ```
 
 -----
@@ -72,8 +75,8 @@ with:
 remotes::install_github("https://github.com/ivanek/Gviz/tree/RELEASE_3_10")
 ```
 
-DTUrtle does **not** require R \>= 4.0 and should work fine with the
-older Gviz version.
+DTUrtle does **not** require R \>= 4.0 and should work fine with older
+Gviz versions.
 
 -----
 
@@ -124,7 +127,7 @@ tx2gene <- import_gtf(gtf_file = "path_to_your_gtf_file.gtf")
     tx2gene$transcript_name <- one_to_one_mapping(name = tx2gene$transcript_name, 
                                                   id = tx2gene$transcript_id)
 
-#import transcript-level quantification data, for example from Salmon
+#import transcript-level quantification data, for example from Salmon, and perform appropriate scaling
 files <- Sys.glob("path_to_your_data/*/quant.sf")
 names(files) <- gsub(".*/","",gsub("/quant.sf","",files))
 cts <- import_counts(files = files, type = "salmon")
@@ -141,16 +144,54 @@ pd <- data.frame("id"=colnames(cts), "group"="your_grouping_variable",
 ### DTU analysis
 
 The `dturtle` object is an easy-to-access list, containing all necessary
-analysis information and results
+analysis information and
+results
 
 ``` r
-#use DRIMSeq for fitting a Dirichlet-multinomial model
+#use DRIMSeq for fitting a Dirichlet-multinomial model --- appropriate parameters are chosen based on the selected filtering_strategy ('bulk' or 'sc')
 dturtle <- run_drimseq(counts = cts, tx2gene = tx2gene, pd=pd, id_col = "id",
                     cond_col = "group", filtering_strategy = "bulk", 
                     BPPARAM = biocpar)
 
 #run posthoc filtering and two-staged statistical correction with stageR
 dturtle <- posthoc_and_stager(dturtle = dturtle, ofdr = 0.05)
+```
+
+### (optional) DGE analysis
+
+Alongside the DTU analysis, a DGE analysis might be of interest. The
+transcript-level count matrices have been scaled for the DTU analysis,
+but for a DGE analysis preferably un-normalized counts are used.
+Therefore the counts are re-imported and summarized to
+gene-level.
+
+``` r
+#import counts and summarize to gene-level --- simply reuse the already selected files.
+cts_dge <- import_dge_counts(files, type="salmon", tx2gene=tx2gene)
+
+##for single-cell data only:
+    #import_counts returned a list of matrices -> combine them to one matrix
+    cts_dge <- combine_to_matrix(tx_list = cts_dge)
+
+#perform the DGE calling with DESeq2 --- appropriate parameters are chosen based on the selected dge_calling_strategy ('bulk' or 'sc')
+dturtle$dge_analysis <- run_deseq2(counts = cts_dge, pd = pd, id_col = "id", cond_col = "group", lfc_threshold = 0.5,
+                                   sig_threshold = 0.01, dge_calling_strategy = "bulk", BPPARAM = biocpar)
+```
+
+### (optional) Estimate influence of a potential priming bias
+
+If a prime-biased (single-cell) RNA-seq protocol was used, the ability
+to detect DTU in certain transcripts might be impaired. DTUrtle offers
+the calculation of a novel detection probability score to infer, which
+transcripts might be hard to detect with the given data - and thus might
+not pop-up in the DTU analysis. Suppose we have 3’-biased data (as
+generated by many prominent single-cell protocols), we can infer the
+effect of this bias on the transcripts by:
+
+``` r
+#Attention: calculation for all available genes might be time consuming.
+priming_bias_df <- priming_bias_detection_probability(counts = cts, gtf = "path_to_your_gtf_file.gtf", tx2gene = tx2gene, one_to_one = T,
+                                                      priming_enrichment = "3", BPPARAM = biocpar)
 ```
 
 ### Result aggregation and visualization

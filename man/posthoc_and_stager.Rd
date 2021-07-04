@@ -32,9 +32,10 @@ The second step tries to identify on singular transcript level the significantly
 \seealso{
 \code{\link[=run_drimseq]{run_drimseq()}} for DTU object creation. \code{\link[=create_dtu_table]{create_dtu_table()}} for result table creation.
 
-Other DTUrtle: 
+Other DTUrtle DTU: 
 \code{\link{combine_to_matrix}()},
 \code{\link{import_counts}()},
+\code{\link{priming_bias_detection_probability}()},
 \code{\link{run_drimseq}()}
 }
-\concept{DTUrtle}
+\concept{DTUrtle DTU}

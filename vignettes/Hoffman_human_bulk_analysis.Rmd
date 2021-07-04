@@ -36,7 +36,7 @@ This vignette exemplifies the analysis of **bulk RNA-seq data with DTUrtle**. Th
 
 ---
 
-The following code shows an example of an DTUrtle workflow. Assume we have performed the preprocessing as described [here](https://tobitekath.github.io/DTUrtle/articles/Hoffman_human_bulk_preprocess.html) and the R working directory is a newly created folder called `dtu_results`.
+The following code shows an example of an DTUrtle workflow. Assume we have performed the pre-processing as described [here](https://tobitekath.github.io/DTUrtle/articles/Hoffman_human_bulk_preprocess.html) and the R working directory is a newly created folder called `dtu_results`.
 
 ---
 
@@ -195,7 +195,7 @@ dturtle$meta_table_gene[1:5,1:5]
 
 ---
 
-As proposed in [Love et al. (2018)](https://doi.org/10.12688/f1000research.15398.3), we will use a two-stage statistical testing procedure together with a post-hoc filtering on the standard deviations in proportions (`posthoc_and_stager()`). We will use *stageR* to determine genes, that show a overall significant change in transcript proportions. For these significant genes, we will try to pinpoint specific transcripts, which significantly drive this overall change. As a result, we will have a list of `significant genes` (genes showing the overall change) and a list of `significant transcripts` (one or more transcripts of the `significant genes`). Please note, that not every `significant gene` does have one or more `significant trasncripts`. It is not always possible to attribute the overall change in proportions to single transcripts. These two list of significant items are computed and corrected against a **overall false discovery rate (OFDR)**.
+As proposed in [Love et al. (2018)](https://doi.org/10.12688/f1000research.15398.3), we will use a two-stage statistical testing procedure together with a post-hoc filtering on the standard deviations in proportions (`posthoc_and_stager()`). We will use *stageR* to determine genes, that show a overall significant change in transcript proportions. For these significant genes, we will try to pinpoint specific transcripts, which significantly drive this overall change. As a result, we will have a list of `significant genes` (genes showing the overall change) and a list of `significant transcripts` (one or more transcripts of the `significant genes`). Please note, that not every `significant gene` does have one or more `significant transcripts`. It is not always possible to attribute the overall change in proportions to single transcripts. These two list of significant items are computed and corrected against a **overall false discovery rate (OFDR)**.
 
 Additionally, we will apply a post-hoc filtering scheme to improve the targeted OFDR control level. The filtering strategy will discard transcripts, which standard deviation of the proportion per cell/sample is below the specified threshold. For example by setting `posthoc=0.1`, we will exclude all transcripts, which proportional expression (in regard to the total gene expression) deviates by less than 0.1 between cells.
 This filtering step should mostly exclude 'uninteresting' transcripts, which would not have been called as significant either way. 
@@ -209,6 +209,49 @@ The `dturtle` object now contains additional elements, including the lists of `s
 ```{r}
 head(dturtle$sig_gene)
 head(dturtle$sig_tx)
+```
+
+---
+
+## (optional) DGE analysis
+
+Alongside a DTU analysis, a DGE analysis might be of interest for your research question. DTUrtle offers a basic DGE calling workflow for bulk and single-cell RNA-seq data via DESeq2.
+
+To utilize this workflow, we should re-scale our imported counts. The transcript-level count matrix has been scaled for the DTU analysis, but for a DGE analysis un-normalized counts should be used (as DESeq2 normalizes internally). We can simply re-import the count data, by providing the already defined `files` object to the DGE analysis specific function `import_dge_counts()`. This function will make sure that the counts are imported but not scaled and also summarizes to gene-level.
+
+Our files object looks like this:
+
+```{r}
+head(files)
+```
+
+We re-import the files with the same parameters as before:
+
+```{r}
+cts_dge <- import_dge_counts(files, type="salmon", tx2gene=tx2gene[,c("transcript_id", "gene_name")])
+```
+
+With this data, we can perform the DGE analysis with DESeq2 with the DTUrtle function `run_deseq2()`. DESeq2 is one of the gold-standard tools for DGE calling in bulk RNA-seq data and showed very good performance for single-cell data in multiple benchmarks. The DESeq2 vignette recommends adjusting some parameters for DGE analysis of single-cell data - DTUrtle incorporates these recommendations and adjusts the specific parameters based on the provided `dge_calling_strategy()`.
+
+After the DESeq2 DGE analysis, the estimated log2 fold changes are shrunken (preferably with `apeglm`) - to provide a secondary ranking variable beside the statistical significance. If a shrinkage with `apeglm` is performed, `run_deseq2()` defaults to also compute s-values rather than adjusted p-values. The underlying hypothesis for s-values and (standard) p-values differs slightly, with s-values hypothesis being presumably preferential in a real biological context. Far more information about all these topics can be found in the excellent [DESeq2 vignette](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) and the associated publications.
+
+`run_deseq2()` will tell the user, if one or more advised packages are missing. It is strongly advised to follow these recommendations.
+
+```{r}
+dturtle$dge_analysis <- run_deseq2(counts = cts_dge, pd = pd, id_col = "id",
+                                   cond_col = "group", cond_levels = c("Dex2hr", "EtOH"), 
+                                   lfc_threshold = 1, sig_threshold = 0.01, dge_calling_strategy = "bulk",
+                                   BPPARAM = biocpar)
+```
+
+We provided a log2 fold change threshold of 1 (on log2 scale), thus preferring an effect size of 2x or more.
+The output of `run_deseq2()` is a list, containing various elements (see `run_deseq2()`'s description). This result list can easily added to an existing DTUrtle object, as shown above.
+
+We can now identify genes which show both a DGE and DTU signal:
+
+```{r}
+dtu_dge_genes <- intersect(dturtle$sig_gene, dturtle$dge_analysis$results_sig$gene)
+length(dtu_dge_genes)
 ```
 
 ---
@@ -329,9 +372,9 @@ plot_transcripts_view(dturtle = dturtle,
 
 
 
-This visualization shows the structure of the transcripts of *TSC22D3*. Our significant transcripts (*TSC22D3-206*) is quite different to the other mainly expressed transcript (*TSC22D3-203*). *TSC22D3-206* has a different frist exon than *TSC22D3-203*, whichs first exon is quite far away from the conserved transcript body. The arrows on the right side indicate the mean fitted proportional change in the comparison groups, thus showing a over-expression of *TSC22D3-206* in `Dex2hr` compared to `EtOH`.
+This visualization shows the structure of the transcripts of *TSC22D3*. The significant transcript (*TSC22D3-206*) is quite different to the other mainly expressed transcript (*TSC22D3-203*). *TSC22D3-206* has a different first exon than *TSC22D3-203*, whose first exon is quite far away from the conserved transcript body. The arrows on the right side indicate the mean fitted proportional change in the comparison groups, thus showing a over-expression of *TSC22D3-206* in `Dex2hr` compared to `EtOH`.
 
-The grey areas indicate intron sequences, which have been compressed in this representation to highlight the exon structure. Only consensus introns are compressed to a defined minimal size. This can be turned off with `reduce_introns=FALSE`
+The areas between exons indicate intron sequences, which have been compressed in this representation to highlight the exon structure. Only consensus introns are compressed to a defined minimal size. This can be turned off with `reduce_introns=FALSE` or alternatively reduced introns can be highlighted by setting a colorful `reduce_introns_fill`.
 
 Analogous as before, we can save plots to disk and add them to the `dtu_table`:
 

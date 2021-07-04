@@ -2,7 +2,7 @@
 title: "Analysis of Tabular Muris mouse single-cell RNA-seq data"
 author: "Tobias Tekath"
 date: "`r Sys.Date()`"
-description: "Exemplified analysis of mouse single-cell RNA-seq data."
+description: "Exemplified analysis of mouse single-cell RNA-seq data (10X Chromium)."
 output: 
   rmarkdown::html_vignette:
     df_print: paged
@@ -117,7 +117,7 @@ We will create a named files vector, pointing to the `quants_mat.gz` file for ea
 
 ```{r}
 files <- Sys.glob("../alevin/10X_P7_*/alevin/quants_mat.gz")
-names(files) <- c("10X_P7_12", "10X_P7_13")
+names(files) <- basename(gsub("/alevin/quants_mat.gz", "", files))
 ```
 
 The files object looks like this:
@@ -191,6 +191,45 @@ All 4481 cells from Tabula Muris have been recovered. The `tabula_muris_metadata
 
 **For an example workflow utilizing the Seurat object directly, please see [Workflow with Seurat object](#workflow-with-seurat-object)**
 
+```{r, include=FALSE}
+### save counts and pd for comparison with Wuidart et al. data set.
+saveRDS(cts, "../../Smart-seq2/tabula_muris_cts.RDS")
+saveRDS(tabula_muris_metadata, "../../Smart-seq2/tabula_muris_pd.RDS")
+```
+
+
+---
+
+### (optional) Estimate influence of priming-bias
+
+As the 10X Chromium 3' protocol preferentially generates reads of the 3'-end of an mRNA, DTU effects of some specific transcripts might not be detectable.
+DTUrtle offers a novel scoring scheme, called "detection probability", to assess which transcripts might be prone to be impaired by such a bias. This score can be computed with the DTUrtle function `priming_bias_detection_probability()`.
+
+The score calculation can be summarized like this: For each gene, a reference transcript is chosen (based on the expression data, selecting the major proportionally expressed transcript as reference). Each other transcript of a gene is now compared to this reference transcript, calculating where the first detectable exon-level difference occurs between the transcript entities - and at what relative coordinate this difference is located (looking from the priming enriched end). Based on this information, a `detection probability` is calculated, with 1 indicating no influence of the prime-biased reads on the detection ability and 0 indicating a very heavy influence. Thus, DTU effects for transcripts with a low score would be expected less likely to be detectable with the given data. 
+
+We can add this score information to an already existing table, like the tx2gene table (`add_to_table = tx2gene`). As we need exon-level information for the calculation, we should provide an unfiltered GTF GRanges or data frame object - or alternatively a file path.
+
+```{r}
+unfilt_gtf <- import_gtf("../gencode.vM24.annotation.gtf", feature_type = NULL, out_df = F)
+#set priming_enrichment to '3', as we expect reads enriched towards the 3' end of the mRNA.
+tx2gene <- priming_bias_detection_probability(counts = cts, tx2gene = tx2gene, gtf = unfilt_gtf, one_to_one = T,
+                                              priming_enrichment = "3", add_to_table = tx2gene, BPPARAM = biocpar)
+```
+
+The newly added columns are `detection_probability` and `used_as_ref`:
+
+```{r}
+head(tx2gene[,c("transcript_name", "gene_name", "detection_probability", "used_as_ref")])
+```
+
+We can calculate, that a potential 3'-bias would not influence the majority of annotated transcripts, relevant for the DTU analysis:
+```{r}
+#only genes with at least two transcript isoforms are relevant for DTU analysis
+dtu_relevant_genes <- unique(tx2gene$gene_name[duplicated(tx2gene$gene_name)])
+summary(tx2gene$detection_probability[tx2gene$gene_name %in% dtu_relevant_genes])
+```
+
+
 ---
 
 ## DTU analysis
@@ -240,7 +279,7 @@ This table shows the single genes, together with their total expressed-in ratio 
 
 ---
 
-As proposed in [Love et al. (2018)](https://doi.org/10.12688/f1000research.15398.3), we will use a two-stage statistical testing procedure together with a post-hoc filtering on the standard deviations in proportions (`posthoc_and_stager()`). We will use *stageR* to determine genes, that show a overall significant change in transcript proportions. For these significant genes, we will try to pinpoint specific transcripts, which significantly drive this overall change. As a result, we will have a list of `significant genes` (genes showing the overall change) and a list of `significant transcripts` (one or more transcripts of the `significant genes`). Please note, that not every `significant gene` does have one or more `significant trasncripts`. It is not always possible to attribute the overall change in proportions to single transcripts. These two list of significant items are computed and corrected against a **overall false discovery rate (OFDR)**.
+As proposed in [Love et al. (2018)](https://doi.org/10.12688/f1000research.15398.3), we will use a two-stage statistical testing procedure together with a post-hoc filtering on the standard deviations in proportions (`posthoc_and_stager()`). We will use *stageR* to determine genes, that show a overall significant change in transcript proportions. For these significant genes, we will try to pinpoint specific transcripts, which significantly drive this overall change. As a result, we will have a list of `significant genes` (genes showing the overall change) and a list of `significant transcripts` (one or more transcripts of the `significant genes`). Please note, that not every `significant gene` does have one or more `significant transcripts`. It is not always possible to attribute the overall change in proportions to single transcripts. These two list of significant items are computed and corrected against a **overall false discovery rate (OFDR)**.
 
 Additionally, we will apply a post-hoc filtering scheme to improve the targeted OFDR control level. The filtering strategy will discard transcripts, which standard deviation of the proportion per cell/sample is below the specified threshold. For example by setting `posthoc=0.1`, we will exclude all transcripts, which proportional expression (in regard to the total gene expression) deviates by less than 0.1 between cells.
 This filtering step should mostly exclude 'uninteresting' transcripts, which would not have been called as significant either way. 
@@ -254,6 +293,49 @@ The `dturtle` object now contains additional elements, including the lists of `s
 ```{r}
 head(dturtle$sig_gene)
 head(dturtle$sig_tx)
+```
+
+---
+
+## (optional) DGE analysis
+
+Alongside a DTU analysis, a DGE analysis might be of interest for your research question. DTUrtle offers a basic DGE calling workflow for bulk and single-cell RNA-seq data via DESeq2.
+
+To utilize this workflow, we should re-scale our imported counts. The transcript-level count matrix has been scaled for the DTU analysis, but for a DGE analysis un-normalized counts should be used (as DESeq2 normalizes internally). We can simply re-import the count data, by providing the already defined `files` object to the DGE analysis specific function `import_dge_counts()`. This function will make sure that the counts are imported but not scaled and also summarizes to gene-level.
+
+Our files object looks like this:
+
+```{r}
+head(files)
+```
+
+We re-import the files and use `combine_to_matrix()` to create one big matrix (as we did for the DTU analysis):
+
+```{r}
+cts_dge <- import_dge_counts(files, type="alevin", tx2gene=tx2gene)
+cts_dge <- combine_to_matrix(tx_list = cts_dge, cell_extensions = c("10X_P7_12", "10X_P7_13"), cell_extension_side = "prepend")
+```
+
+With this data, we can perform the DGE analysis with DESeq2 with the DTUrtle function `run_deseq2()`. DESeq2 is one of the gold-standard tools for DGE calling in bulk RNA-seq data and showed very good performance for single-cell data in multiple benchmarks. The DESeq2 vignette recommends adjusting some parameters for DGE analysis of single-cell data - DTUrtle incorporates these recommendations and adjusts the specific parameters based on the provided `dge_calling_strategy`.
+
+After the DESeq2 DGE analysis, the estimated log2 fold changes are shrunken (preferably with `apeglm`) - to provide a secondary ranking variable beside the statistical significance. If a shrinkage with `apeglm` is performed, `run_deseq2()` defaults to also compute s-values rather than adjusted p-values. The underlying hypothesis for s-values and (standard) p-values differs slightly, with s-values hypothesis being presumably preferential in a real biological context. Far more information about all these topics can be found in the excellent [DESeq2 vignette](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) and the associated publications.
+
+`run_deseq2()` will tell the user, if one or more advised packages are missing. It is strongly advised to follow these recommendations.
+
+```{r}
+dturtle$dge_analysis <- run_deseq2(counts = cts_dge, pd = tabula_muris_metadata, cond_col = "cell_ontology_class", 
+                                   cond_levels = c("T cell", "luminal epithelial cell of mammary gland"), lfc_threshold = 1,
+                                   sig_threshold = 0.01, dge_calling_strategy = "sc", BPPARAM = biocpar)
+```
+
+We provided a log2 fold change threshold of 1 (on log2 scale), thus preferring an effect size of 2x or more.
+The output of `run_deseq2()` is a list, containing various elements (see `run_deseq2()`'s description). This result list can easily added to an existing DTUrtle object, as shown above.
+
+We can now identify genes which show both a DGE and DTU signal:
+
+```{r}
+dtu_dge_genes <- intersect(dturtle$sig_gene, dturtle$dge_analysis$results_sig$gene)
+length(dtu_dge_genes)
 ```
 
 ---
@@ -351,6 +433,7 @@ Again, we can save the plots to disk and add them to the `dtu_table`:
 dturtle <- plot_proportion_pheatmap(dturtle = dturtle,
                                     include_expression = T,
                                     treeheight_col=20,
+                                    sample_meta_table_columns = c("sample_id","condition"),
                                     savepath = "images", 
                                     add_to_table = "pheatmap",
                                     BPPARAM = biocpar)
@@ -383,7 +466,7 @@ plot_transcripts_view(dturtle = dturtle,
 
 This visualization shows the structure of the transcripts of *Lcn2*. Our two significant transcripts (*Lcn2-201* and *Lcn2-203*) are quite different, with alternative end points as well as some retained intron sequences in *Lcn2-203*. The arrows on the right side indicate the mean fitted proportional change in the comparison groups, thus showing a under-expression of *Lcn2-201* in `T cell` compared to `luminal epithelial cell of mammary gland`.
 
-The grey areas indicate intron sequences, which have been compressed in this representation to highlight the exon structure. Only consensus introns are compressed to a defined minimal size. This can be turned off with `reduce_introns=FALSE`
+The areas between exons indicate intron sequences, which have been compressed in this representation to highlight the exon structure. Only consensus introns are compressed to a defined minimal size. This can be turned off with `reduce_introns=FALSE` or alternatively reduced introns can be highlighted by setting a colorful `reduce_introns_fill`.
 
 Analogous as before, we can save plots to disk and add them to the `dtu_table`:
 

@@ -14,7 +14,7 @@ combine_to_matrix(
 )
 }
 \arguments{
-\item{tx_list}{List of sparse transcription count matrices, as returned by \code{\link[=import_counts]{import_counts()}} for single-cell data.}
+\item{tx_list}{List of sparse count matrices, as returned by \code{\link[=import_counts]{import_counts()}} or \code{\link[=import_dge_counts]{import_dge_counts()}} for single-cell data.}
 
 \item{cell_extensions}{Optional vector of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'. Defaults to an increasing integer per sample.}
 
@@ -27,10 +27,10 @@ combine_to_matrix(
 \item{assay_name}{If the combined matrix should be added to an existing Seurat object, the name of the assay can be specified here.}
 }
 \value{
-Either a combined sparse transcription count matrix or a seurat object which the combined sparse transcription count matrix as an assay.
+Either a combined sparse count matrix or a seurat object which the combined sparse count matrix as an assay.
 }
 \description{
-Combine list of sparse transcription count matrices. Presumably coming from \code{\link[=import_counts]{import_counts()}} in conjunction with single-cell data.
+Combine list of sparse count matrices. Presumably coming from \code{\link[=import_counts]{import_counts()}} or \code{\link[=import_dge_counts]{import_dge_counts()}} in conjunction with single-cell data.
 }
 \details{
 This function adds a cellname extension if necessary.
@@ -38,9 +38,10 @@ Can optionally add the combined matrix to a existing Seurat object (keeping the 
 Also removes overall non expressed features.
 }
 \seealso{
-Other DTUrtle: 
+Other DTUrtle DTU: 
 \code{\link{import_counts}()},
 \code{\link{posthoc_and_stager}()},
+\code{\link{priming_bias_detection_probability}()},
 \code{\link{run_drimseq}()}
 }
-\concept{DTUrtle}
+\concept{DTUrtle DTU}

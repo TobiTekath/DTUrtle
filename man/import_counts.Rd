@@ -113,9 +113,10 @@ See also \code{\link[=combine_to_matrix]{combine_to_matrix()}}, when output is a
 \seealso{
 Please see \code{\link[=import_gtf]{import_gtf()}}, \code{\link[=move_columns_to_front]{move_columns_to_front()}} and \code{\link[=one_to_one_mapping]{one_to_one_mapping()}} to help with tx2gene creation. See also \code{\link[=combine_to_matrix]{combine_to_matrix()}}, when output is a list of single-cell runs.
 
-Other DTUrtle: 
+Other DTUrtle DTU: 
 \code{\link{combine_to_matrix}()},
 \code{\link{posthoc_and_stager}()},
+\code{\link{priming_bias_detection_probability}()},
 \code{\link{run_drimseq}()}
 }
-\concept{DTUrtle}
+\concept{DTUrtle DTU}

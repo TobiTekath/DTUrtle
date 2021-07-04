@@ -40,6 +40,9 @@
     <loc>https://tobitekath.github.io/DTUrtle/reference/import_counts.html</loc>
   </url>
   <url>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/import_dge_counts.html</loc>
+  </url>
+  <url>
     <loc>https://tobitekath.github.io/DTUrtle/reference/import_gtf.html</loc>
   </url>
   <url>
@@ -76,6 +79,9 @@
     <loc>https://tobitekath.github.io/DTUrtle/reference/posthoc_and_stager.html</loc>
   </url>
   <url>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/priming_bias_detection_probability.html</loc>
+  </url>
+  <url>
     <loc>https://tobitekath.github.io/DTUrtle/reference/prop_matrix.html</loc>
   </url>
   <url>
@@ -86,6 +92,9 @@
   </url>
   <url>
     <loc>https://tobitekath.github.io/DTUrtle/reference/rm_version.html</loc>
+  </url>
+  <url>
+    <loc>https://tobitekath.github.io/DTUrtle/reference/run_deseq2.html</loc>
   </url>
   <url>
     <loc>https://tobitekath.github.io/DTUrtle/reference/run_drimseq.html</loc>
@@ -128,5 +137,11 @@
   </url>
   <url>
     <loc>https://tobitekath.github.io/DTUrtle/articles/Tabular_Muris_mouse_single-cell_preprocess.html</loc>
+  </url>
+  <url>
+    <loc>https://tobitekath.github.io/DTUrtle/articles/Wuidart_mouse_single-cell_analysis.html</loc>
+  </url>
+  <url>
+    <loc>https://tobitekath.github.io/DTUrtle/articles/Wuidart_mouse_single-cell_preprocess.html</loc>
   </url>
 </urlset>

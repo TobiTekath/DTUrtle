@@ -675,7 +675,7 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
 #'
 #' Reduced intron length is computed by taking the square root, but is not less than the specified `reduce_introns_min_size` length.
 #' If less `GRanges` are found than expected, try setting `one_to_one` to `TRUE` or the used extension character.
-#' When calling this function many times, try importing the GTF-File with `gtf <- rtracklayer::import("PATH_TO_GTF")` once and pass it to the `gtf` parameter to improve performance.
+#' When calling this function many times, try importing the GTF-File with `gtf <- import_gtf("GTF_PATH", feature_type=NULL, out_df=FALSE)` once and pass it to the `gtf` parameter to improve performance.
 #' @param gtf Either path to a `gtf/gff` file which will be read or a `granges` object of a already read in `gtf/gff` file. Such an object can be created with `import_gtf("GTF_PATH", feature_type=NULL, out_df=FALSE)`. See [import_gtf()] for more information.
 #' @param genome The genome on which to create the ideogram tracks. This has to be a valid `UCSC genome identifier` (e.g. 'hg38', 'mm10', 'danRer11', etc.). Can also be NULL to skip ideogram track generation.
 #' @param one_to_one Specify `TRUE`, if one_to_one mapping of gene/transcript identifiers with their respective names was enforced before (with [one_to_one_mapping()]). If a non default extension character (`ext`) has been used, please specify the used extension character.

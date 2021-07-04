@@ -52,9 +52,9 @@ run_drimseq(
 
 \item{force_dense}{If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying \code{TRUE}. Increases memory usage, but also reduces runtime drastically (currently).}
 
-\item{subset_feature}{Subsets the provided count matrix to only specified features. Can be names, indeces or logicals.}
+\item{subset_feature}{Subsets the provided count matrix to only specified features. Can be names, indices or logicals.}
 
-\item{subset_sample}{Subsets the provided count matrix to only specified samples. Can be names, indeces or logicals.}
+\item{subset_sample}{Subsets the provided count matrix to only specified samples. Can be names, indices or logicals.}
 
 \item{carry_over_metadata}{Specify if compatible additional columns of \code{tx2gene} shall be carried over to the gene and transcript level \code{meta_table} in the results. Columns with \code{NA} values are not carried over.}
 
@@ -89,9 +89,10 @@ Perform customizable filtering and the main DTU calling with DRIMSeq.
 Run the main DRIMSeq pipeline, including generation of a design matrix, gene/feature filtering and running the statistical computations of DRIMSeq (\code{dmPrecision()}, \code{dmFit()} and \code{dmTest()})
 }
 \seealso{
-Other DTUrtle: 
+Other DTUrtle DTU: 
 \code{\link{combine_to_matrix}()},
 \code{\link{import_counts}()},
-\code{\link{posthoc_and_stager}()}
+\code{\link{posthoc_and_stager}()},
+\code{\link{priming_bias_detection_probability}()}
 }
-\concept{DTUrtle}
+\concept{DTUrtle DTU}

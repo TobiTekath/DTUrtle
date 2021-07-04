@@ -93,7 +93,7 @@ run_posthoc <- function(drim, filt){
 }
 
 
-#' Get the transcript-wise proportion diffrences of the specified gene
+#' Get the transcript-wise proportion differences of the specified gene
 #'
 #' @param gID gene identifier
 #' @param dturtle `dturtle` object
@@ -310,10 +310,11 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, dr
 #' @return A summarised (sparse) matrix
 #' @export
 summarize_to_gene <- function(mtx, tx2gene, fun="sum", genes=NULL){
-    assertthat::assert_that(methods::is(mtx, "matrix")||methods::is(mtx, "sparseMatrix"))
-    assertthat::assert_that(is.data.frame(tx2gene))
-    assertthat::assert_that(all(rownames(mtx) %in% tx2gene[[1]]))
-    assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0))
+    assertthat::assert_that(methods::is(mtx, "matrix")||methods::is(mtx, "sparseMatrix"), msg = "The provided mtx must be either of class matrix or sparseMatrix.")
+    assertthat::assert_that(is.data.frame(tx2gene), msg="The provided tx2gene must be a data frame.")
+    assertthat::assert_that(all(rownames(mtx) %in% tx2gene[[1]]), msg=paste0("The provided names in the first tx2gene column and the data do not match. Summarising not possible.\nNames in data: ",
+                                                                             paste0(head(rownames(mtx)), collapse = ", "),"\nNames in tx2gene: ", paste0(head(tx2gene[[1]]), collapse=", ")))
+    assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg="The genes object must be either NULL, or a character vector of length>0.")
 
     if(!is.null(genes)){
         mtx <- mtx[rownames(mtx) %in% tx2gene[[1]][tx2gene[[2]] %in% genes],,drop=F]

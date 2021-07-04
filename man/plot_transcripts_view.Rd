@@ -72,7 +72,7 @@ Visualize exon-intron structure of transcripts on genomic scale.
 \details{
 Reduced intron length is computed by taking the square root, but is not less than the specified \code{reduce_introns_min_size} length.
 If less \code{GRanges} are found than expected, try setting \code{one_to_one} to \code{TRUE} or the used extension character.
-When calling this function many times, try importing the GTF-File with \code{gtf <- rtracklayer::import("PATH_TO_GTF")} once and pass it to the \code{gtf} parameter to improve performance.
+When calling this function many times, try importing the GTF-File with \code{gtf <- import_gtf("GTF_PATH", feature_type=NULL, out_df=FALSE)} once and pass it to the \code{gtf} parameter to improve performance.
 }
 \seealso{
 \code{\link[=run_drimseq]{run_drimseq()}} and \code{\link[=posthoc_and_stager]{posthoc_and_stager()}} for DTU object creation. \code{\link[=create_dtu_table]{create_dtu_table()}} and \code{\link[=plot_dtu_table]{plot_dtu_table()}} for table visualization.

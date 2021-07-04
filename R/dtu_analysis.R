@@ -1,6 +1,7 @@
 #' @import sparseDRIMSeq
 NULL
 
+
 #' Import quantification results
 #'
 #' Import the quantification results of many RNA-seq quantifiers, including `alevin` and `bustools` for single-cell data.
@@ -26,7 +27,7 @@ NULL
 #'
 #' @return - For bulk data: A combined count matrix for all specified samples.
 #' - For single-cell data: A list of count matrices per sample. Should be combined and optionally added to a Seurat object with [combine_to_matrix()].
-#' @family DTUrtle
+#' @family DTUrtle DTU
 #' @export
 #' @seealso Please see [import_gtf()], [move_columns_to_front()] and [one_to_one_mapping()] to help with tx2gene creation. See also [combine_to_matrix()], when output is a list of single-cell runs.
 import_counts <- function(files, type, ...){
@@ -46,7 +47,11 @@ import_counts <- function(files, type, ...){
 
         if(type=="alevin"){
             assertthat::assert_that(all(basename(files) == "quants_mat.gz"), msg = "Expecting 'files' to point to 'quants_mat.gz' file in a directory 'alevin'\n  also containing 'quants_mat_rows.txt' and 'quant_mat_cols.txt'.\n  Please re-run alevin preserving output structure.")
-            return_obj <- lapply(files, function(i) tximport::tximport(files = i, type = "alevin", ...)$counts)
+            args$type <- type
+            return_obj <- lapply(files, function(i){
+              args$files <- i
+              return(do.call(tximport::tximport, args)$counts)
+            })
         }else{
             return_obj <- lapply(files, function(i) readin_bustools(files = i))
         }
@@ -54,7 +59,6 @@ import_counts <- function(files, type, ...){
         if(!is.null(names(files))){
             names(return_obj) <- names(files)
         }
-        return(return_obj)
 
     }else{
         if(methods::hasArg("countsFromAbundance")){
@@ -79,28 +83,29 @@ import_counts <- function(files, type, ...){
         }
         args$files <- files
         args$type <- type
-        return(do.call(tximport::tximport, args)$counts)
+        return_obj <- do.call(tximport::tximport, args)$counts
     }
+    return(return_obj)
 }
 
 
 #' Combine sparse matrices.
 #'
-#' Combine list of sparse transcription count matrices. Presumably coming from [import_counts()] in conjunction with single-cell data.
+#' Combine list of sparse count matrices. Presumably coming from [import_counts()] or [import_dge_counts()] in conjunction with single-cell data.
 #'
 #' This function adds a cellname extension if necessary.
 #' Can optionally add the combined matrix to a existing Seurat object (keeping the cellname extension of the object and matching the cells).
 #' Also removes overall non expressed features.
 #'
-#' @param tx_list List of sparse transcription count matrices, as returned by [import_counts()] for single-cell data.
+#' @param tx_list List of sparse count matrices, as returned by [import_counts()] or [import_dge_counts()] for single-cell data.
 #' @param cell_extensions Optional vector of cellname extensions that are added to the cellnames of the samples. The original cellnames and the extension are separated by an underscore '_'. Defaults to an increasing integer per sample.
 #' @param cell_extension_side Define to which side of the barcode the cell extensions shall be added ('append' or 'prepend').
 #' @param seurat_obj Optional seurat object, where the combined matrix is added as an assay. This has the advantage, that the cells are matched and subsetted if necessary. Currently only Seurat 3 objects are supported.
 #' @param tx2gene Optional tx2gene or metadata data frame, can only be used in conjunction with a seurat object. Metadata is added as feature-level meta data to the created assay. The first column of the data frame must contain transcript names/ids. The same transcript names/ids as in the `tx_list` objects must be used.
 #' @param assay_name If the combined matrix should be added to an existing Seurat object, the name of the assay can be specified here.
 #'
-#' @return Either a combined sparse transcription count matrix or a seurat object which the combined sparse transcription count matrix as an assay.
-#' @family DTUrtle
+#' @return Either a combined sparse count matrix or a seurat object which the combined sparse count matrix as an assay.
+#' @family DTUrtle DTU
 #' @export
 combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side="append", seurat_obj=NULL, tx2gene=NULL, assay_name="dtutx"){
 
@@ -126,6 +131,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
 
     if(!is.null(cell_extensions)){
         assertthat::assert_that(length(cell_extensions)==length(tx_list), msg="cell_extensions must have same length as tx_list!")
+        assertthat::assert_that(is.character(cell_extensions), msg="cell_extensions must be of type character!")
     }
 
     assertthat::assert_that(is.character(cell_extension_side) && length(cell_extension_side)==1 && cell_extension_side %in% c("append", "prepend"), msg="The cell_extension_side must be 'append' or 'prepend'!")
@@ -201,13 +207,13 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
             message("Subsetting!")
         }
         seurat_obj <- subset(seurat_obj, cells=common_cells)
-        tx_list <- tx_list[,common_cells]
+        tx_list <- tx_list[,common_cells,drop=F]
     }
 
     #exclude not expressed
     excl_tx <- Matrix::rowSums(tx_list)>0
     message("Excluding ", sum(!excl_tx), " overall not expressed features.")
-    tx_list <- tx_list[excl_tx,]
+    tx_list <- tx_list[excl_tx,,drop=F]
     message(nrow(tx_list), " features left.")
 
     if(!is.null(seurat_obj)){
@@ -225,8 +231,8 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
     }
 }
 
-#TODO: add_uniform should stay false - have a deeper look at what it does. Added values far to high? Mean fit of 0 counts at ~5? Far less DTU genes.
 
+#TODO: add_uniform should stay false - have a deeper look at what it does. Added values far to high? Mean fit of 0 counts at ~5? Far less DTU genes.
 #' Main filtering and DTU statistical computations
 #'
 #' Perform customizable filtering and the main DTU calling with DRIMSeq.
@@ -248,8 +254,8 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
 #' @param add_pseudocount Define `TRUE` if a very small pseudocount shall be added to transcripts with zero expression in one group. Adding the pseudocount enables statistical analysis for comparisons, where one groups proportion is completely zero.
 #' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
 #' @param force_dense If you do not want to use a sparse Matrix for DRIMSeq calculations, you can force a dense conversion by specifying `TRUE`. Increases memory usage, but also reduces runtime drastically (currently).
-#' @param subset_feature Subsets the provided count matrix to only specified features. Can be names, indeces or logicals.
-#' @param subset_sample Subsets the provided count matrix to only specified samples. Can be names, indeces or logicals.
+#' @param subset_feature Subsets the provided count matrix to only specified features. Can be names, indices or logicals.
+#' @param subset_sample Subsets the provided count matrix to only specified samples. Can be names, indices or logicals.
 #' @param carry_over_metadata Specify if compatible additional columns of `tx2gene` shall be carried over to the gene and transcript level `meta_table` in the results. Columns with `NA` values are not carried over.
 #' @param filter_only Return filtered (sparse) matrix, without performing DRIMSeq statistical computations.
 #' @inheritDotParams sparseDRIMSeq::dmFilter
@@ -266,7 +272,7 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
 #'
 #' If `filter_only=TRUE`, only the filtered (sparse) matrix is returned.
 #'
-#' @family DTUrtle
+#' @family DTUrtle DTU
 #' @export
 run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", add_pseudocount=F, BPPARAM=BiocParallel::SerialParam(), force_dense=T, subset_feature=NULL, subset_sample=NULL, carry_over_metadata=T, filter_only=F, ...){
     if(methods::is(counts, "Seurat")){
@@ -281,11 +287,13 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
         }
         counts <- Seurat::GetAssayData(counts)
     }
-    assertthat::assert_that(methods::is(counts, "matrix")|methods::is(counts, "sparseMatrix"))
-    assertthat::assert_that(methods::is(tx2gene, "data.frame"))
-    assertthat::assert_that(methods::is(pd, "data.frame"))
+    assertthat::assert_that(methods::is(counts, "matrix")|methods::is(counts, "sparseMatrix"), msg="Counts must be a (sparse) matrix.")
+    assertthat::assert_that(methods::is(tx2gene, "data.frame"), msg="Tx2gene must be a data frame.")
+    assertthat::assert_that(methods::is(pd, "data.frame"), msg="pd must be a data frame.")
     assertthat::assert_that(ncol(tx2gene)>1, msg = "'tx2gene' should at least have two columns [feature | gene --- in that order].")
-    assertthat::assert_that(cond_col %in% colnames(pd), msg = paste0("Could not find", cond_col, " in column names of pd."))
+    assertthat::assert_that(is.null(id_col)||(is.character(id_col)&&length(id_col)==1&&id_col %in% colnames(pd)), msg="id_col should be a single column name of pd or NULL.")
+    assertthat::assert_that((is.character(cond_col)&&length(cond_col)==1&&cond_col %in% colnames(pd)), msg = paste0("Could not find", cond_col, " in column names of pd."))
+    assertthat::assert_that(is.null(cond_levels)||length(cond_levels)==2, msg="'cond_levels' should be of length two or NULL.")
     assertthat::assert_that(filtering_strategy %in% c("bulk", "sc", "own"), msg = "Please select a valid filtering strategy ('bulk', 'sc' or 'own').")
     assertthat::assert_that(is.logical(add_pseudocount), msg="`add_pseudocount` must be `TRUE` or `FALSE`.")
     assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
@@ -330,9 +338,10 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     message("\nComparing in '", cond_col, "': '", cond_levels[1], "' vs '", cond_levels[2], "'")
 
     if(is.null(id_col)){
-        samp <- data.frame("sample_id"=row.names(pd), "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd)==cond_col))], row.names = NULL, stringsAsFactors = F)
+      assertthat::assert_that(all(rownames(pd) %in% colnames(counts)), msg = "Provided id_col does not match with sample names in counts.")
+      samp <- data.frame("sample_id"=rownames(pd), "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd)==cond_col)),drop=F], row.names = NULL, stringsAsFactors = F)
     }else{
-        samp <- data.frame("sample_id"=pd[[id_col]], "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd) %in% c(id_col, cond_col)))], row.names = NULL, stringsAsFactors = F)
+      samp <- data.frame("sample_id"=pd[[id_col]], "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd) %in% c(id_col, cond_col))),drop=F], row.names = NULL, stringsAsFactors = F)
     }
     samp$condition <- factor(samp$condition, levels=cond_levels)
     samp <- samp[samp$sample_id %in% colnames(counts),,drop=F]
@@ -347,6 +356,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     }
     message("\nProceed with cells/samples: ",paste0(utils::capture.output(table(samp$condition)), collapse = "\n"))
     assertthat::assert_that(length(levels(samp$condition))==2, msg="No two sample groups left for comparison. Aborting!")
+    assertthat::assert_that(all(table(samp$condition)>0), msg="No sample in each group left for comparison. Aborting!")
 
     message("\nFiltering...\n")
     filter_opt_list <- list("min_samps_gene_expr" = 0,
@@ -418,7 +428,6 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     ### do not add uniform distribution to full fit, as it is not added to null fit
     drim_test <- sparseDRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=add_pseudocount, verbose=1)
     drim_test <- sparseDRIMSeq::dmTest(drim_test, coef=2, BPPARAM=BPPARAM, verbose=1)
-
     group <- factor(samp$condition, levels = cond_levels, ordered = T)
 
     exp_in_gn <- rapply(exp_in_gn, as.character, classes="factor", how="replace")
@@ -433,7 +442,6 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 }
 
 
-#TODO: implement Noise - IQR filtering
 #' Posthoc filtering and two-staged statistical tests
 #'
 #' Perform optional post-hoc filtering and run two-staged statistical tests.
@@ -450,7 +458,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 #' - `sig_tx` : A named character vector of transcripts where the second stageR step was significant. Basically the significant transcripts of the significant genes.
 #' - `FDR_table` : A data frame of the stage-wise adjusted p-values for all genes/transcripts. Might contain NA-values, as transcript level p-values are not available when the gene level test was not significant.
 #'
-#' @family DTUrtle
+#' @family DTUrtle DTU
 #' @export
 #' @seealso [run_drimseq()] for DTU object creation. [create_dtu_table()] for result table creation.
 posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
@@ -498,4 +506,183 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
                                        "posthoc"=ifelse(posthoc==F, 0, posthoc))
     class(return_obj) <- append("dturtle", class(return_obj))
     return(return_obj)
+}
+
+
+#' Estimate transcript detection probability
+#'
+#' Estimate transcript detection probability for 3'- or 5'-biased data
+#'
+#' Many (single-cell) RNA-seq protocols do not produce reads from the full-length of the mRNA, but instead favor fragments of the 3' or 5' end of the mRNA.
+#' Such protocols limit the ability to detect DTU events for specific transcripts, e.g. for transcripts of the same gene, where the first exon-level difference is close to the non-favoured priming end.
+#' This function tries to estimate, which transcripts might not pop up in a DTU analysis, because of this effect.
+#'
+#' First, this function sets the major proportionally expressed transcript as the reference transcript for that specific gene.
+#' If no count information are availble, the first transcript is chosen as reference.
+#'
+#' Then, for each other transcript of that gene, the first exon-level difference compared to the reference transcript is detected and a probability score is calculated
+#' based on the exonic distance between that difference and the favoured priming end.
+#'
+#' The probability score ranges from 0 to 1, where 1 indicates no influence by the prime-biased protocol, and 0 indicates an extreme heavy influence.
+#' Thus, DTU effects for transcripts with a low score are less likely to be detectable with the given data.
+#'
+#' @param counts A (sparse) count matrix, where columns represent a sample / cell and rows represent a single transcript isoform. This data is used to infer each gene's reference transcript.
+#' @param gtf A GTF file with gene and exon-level information. Can be a filepath or a previously imported gtf file (as GRanges or data frame). It is advised to read-in the file like this: `gtf <- import_gtf("YOUR_PATH", feature_type = NULL, out_df=F)`.
+#' @param tx2gene Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object.
+#' @param priming_enrichment Specify, which end of the mRNA is supposed to be enriched in your (single-cell) RNA-seq protocol. Can be either '3' or '5', for the 3'-end or the 5'-end respectively.
+#' @param genes (Optional) Specify certain genes, that shall be analysed. If `NULL`, defaults to all genes in the provided tx2gene data frame.
+#' @param add_to_table (Optional) add the `detection_probability` and `used_as_ref` column directly to the here provided data frame. First column of the data frame must match with transcript identifiers.
+#' @inheritParams plot_transcripts_view
+#'
+#' @family DTUrtle DTU
+#' @return A data frame with the columns:
+#'  - `gene`: A gene identifier.
+#'  - `tx`: A transcript identifier.
+#'  - `detection_probability`: The calculated detection probability score.
+#'  - `used_as_ref`: Boolean vector, indicating which transcripts were used as reference transcript for the specific gene.
+#'
+#'  If a valid data frame in `add_to_table` is provided, this data frame is returned with the added `detection_probability` and `used_as_ref` column.
+#'
+#' @export
+priming_bias_detection_probability <- function(counts, gtf, tx2gene, one_to_one=NULL, priming_enrichment="3", genes=NULL, add_to_table=NULL, BPPARAM=BiocParallel::SerialParam()){
+  assertthat::assert_that(methods::is(counts, "matrix")|methods::is(counts, "sparseMatrix"), msg="Counts must be a (sparse) matrix.")
+  assertthat::assert_that(methods::is(gtf, "character") && file.exists(gtf) || methods::is(gtf, "GRanges") || is.data.frame(gtf), msg = "Invalid gtf filepath or object. Must be either a filepath to a gtf, a previously created granges object or a data frame.")
+  assertthat::assert_that(methods::is(tx2gene, "data.frame"), msg="Tx2gene must be a data frame.")
+  assertthat::assert_that(ncol(tx2gene)>1, msg = "'tx2gene' should at least have two columns [feature | gene --- in that order].")
+  assertthat::assert_that((length(intersect(rownames(counts), tx2gene[[1]]))>0), msg = paste0("The provided counts names and tx2gene names do not match.\n\tCounts names: ",
+                                                                                              paste0(rownames(utils::head(counts, n = 5)), collapse = ", "), "\n\tTx2gene names: ", paste0(utils::head(tx2gene, n = 5)[[1]], collapse = ", ")))
+  assertthat::assert_that(all(rownames(counts) %in% tx2gene[[1]]), msg="Could not find all count transcript names in first column of tx2gene.")
+  assertthat::assert_that(is.null(one_to_one)||isTRUE(one_to_one)||(methods::is(one_to_one, "character")&&length(one_to_one)==1), msg = "The one_to_one object must be a character vector of length 1, TRUE or NULL.")
+  assertthat::assert_that(is.character(priming_enrichment)&&priming_enrichment %in% c("5","3")&&length(priming_enrichment)==1, msg="`priming_enrichment` must be either '3' or '5'.")
+  assertthat::assert_that(is.null(genes)||is.character(genes), msg="`genes` must be a character vector or NULL.")
+  assertthat::assert_that(is.null(add_to_table)||(is.data.frame(add_to_table)&&any(tx2gene[[1]] %in% add_to_table[[1]])), msg = "The provided `add_to_table` is not valid. Must be either a data frame with transcript identifiers in first column or NULL.")
+  assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object in BPPARAM.")
+
+  if(is.data.frame(gtf)){
+    gtf <- GenomicRanges::makeGRangesFromDataFrame(gtf, keep.extra.columns = T)
+  }else if(is.character(gtf)){
+    gtf <- import_gtf(gtf_file = gtf, feature_type = NULL, out_df = F)
+  }
+
+  assertthat::assert_that(class(gtf) %in% c("GRanges"))
+  assertthat::assert_that("exon" %in% gtf$type, msg="The provided GTF does not contain needed exonic information. If you provide the result of the `import_gtf()` function, please make sure that `feature_type` is set to `NULL`.")
+
+  if(is.null(genes)){
+    genes <- unique(tx2gene[[2]])
+    tx <- tx2gene[[1]]
+  }else{
+    tx <- tx2gene[[1]][match(genes, tx2gene[[2]])]
+  }
+
+  gtf_genes_column <- sapply(gtf@elementMetadata[,c("gene_id", "gene_name")], function(x) length(intersect(genes,x)))
+  gtf_tx_column <- sapply(gtf@elementMetadata[,c("transcript_id", "transcript_name")], function(x) length(intersect(tx,x)))
+  if(!any(gtf_genes_column>length(genes)*0.1)&!any(gtf_tx_column>length(tx)*0.1)){
+    stop("Could not find a matching gtf metadata column for the provided genes or used transcript identifiers.")
+  }
+  gtf_genes_column <- names(which.max(gtf_genes_column))
+  gtf_tx_column <- names(which.max(gtf_tx_column))
+
+  if(!is.null(one_to_one)){
+    message("\nPerforming one to one mapping in gtf")
+    one_to_one <- ifelse(isTRUE(one_to_one), formals(one_to_one_mapping)$ext, one_to_one)
+    suppressMessages(gtf@elementMetadata$gene_name <- one_to_one_mapping(name = gtf@elementMetadata$gene_name, id = gtf@elementMetadata$gene_id, ext = one_to_one))
+    suppressMessages(gtf@elementMetadata$transcript_name[!is.na(gtf@elementMetadata$transcript_name)] <- one_to_one_mapping(name = gtf@elementMetadata$transcript_name[!is.na(gtf@elementMetadata$transcript_name)], id = gtf@elementMetadata$transcript_id[!is.na(gtf@elementMetadata$transcript_name)], ext = one_to_one))
+  }
+
+  valid_genes <- genes[genes %in% gtf@elementMetadata[[gtf_genes_column]]]
+  message("\nFound gtf GRanges for ", length(valid_genes), " of ", length(genes), " provided genes.")
+  if(length(valid_genes)<length(genes)){
+    message("\n\tIf you ensured one_to_one mapping of the transcript and/or gene id in the former DTU analysis, try to set 'one_to_one' to TRUE or the used extension character.")
+  }
+  if(length(valid_genes)==0){
+    message("\nNo genes to score!\n")
+    return()
+  }
+
+  gtf <- gtf[GenomicRanges::elementMetadata(gtf)[,gtf_genes_column] %in% valid_genes]
+
+  #compute mean proportion of each tx to infer the reference tx
+  counts <- get_proportion_matrix(counts, tx2gene = tx2gene, genes=valid_genes)
+  counts <- Matrix::rowMeans(x=counts, na.rm = T)
+
+  if(length(valid_genes)>10){
+    BiocParallel::bpprogressbar(BPPARAM) <- T
+  }
+
+  message("Scoring transcripts of ", length(valid_genes), " genes.")
+  if(!BiocParallel::bpisup(BPPARAM)){
+    BiocParallel::bpstart(BPPARAM)
+  }
+
+  score_list <- BiocParallel::bplapply(valid_genes, function(gene){
+    gene_gtf <- gtf[gtf@elementMetadata[[gtf_genes_column]]==gene,]
+    gene_info <- as.data.frame(gene_gtf[gene_gtf$type=="gene",])
+    expressed_tx <- gene_gtf@elementMetadata[[gtf_tx_column]][gene_gtf$type=="transcript"]
+    if(length(expressed_tx)<2){
+      return(setNames(rep(1, length(expressed_tx)), expressed_tx))
+    }
+    if(gene_info$strand=="*"){
+      message("Could not score ", gene_info$gene_name, ": Strand information needed!")
+      return(setNames(rep(NA, length(expressed_tx)), expressed_tx))
+    }
+    # use tx with highest proportion as reference
+    tx_counts <- counts[expressed_tx]
+    reference_tx <- names(tx_counts)[which.max(tx_counts)]
+    other_tx <- expressed_tx[-which.max(tx_counts)]
+    if(length(reference_tx)==0){
+      reference_tx <- expressed_tx[1]
+      other_tx <- expressed_tx[-1]
+    }
+    gtf_trans <- gene_gtf[gene_gtf@elementMetadata[[gtf_tx_column]] %in% expressed_tx & gene_gtf$type %in% c("exon")]
+    gtf_ref <- gtf_trans[gtf_trans@elementMetadata[[gtf_tx_column]] %in% reference_tx]
+    score_vec <- sapply(other_tx, function(i){
+      temp_i <- gtf_trans[gtf_trans@elementMetadata[[gtf_tx_column]] %in% i]
+      # search for differences
+      temp_diff <- c(GenomicRanges::setdiff(temp_i, gtf_ref),GenomicRanges::setdiff(gtf_ref, temp_i))
+      start_i <- min(GenomicRanges::start(temp_i))
+      end_i <- max(GenomicRanges::end(temp_i))
+      #restrict to range of temp_i
+      temp_diff <- temp_diff[GenomicRanges::start(temp_diff)<end_i]
+      temp_diff <- temp_diff[GenomicRanges::end(temp_diff)>start_i]
+      #temp_diff <- GenomicRanges::intersect(temp_diff, GenomicRanges::GRanges(seqnames=gene_info$seqnames, ranges=c(start_i, end_i), strand = gene_info$strand)
+
+      if((priming_enrichment=="5"&&gene_info$strand=="+")||(priming_enrichment=="3"&&gene_info$strand=="-")){
+        #select diff with min distance to priming end.
+        temp_diff <- GenomicRanges::start(temp_diff)[which.min(abs(GenomicRanges::start(temp_diff)-start_i))]
+        preceeding_exons <- temp_i[GenomicRanges::start(temp_i)<temp_diff]
+        GenomicRanges::end(preceeding_exons[GenomicRanges::end(preceeding_exons)>temp_diff]) <- temp_diff
+      }else{
+        temp_diff <- GenomicRanges::end(temp_diff)[which.min(abs(GenomicRanges::end(temp_diff)-end_i))]
+        preceeding_exons <- temp_i[GenomicRanges::end(temp_i)>temp_diff]
+        GenomicRanges::start(preceeding_exons[GenomicRanges::start(preceeding_exons)<temp_diff]) <- temp_diff
+      }
+      temp_dist <- sum(GenomicRanges::width(preceeding_exons))
+      temp_score <- 1-(temp_dist/sum(GenomicRanges::width(temp_i)))
+      return(temp_score)
+    })
+    #use score of 2 to indicate reference transcript... is set to 1 later.
+    score_vec <- setNames(c(2,score_vec), c(reference_tx, other_tx))
+    return(score_vec)
+  }, BPPARAM=BPPARAM)
+  BiocParallel::bpstop(BPPARAM)
+
+  score_list <- unlist(score_list)
+  ref_tx <- setNames(score_list==2, names(score_list))
+  score_list[ref_tx] <- 1
+
+  if(!is.null(add_to_table)){
+    not_used <- sum(!names(score_list) %in% add_to_table[[1]])
+    add_to_table$detection_probability <- score_list[add_to_table[[1]]]
+    add_to_table$used_as_ref <- ref_tx[add_to_table[[1]]]
+    if(not_used>0){
+      message("Discarding results of ", not_used, " transcripts, as they are not present in the provided `add_to_table`.")
+    }
+    return(add_to_table)
+  }
+
+  return_df <- data.frame("tx"=names(score_list), "detection_probability"=score_list, "used_as_ref"=ref_tx, row.names = NULL, stringsAsFactors = F)
+  return_df$gene <- tx2gene[[2]][match(return_df$tx, tx2gene[[1]])]
+  return_df <- move_columns_to_front(return_df, "gene")
+
+  return(return_df)
 }
