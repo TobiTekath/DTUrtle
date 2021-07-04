@@ -9,8 +9,8 @@ get_by_partition(
   partitioning,
   FUN,
   columns = NULL,
-  simplify = T,
-  drop = T,
+  simplify = TRUE,
+  drop = TRUE,
   BPPARAM = BiocParallel::SerialParam()
 )
 }

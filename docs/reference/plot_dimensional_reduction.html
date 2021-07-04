@@ -191,11 +191,11 @@
   <span class='va'>reduction_df</span>,
   genes <span class='op'>=</span> <span class='cn'>NULL</span>,
   plot <span class='op'>=</span> <span class='st'>"proportions"</span>,
-  include_gene <span class='op'>=</span> <span class='cn'>T</span>,
-  log_expression <span class='op'>=</span> <span class='cn'>T</span>,
-  include_labels <span class='op'>=</span> <span class='cn'>T</span>,
+  include_gene <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  log_expression <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  include_labels <span class='op'>=</span> <span class='cn'>TRUE</span>,
   reduction_to_use <span class='op'>=</span> <span class='st'>"umap"</span>,
-  indicate_significant_tx <span class='op'>=</span> <span class='cn'>T</span>,
+  indicate_significant_tx <span class='op'>=</span> <span class='cn'>TRUE</span>,
   plot_colors <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"grey"</span>, <span class='st'>"#9ECAE1"</span>, <span class='st'>"#6BAED6"</span>, <span class='st'>"#4292C6"</span>, <span class='st'>"#2171B5"</span>, <span class='st'>"#08519C"</span>,
     <span class='st'>"#08306B"</span><span class='op'>)</span>,
   plot_scale <span class='op'>=</span> <span class='st'>"fixed"</span>,
@@ -207,7 +207,7 @@
   label_y_expansion <span class='op'>=</span> <span class='fl'>0.2</span>,
   savepath <span class='op'>=</span> <span class='cn'>NULL</span>,
   filename_ext <span class='op'>=</span> <span class='st'>"_dim_reduce.png"</span>,
-  add_to_table <span class='op'>=</span> <span class='cn'>F</span>,
+  add_to_table <span class='op'>=</span> <span class='cn'>FALSE</span>,
   BPPARAM <span class='op'>=</span> <span class='fu'>BiocParallel</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html'>SerialParam</a></span><span class='op'>(</span><span class='op'>)</span>,
   <span class='va'>...</span>
 <span class='op'>)</span></pre>
@@ -273,15 +273,15 @@
     </tr>
     <tr>
       <th>label_size</th>
-      <td><p>If <code>include_labels=T</code>, set size of labels (in mm).</p></td>
+      <td><p>If <code>include_labels=TRUE</code>, set size of labels (in mm).</p></td>
     </tr>
     <tr>
       <th>label_colors</th>
-      <td><p>If <code>include_labels=T</code>, set color of labels of positive or negative proportional differences.</p></td>
+      <td><p>If <code>include_labels=TRUE</code>, set color of labels of positive or negative proportional differences.</p></td>
     </tr>
     <tr>
       <th>label_y_expansion</th>
-      <td><p>If <code>include_labels=T</code>, define the factor the y-axis is extended by. This extension is performed to avoid overlapping of labels and cells / samples.
+      <td><p>If <code>include_labels=TRUE</code>, define the factor the y-axis is extended by. This extension is performed to avoid overlapping of labels and cells / samples.
 Labels are added to bottom of the plots of the second comparison group.</p></td>
     </tr>
     <tr>

@@ -65,7 +65,7 @@ To run the `Alevin` quantification, we first need a transcriptomic index. For th
 
 Assume you have downloaded and unpacked the above mentioned files in the analysis root directory. To build the actual index we run this *bash* code:
 
-```{bash, eval=F}
+```{bash, eval=FALSE}
 #installation in conda evironment
 conda install salmon
 
@@ -81,7 +81,7 @@ To perform the actual quantification, we need one last file specifying the trans
 
 We can create such a mapping file with the help of the `DTUrtle` package in *R*:
 
-```{r, eval=F}
+```{r, eval=FALSE}
 library(DTUrtle)
 setwd("$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/alevin")
 
@@ -96,13 +96,13 @@ tx2gene <- import_gtf(gtf_file = "../gencode.vM24.annotation.gtf")
   
 
 write.table(x = tx2gene[,c("transcript_id", "transcript_name")], 
-            file = "txmap.tsv", sep = "\t", quote = F, 
-            row.names = F, col.names = F)
+            file = "txmap.tsv", sep = "\t", quote = FALSE, 
+            row.names = FALSE, col.names = FALSE)
 ```
 
 The actual quantification can be performed in *bash* with:
 
-```{bash, eval=F}
+```{bash, eval=FALSE}
 #change back to sample directory for shorter command
 cd ../samples/10X_P7_12/10X_P7_12_MissingLibrary_1_H2H5YDMXX
 salmon alevin -l ISR -i ../../../alevin/index/ -1 bamtofastq_S1_L001_R1_001.fastq.gz bamtofastq_S1_L002_R1_001.fastq.gz -2 bamtofastq_S1_L001_R2_001.fastq.gz bamtofastq_S1_L002_R2_001.fastq.gz --chromium -p 20 --tgMap ../../../alevin/txmap.tsv --dumpFeatures -o ../../../alevin/10X_P7_12

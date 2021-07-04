@@ -9,11 +9,11 @@ plot_dimensional_reduction(
   reduction_df,
   genes = NULL,
   plot = "proportions",
-  include_gene = T,
-  log_expression = T,
-  include_labels = T,
+  include_gene = TRUE,
+  log_expression = TRUE,
+  include_labels = TRUE,
   reduction_to_use = "umap",
-  indicate_significant_tx = T,
+  indicate_significant_tx = TRUE,
   plot_colors = c("grey", "#9ECAE1", "#6BAED6", "#4292C6", "#2171B5", "#08519C",
     "#08306B"),
   plot_scale = "fixed",
@@ -25,7 +25,7 @@ plot_dimensional_reduction(
   label_y_expansion = 0.2,
   savepath = NULL,
   filename_ext = "_dim_reduce.png",
-  add_to_table = F,
+  add_to_table = FALSE,
   BPPARAM = BiocParallel::SerialParam(),
   ...
 )
@@ -59,11 +59,11 @@ plot_dimensional_reduction(
 
 \item{text_size}{Specify basic text size (in pt) to use in plot.}
 
-\item{label_size}{If \code{include_labels=T}, set size of labels (in mm).}
+\item{label_size}{If \code{include_labels=TRUE}, set size of labels (in mm).}
 
-\item{label_colors}{If \code{include_labels=T}, set color of labels of positive or negative proportional differences.}
+\item{label_colors}{If \code{include_labels=TRUE}, set color of labels of positive or negative proportional differences.}
 
-\item{label_y_expansion}{If \code{include_labels=T}, define the factor the y-axis is extended by. This extension is performed to avoid overlapping of labels and cells / samples.
+\item{label_y_expansion}{If \code{include_labels=TRUE}, define the factor the y-axis is extended by. This extension is performed to avoid overlapping of labels and cells / samples.
 Labels are added to bottom of the plots of the second comparison group.}
 
 \item{savepath}{If you want your files to be saved to disk, specify a save path here. The directories will be created if necessary.}

@@ -12,13 +12,13 @@ run_drimseq(
   cond_col,
   cond_levels = NULL,
   filtering_strategy = "bulk",
-  add_pseudocount = F,
+  add_pseudocount = FALSE,
   BPPARAM = BiocParallel::SerialParam(),
-  force_dense = T,
+  force_dense = TRUE,
   subset_feature = NULL,
   subset_sample = NULL,
-  carry_over_metadata = T,
-  filter_only = F,
+  carry_over_metadata = TRUE,
+  filter_only = FALSE,
   ...
 )
 }

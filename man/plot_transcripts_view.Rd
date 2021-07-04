@@ -11,7 +11,7 @@ plot_transcripts_view(
   genome,
   one_to_one = NULL,
   tested_transcripts_only = "mixed",
-  reduce_introns = T,
+  reduce_introns = TRUE,
   reduce_introns_fill = "white",
   reduce_introns_min_size = 50,
   fontsize_vec = c(10, 1.1, 0.6),
@@ -20,7 +20,7 @@ plot_transcripts_view(
   extension_factors = c(0.025, 0.22),
   savepath = NULL,
   filename_ext = "_transcripts.png",
-  add_to_table = F,
+  add_to_table = FALSE,
   BPPARAM = BiocParallel::SerialParam(),
   ...
 )

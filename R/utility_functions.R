@@ -18,8 +18,8 @@ smallProportionSD <- function(drim, filter) {
     cts <- drim@counts@unlistData
     part <- drim@counts@partitioning
     prop <- prop_matrix(cts,part)
-    prop_sd <- prop-Matrix::rowMeans(prop, na.rm = T)
-    prop_sd <- sqrt(Matrix::rowSums(prop_sd*prop_sd, na.rm = T)/(ncol(prop_sd)-1))
+    prop_sd <- prop-Matrix::rowMeans(prop, na.rm = TRUE)
+    prop_sd <- sqrt(Matrix::rowSums(prop_sd*prop_sd, na.rm = TRUE)/(ncol(prop_sd)-1))
     return(prop_sd < filter)
 }
 
@@ -88,7 +88,7 @@ run_posthoc <- function(drim, filt){
     filt <- smallProportionSD(drim, filt)
     res_txp_filt$pvalue[filt] <- 1
     res_txp_filt$adj_pvalue[filt] <- 1
-    message("Posthoc filtered ", sum(filt, na.rm = T), " features.")
+    message("Posthoc filtered ", sum(filt, na.rm = TRUE), " features.")
     return(res_txp_filt)
 }
 
@@ -101,7 +101,7 @@ run_posthoc <- function(drim, filt){
 #' @return Data frame with the transcript-wise proportion differences.
 get_diff <- function(gID, dturtle){
     # added as sparseDRIMSeq loading sometimes failed.
-    requireNamespace("sparseDRIMSeq", quietly = T)
+    requireNamespace("sparseDRIMSeq", quietly = TRUE)
     group <- dturtle$group
     y <- data.frame(row.names = rownames(dturtle$drim@fit_full[[gID]]))
     y[levels(group)[1]] <- apply(dturtle$drim@fit_full[[gID]][, which(group==levels(group)[1])], 1, unique)
@@ -211,22 +211,22 @@ ratio_expression_in <- function(drim, type, BPPARAM=BiocParallel::SerialParam())
                           rownames(data),
                           Matrix::rowSums(data!=0)/ncol(data),
                           BiocParallel::bplapply(cond, FUN = function(x){
-                              group_data = data[,drim@samples$sample_id[drim@samples$condition==x],drop=F]
+                              group_data = data[,drim@samples$sample_id[drim@samples$condition==x],drop=FALSE]
                               return(Matrix::rowSums(group_data!=0)/ncol(group_data))
-                          }, BPPARAM = BPPARAM), stringsAsFactors = F)
+                          }, BPPARAM = BPPARAM), stringsAsFactors = FALSE)
         BiocParallel::bpstop(BPPARAM)
         colnames(ret) <- c("gene","tx","exp_in",paste0("exp_in_",cond))
     }else{
-        data <-  t(sapply(part, FUN = function(x) Matrix::colSums(data[x,,drop=F])))
+        data <-  t(sapply(part, FUN = function(x) Matrix::colSums(data[x,,drop=FALSE])))
         if(!BiocParallel::bpisup(BPPARAM)){
             BiocParallel::bpstart(BPPARAM)
         }
         ret <- data.frame(rownames(data),
                           Matrix::rowSums(data!=0)/ncol(data),
                           BiocParallel::bplapply(cond, FUN = function(x){
-                              group_data = data[,drim@samples$sample_id[drim@samples$condition==x],drop=F]
+                              group_data = data[,drim@samples$sample_id[drim@samples$condition==x],drop=FALSE]
                               return(Matrix::rowSums(group_data!=0)/ncol(group_data))
-                          }, BPPARAM = BPPARAM), stringsAsFactors = F)
+                          }, BPPARAM = BPPARAM), stringsAsFactors = FALSE)
         BiocParallel::bpstop(BPPARAM)
         colnames(ret) <- c("gene","exp_in",paste0("exp_in_",cond))
     }
@@ -250,11 +250,11 @@ check_unique_by_partition <- function(df, partitioning, columns=NULL){
     assertthat::assert_that(is.list(partitioning))
     if(!is.null(columns)){
         assertthat::assert_that(all(columns %in% colnames(df)))
-        df <- df[,columns, drop=F]
+        df <- df[,columns, drop=FALSE]
     }
     cols <- colnames(df)
     for(part in partitioning){
-        dat <- df[part, cols, drop=F]
+        dat <- df[part, cols, drop=FALSE]
         cols <- cols[apply(dat, 2, function(x){all(x == x[1])})]
         if(length(cols)==0){
             return(NULL)
@@ -278,7 +278,7 @@ check_unique_by_partition <- function(df, partitioning, columns=NULL){
 #'
 #' @return Data frame with Group column that specifies the partition and one column per specified column with aggregated values.
 #' @export
-get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, drop=T, BPPARAM=BiocParallel::SerialParam()){
+get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=TRUE, drop=TRUE, BPPARAM=BiocParallel::SerialParam()){
     assertthat::assert_that(is.data.frame(df))
     assertthat::assert_that(is.list(partitioning))
     assertthat::assert_that(is.function(FUN))
@@ -290,7 +290,7 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=T, dr
     if(!BiocParallel::bpisup(BPPARAM)){
         BiocParallel::bpstart(BPPARAM)
     }
-    ret <- BiocParallel::bpaggregate(df, by=list(rep(names(partitioning), lengths(partitioning))), FUN=FUN,  simplify=simplify, drop=T, BPPARAM = BPPARAM)
+    ret <- BiocParallel::bpaggregate(df, by=list(rep(names(partitioning), lengths(partitioning))), FUN=FUN,  simplify=simplify, drop=TRUE, BPPARAM = BPPARAM)
     BiocParallel::bpstop(BPPARAM)
     return(ret)
 }
@@ -317,7 +317,7 @@ summarize_to_gene <- function(mtx, tx2gene, fun="sum", genes=NULL){
     assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg="The genes object must be either NULL, or a character vector of length>0.")
 
     if(!is.null(genes)){
-        mtx <- mtx[rownames(mtx) %in% tx2gene[[1]][tx2gene[[2]] %in% genes],,drop=F]
+        mtx <- mtx[rownames(mtx) %in% tx2gene[[1]][tx2gene[[2]] %in% genes],,drop=FALSE]
     }
 
     tx2gene <- tx2gene[match(rownames(mtx), tx2gene[[1]]),]
@@ -402,7 +402,7 @@ get_proportion_matrix <- function(obj, tx2gene=NULL, genes=NULL){
         assertthat::assert_that(!is.null(obj$drim), msg="obj does not contain DRIMSeq results.")
         if(!is.null(genes)){
             genes <- unlist(lapply(obj$drim@counts@partitioning[genes], FUN = names))
-            return(prop_matrix(obj$drim@counts@unlistData[genes,,drop=F], partitioning = obj$drim@counts@partitioning))
+            return(prop_matrix(obj$drim@counts@unlistData[genes,,drop=FALSE], partitioning = obj$drim@counts@partitioning))
         }else{
             return(prop_matrix(obj$drim@counts@unlistData, partitioning = obj$drim@counts@partitioning))
         }
@@ -418,7 +418,7 @@ get_proportion_matrix <- function(obj, tx2gene=NULL, genes=NULL){
 #' @export
 partitioning_to_dataframe <- function(partitioning){
     assertthat::assert_that(methods::is(partitioning, "list"))
-    return(data.frame("tx"=unlist(sapply(partitioning, FUN = names)), "gene"=rep(names(partitioning),lengths(partitioning)), row.names = NULL, stringsAsFactors = F))
+    return(data.frame("tx"=unlist(sapply(partitioning, FUN = names)), "gene"=rep(names(partitioning),lengths(partitioning)), row.names = NULL, stringsAsFactors = FALSE))
 }
 
 
@@ -496,7 +496,7 @@ granges_reduce_introns <- function(granges, min_intron_size){
     #compute reduced region size
     #do not artificially inflate regions smaller than min_intron_size
     regions_to_reduce <- regions_to_reduce[GenomicRanges::width(regions_to_reduce)>min_intron_size,]
-    regions_to_reduce$new_width <- sapply(ceiling(sqrt(GenomicRanges::width(regions_to_reduce))), FUN = function(x) max(min_intron_size, x))
+    regions_to_reduce$new_width <- vapply(ceiling(sqrt(GenomicRanges::width(regions_to_reduce))), FUN = function(x) max(min_intron_size, x), FUN.VALUE = numeric(1))
     for(j in seq_along(regions_to_reduce)){
         x <- regions_to_reduce[j]
         granges_reduced[GenomicRanges::start(granges_reduced)>GenomicRanges::start(x),]$new_start <- granges_reduced[GenomicRanges::start(granges_reduced)>GenomicRanges::start(x),]$new_start-GenomicRanges::width(x)+x$new_width
@@ -511,5 +511,5 @@ granges_reduce_introns <- function(granges, min_intron_size){
 #'
 #' @return Path to DTUrtle logo
 dturtle_logo <- function() {
-    return(system.file("logo/logo.svg", package= "DTUrtle", mustWork = T))
+    return(system.file("logo/logo.svg", package= "DTUrtle", mustWork = TRUE))
 }

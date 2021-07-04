@@ -9,7 +9,7 @@ table_pval_tile(
   gradient_max_color,
   gradient_alpha = NULL,
   digits,
-  gradient_na_rm = T,
+  gradient_na_rm = TRUE,
   ...
 )
 }

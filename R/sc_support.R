@@ -15,8 +15,8 @@ sparse_filter <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), 
                           min_samps_feature_prop = 0, min_feature_prop = 0,
                           run_gene_twice=FALSE){
     assertthat::assert_that(methods::is(counts, "matrix")||methods::is(counts, "sparseMatrix"))
-    counts <- counts[Matrix::rowSums(counts)>0,,drop=F]
-    tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),,drop=F]
+    counts <- counts[Matrix::rowSums(counts)>0,,drop=FALSE]
+    tx2gene <- tx2gene[match(rownames(counts), tx2gene[[1]]),,drop=FALSE]
     #genes with at least two transcripts
     inds <- which(duplicated(tx2gene[[2]]) | duplicated(tx2gene[[2]], fromLast = TRUE))
     inds <- split(inds, f = tx2gene[inds,2])
@@ -45,7 +45,7 @@ sparse_filter <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), 
             return(NULL)
 
         temp <- expr_features[, samps2keep, drop = FALSE]
-        prop <- temp %*% Matrix::diag(1/Matrix::colSums(temp), names = F)
+        prop <- temp %*% Matrix::diag(1/Matrix::colSums(temp), names = FALSE)
 
         ### features with min proportion
         row_index <- Matrix::rowSums(prop >= min_feature_prop) >= min_samps_feature_prop
@@ -74,7 +74,7 @@ sparse_filter <- function(counts, tx2gene, BPPARAM=BiocParallel::SerialParam(), 
     }
     counts_new <- BiocParallel::bplapply(inds, FUN=filter, BPPARAM=BPPARAM)
     BiocParallel::bpstop(BPPARAM)
-    counts_new <- counts[unlist(counts_new),,drop=F]
+    counts_new <- counts[unlist(counts_new),,drop=FALSE]
     assertthat::assert_that(nrow(counts_new)>0, msg = "No Features left after filtering. Maybe try more relaxed filtering parameter.")
     message("Retain ",nrow(counts_new), " of ",nrow(counts)," features.\nRemoved ", nrow(counts)-nrow(counts_new), " features.")
     return(counts_new)
@@ -101,9 +101,9 @@ readin_bustools <- function(files){
     message("\tReading in Matrix.")
     mtx <- Matrix::readMM(mtx)
     message("\tAssigning dimnames.")
-    rownames <- scan(rownames, what = "character", quiet=T)
+    rownames <- scan(rownames, what = "character", quiet=TRUE)
     assertthat::assert_that(length(rownames)==nrow(mtx), msg = "Number of barcodes does not match to matrix.")
-    colnames <- scan(colnames, what = "character", quiet=T)
+    colnames <- scan(colnames, what = "character", quiet=TRUE)
     assertthat::assert_that(length(colnames)==ncol(mtx), msg = "Number of features does not match to matrix.")
     dimnames(mtx) <- list(rownames, colnames)
     return(methods::as(Matrix::t(mtx), "dgCMatrix"))

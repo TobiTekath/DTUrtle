@@ -40,7 +40,7 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
   assertthat::assert_that(is.null(add_tx_metadata)||(methods::is(add_tx_metadata, "list")&&all(lengths(add_tx_metadata)>0)), msg = "The add_tx_metadata object must be a list of non-empty elements or or NULL.")
 
   max_delta_col <- paste0("max(",levels(dturtle$group)[1], "-",levels(dturtle$group)[2],")")
-  dtu_table <- data.frame("gene_ID" = dturtle$sig_gene, stringsAsFactors = F)
+  dtu_table <- data.frame("gene_ID" = dturtle$sig_gene, stringsAsFactors = FALSE)
 
   dtu_table$gene_qvalue <- sapply(dtu_table$gene_ID, FUN = function(x) min(dturtle$FDR_table$gene[dturtle$FDR_table$geneID == x]))
   dtu_table$minimal_tx_qvalue <- sapply(dtu_table$gene_ID, FUN = function(x) min(dturtle$FDR_table$transcript[dturtle$FDR_table$geneID == x]))
@@ -53,14 +53,14 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
     if(length(valid_cols) != length(add_gene_metadata)){
       message("\nCould not find the following columns in 'meta_table_gene':\n\t", paste0(setdiff(add_gene_metadata, valid_cols), collapse = "\n\t"))
     }
-    add_table <- dturtle$meta_table_gene[match(dtu_table$gene_ID, dturtle$meta_table_gene$gene), unlist(valid_cols), drop=F]
+    add_table <- dturtle$meta_table_gene[match(dtu_table$gene_ID, dturtle$meta_table_gene$gene), unlist(valid_cols), drop=FALSE]
     if(is.null(names(valid_cols))){
       names(valid_cols) <- make.names(unlist(valid_cols))
     }else{
       names(valid_cols)[names(valid_cols) == ""] <- unlist(valid_cols[names(valid_cols) == ""])
     }
     colnames(add_table) <- make.names(names(valid_cols))
-    dtu_table <- cbind(dtu_table, add_table, stringsAsFactors=F)
+    dtu_table <- cbind(dtu_table, add_table, stringsAsFactors=FALSE)
   }
 
   if(!is.null(add_tx_metadata)){
@@ -72,7 +72,7 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
       message("\nInvalid vector (must be of length 2) or could not find columns in 'meta_table_tx':\n\t", paste0(setdiff(lapply(add_tx_metadata, `[[`, 1), valid_cols), collapse = "\n\t"))
     }
     assertthat::assert_that(all(unlist(lapply(funcs, methods::is, "function"))), msg = "Not all provided 'add_tx_metadata' functions are functions!")
-    temp_table <- dturtle$meta_table_tx[dturtle$meta_table_tx$gene %in% dtu_table$gene_ID, c("gene",unlist(valid_cols)), drop=F]
+    temp_table <- dturtle$meta_table_tx[dturtle$meta_table_tx$gene %in% dtu_table$gene_ID, c("gene",unlist(valid_cols)), drop=FALSE]
     add_table <- lapply(dtu_table$gene_ID, function(gene){
       temp <- temp_table[temp_table$gene==gene,]
       lapply(seq_along(funcs), function(i) funcs[[i]](temp[[i+1]]))
@@ -88,11 +88,11 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
       names(valid_cols)[names(valid_cols) == ""] <- unlist(valid_cols[names(valid_cols) == ""])
     }
     colnames(add_table) <- make.names(names(valid_cols))
-    dtu_table <- cbind(dtu_table, add_table, stringsAsFactors=F)
+    dtu_table <- cbind(dtu_table, add_table, stringsAsFactors=FALSE)
   }
 
   dtu_table <- rapply(dtu_table, as.character, classes="factor", how="replace")
-  dtu_table <- dtu_table[order(abs(dtu_table[[max_delta_col]]), decreasing = T),, drop=F]
+  dtu_table <- dtu_table[order(abs(dtu_table[[max_delta_col]]), decreasing = TRUE),, drop=FALSE]
 
   return_obj <- append(list("dtu_table"=dtu_table), dturtle)
   class(return_obj) <- append("dturtle", class(return_obj))
@@ -124,7 +124,7 @@ create_dtu_table <- function(dturtle, add_gene_metadata = list("pct_gene_expr"="
 #' @export
 plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
                            order_by=NULL, num_digits=NULL, num_digits_format=NULL,
-                           min_page_length=25, savepath=NULL, create_table_image=F, ...) {
+                           min_page_length=25, savepath=NULL, create_table_image=FALSE, ...) {
   assertthat::assert_that(!is.null(dturtle$dtu_table), msg = "The provided dturtle object does not contain the needed dtu_table. Have you run 'create_dtu_table()'?")
   assertthat::assert_that(!is.null(dturtle$group), msg = "The provided dturtle object does not contain all the needed information. Have you run 'create_dtu_table()'?")
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'create_dtu_table()'?")
@@ -146,7 +146,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
   }else{
     assertthat::assert_that(all(columns %in% colnames(dturtle$dtu_table)))
   }
-  dtu_table <- dturtle$dtu_table[,columns,drop=F]
+  dtu_table <- dturtle$dtu_table[,columns,drop=FALSE]
 
   if(!is.null(order_by)){
     assertthat::assert_that(all(lapply(gsub("^-", "", order_by), FUN = function(x) x %in% colnames(dtu_table))), msg = "Invalid `order_by` names provided.")
@@ -159,7 +159,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
         return(xtfrm(order_col_list[[i]]))
       }
     }), names(order_col_list))
-    dtu_table <- dtu_table[with(dtu_table, do.call(order, order_col_list)),,drop=F]
+    dtu_table <- dtu_table[with(dtu_table, do.call(order, order_col_list)),,drop=FALSE]
   }
 
   if(!is.null(num_digits)){
@@ -183,13 +183,13 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
              length(cols_to_change), " values for columns: \n\t", paste0(names(cols_to_change), collapse = "\n\t"))
       }
       dtu_table[cols_to_change] <- lapply(seq_along(cols_to_change), FUN=function(i){
-        return(formattable::digits(x=dtu_table[[names(cols_to_change)[i]]], digits = num_digits[i], format = num_digits_format[i], drop0trailing = T))
+        return(formattable::digits(x=dtu_table[[names(cols_to_change)[i]]], digits = num_digits[i], format = num_digits_format[i], drop0trailing = TRUE))
       })
     }
   }
 
   #default arguments for formattable
-  args <- list(x=dtu_table, align = rep("c", ncol(dtu_table)), formatters = column_formatters, row.names = F)
+  args <- list(x=dtu_table, align = rep("c", ncol(dtu_table)), formatters = column_formatters, row.names = FALSE)
   args <- utils::modifyList(args, list(...))
   dtu_formattable <- do.call(formattable::formattable, c(args))
 
@@ -211,7 +211,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
   container <- paste0(header_string,container)
 
   ### adds spurious whitespace to character columns?
-  temp_table <- utils::type.convert(data.frame(formattable:::render_html_matrix.formattable(dtu_formattable), stringsAsFactors = F), as.is=T)
+  temp_table <- utils::type.convert(data.frame(formattable:::render_html_matrix.formattable(dtu_formattable), stringsAsFactors = FALSE), as.is=TRUE)
   #remove trailing whitespaces from characters
   cols_to_change <- which(sapply(temp_table, is.character))
   temp_table[cols_to_change] <- lapply(temp_table[cols_to_change], function(x) trimws(x, which="right"))
@@ -233,11 +233,11 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
 
   table_id <- paste0("DTUrtle_table-", paste0(sample(c(sample(LETTERS, 5), sample(letters, 5), sample(0:9, 5))), collapse = ""))
   #TODO: test datatables columns.data
-  options(DT.warn.size=F)
-  dtable <- DT::datatable(temp_table, escape = FALSE, filter='top', rownames = F,
+  options(DT.warn.size=FALSE)
+  dtable <- DT::datatable(temp_table, escape = FALSE, filter='top', rownames = FALSE,
                           extensions = 'Buttons', width = "90%", elementId = table_id,
                           container = container, options = list(
-                        dom = "lBfrtip", orderClasses = T, buttons = list(list(
+                        dom = "lBfrtip", orderClasses = TRUE, buttons = list(list(
                           extend = 'collection', buttons = c('csv', 'excel'),
                           text = 'Download')),
                         autoWidth = TRUE, pageLength = min_page_length,
@@ -289,22 +289,22 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
     return(dtable)
   }else{
     if(!dir.exists(dirname(savepath))){
-      dir.create(file.path(dirname(savepath)), recursive = T)
+      dir.create(file.path(dirname(savepath)), recursive = TRUE)
     }
     ### bug in saveWidget
     old_wd <- getwd()
     tryCatch({
       setwd(file.path(dirname(savepath)))
-      DT::saveWidget(dtable, file = paste0(basename(savepath),ifelse(endsWith(basename(savepath),".html"),"",".html")), selfcontained = T)
+      DT::saveWidget(dtable, file = paste0(basename(savepath),ifelse(endsWith(basename(savepath),".html"),"",".html")), selfcontained = TRUE)
     }, finally={
       setwd(old_wd)
     })
   }
 
   ###webshot
-  if (create_table_image != F) {
-    assertthat::assert_that(requireNamespace("webshot2", quietly = T)||requireNamespace("webshot", quietly = T), msg = "The package webshot or webshot2 is needed for creating an image of a HTML-table.")
-    if(requireNamespace("webshot2", quietly = T)){
+  if (create_table_image != FALSE) {
+    assertthat::assert_that(requireNamespace("webshot2", quietly = TRUE)||requireNamespace("webshot", quietly = TRUE), msg = "The package webshot or webshot2 is needed for creating an image of a HTML-table.")
+    if(requireNamespace("webshot2", quietly = TRUE)){
       webshot_func <- webshot2::webshot
     }else{
       assertthat::assert_that(webshot::is_phantomjs_installed(), msg="The function `install_phantomjs()` of webshot must be run before an image of a HTML-table can be created.")
@@ -318,7 +318,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
     cols_to_change <- cols_to_change[!names(cols_to_change) %in% names(column_formatters)]
     cols_to_change <- cols_to_change[sapply(cols_to_change, function(x) any(file.exists(image_dtu_table[[x]])))]
     if(length(cols_to_change)>0){
-      image_dtu_table <- image_dtu_table[,-c(cols_to_change),drop=F]
+      image_dtu_table <- image_dtu_table[,-c(cols_to_change),drop=FALSE]
     }
 
     args$x <- image_dtu_table
@@ -342,7 +342,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
                      zoom = 4, vwidth = 1920, vheight = 1080, delay=0.5)
     file.remove(temp_path)
     #trim webshot
-    if(requireNamespace("magick", quietly = T)){
+    if(requireNamespace("magick", quietly = TRUE)){
       magick::image_write(magick::image_trim(magick::image_read(image_file_name)),path = image_file_name)
     }else{
       message("Trimming of table image could be performed, if `magick` package is installed.")
@@ -376,7 +376,7 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
 plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
                                     group_colors=NULL, fit_line_color="red",
                                     text_size=11, label_angle=25, savepath=NULL,
-                                    filename_ext="_barplot.png", add_to_table=F,
+                                    filename_ext="_barplot.png", add_to_table=FALSE,
                                     BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
   assertthat::assert_that(is.null(meta_gene_id)||(methods::is(meta_gene_id, "character")&&meta_gene_id %in% colnames(dturtle$meta_table_gene)), msg = "The provided meta_gene_id column could not be found or is of wrong format.")
@@ -416,11 +416,11 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
   }
 
   if(!is.null(savepath) && !dir.exists(savepath)){
-      dir.create(file.path(savepath), recursive = T)
+      dir.create(file.path(savepath), recursive = TRUE)
   }
 
   if(length(valid_genes)>10){
-    BiocParallel::bpprogressbar(BPPARAM) <- T
+    BiocParallel::bpprogressbar(BPPARAM) <- TRUE
   }
 
   message("Creating ", length(valid_genes), " plots:")
@@ -433,10 +433,10 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
 
     sum1 <- colSums(counts_gene[,which(group==levels(group)[1])])
     sum2 <- colSums(counts_gene[,which(group==levels(group)[2])])
-    mean_1 <- mean(sum1, na.rm = T)
-    mean_2 <- mean(sum2, na.rm = T)
-    sd_1 <- stats::sd(sum1, na.rm = T)
-    sd_2 <- stats::sd(sum2, na.rm = T)
+    mean_1 <- mean(sum1, na.rm = TRUE)
+    mean_2 <- mean(sum2, na.rm = TRUE)
+    sd_1 <- stats::sd(sum1, na.rm = TRUE)
+    sd_2 <- stats::sd(sum2, na.rm = TRUE)
 
     if(!is.null(meta_gene_id)){
       gene_id <- gene_ids[[gene]]
@@ -454,11 +454,11 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
     proportions <- get_proportion_matrix(counts_gene)
     #Nan if counts are all 0 --> 0/0
     proportions[is.nan(proportions)] <- 0
-    prop_samp <- data.frame(feature_id = rownames(proportions), proportions, stringsAsFactors = F, check.names = F)
-    prop_fit <- data.frame(feature_id = rownames(fit_full), fit_full, stringsAsFactors = F, check.names = F)
+    prop_samp <- data.frame(feature_id = rownames(proportions), proportions, stringsAsFactors = FALSE, check.names = FALSE)
+    prop_fit <- data.frame(feature_id = rownames(fit_full), fit_full, stringsAsFactors = FALSE, check.names = FALSE)
 
     #order_features
-    oo <- order(apply(stats::aggregate(t(prop_samp[, -1]), by = list(group = group), stats::median)[, -1], 2, max), decreasing = T)
+    oo <- order(apply(stats::aggregate(t(prop_samp[, -1]), by = list(group = group), stats::median)[, -1], 2, max), decreasing = TRUE)
     feature_levels <- rownames(prop_samp)[oo]
 
     #order_samples
@@ -504,7 +504,7 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
 
     if(!is.null(fit_line_color)){
       ggp <- ggp + ggplot2::geom_errorbar(data = prop_fit, ggplot2::aes_string(x = "feature_id", ymin = "proportion", ymax = "proportion", group = "sample_id"),
-                                 position = ggplot2::position_dodge(width = 0.9), size=0.5, linetype = "solid", inherit.aes = F, width = 1, colour = fit_line_color)
+                                 position = ggplot2::position_dodge(width = 0.9), size=0.5, linetype = "solid", inherit.aes = FALSE, width = 1, colour = fit_line_color)
     }
     if(!is.null(savepath)){
       #default arguments for plot
@@ -557,8 +557,8 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
 #' @export
 #'@seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
 plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_columns=NULL,
-                                     include_expression=F, savepath=NULL, filename_ext="_pheatmap.png",
-                                     add_to_table=F, BPPARAM=BiocParallel::SerialParam(), ...){
+                                     include_expression=FALSE, savepath=NULL, filename_ext="_pheatmap.png",
+                                     add_to_table=FALSE, BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(!is.null(dturtle$meta_table_sample), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(!is.null(dturtle$drim), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
@@ -600,16 +600,16 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
 
   meta_table <- dturtle$meta_table_sample[,sample_meta_table_columns]
   assertthat::assert_that(all(as.character(dturtle$drim@samples[[1]]) %in% meta_table[[1]]), msg = "Not all provided samples are present in meta_table_sample (or the provided first column).")
-  meta_table <- meta_table[match(as.character(dturtle$drim@samples[[1]]), meta_table[[1]]), ,drop=F]
+  meta_table <- meta_table[match(as.character(dturtle$drim@samples[[1]]), meta_table[[1]]), ,drop=FALSE]
   rownames(meta_table) <- meta_table[[1]]
   meta_table[1] <- NULL
 
   if(!is.null(savepath) && !dir.exists(savepath)){
-    dir.create(file.path(savepath), recursive = T)
+    dir.create(file.path(savepath), recursive = TRUE)
   }
 
   if(length(valid_genes)>10){
-    BiocParallel::bpprogressbar(BPPARAM) <- T
+    BiocParallel::bpprogressbar(BPPARAM) <- TRUE
   }
 
   message("Creating ", length(valid_genes), " plots:")
@@ -626,15 +626,15 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
     if(include_expression){
       anno_col[[paste0(gene, " expr.")]] <- log2(gene_cts[gene,]+1)
     }
-    anno_col <- anno_col[,rev(colnames(anno_col)),drop=F]
+    anno_col <- anno_col[,rev(colnames(anno_col)),drop=FALSE]
 
     ###pheatmap can not handle booleans
-    anno_row <- data.frame("Sig"=as.character(row.names(prop) %in% dturtle$sig_tx), row.names=row.names(prop), stringsAsFactors = F)
+    anno_row <- data.frame("Sig"=as.character(row.names(prop) %in% dturtle$sig_tx), row.names=row.names(prop), stringsAsFactors = FALSE)
 
     #default arguments for pheatmap
     args <- list(mat=prop, annotation_col=anno_col, annotation_row=anno_row,
                  filename=ifelse(is.null(savepath),NA,file.path(savepath,paste0(make.names(gene),filename_ext))),
-                 show_colnames=ifelse(ncol(prop)>15,F,T), treeheight_row=0, silent=T)
+                 show_colnames=ifelse(ncol(prop)>15,FALSE,TRUE), treeheight_row=0, silent=TRUE)
     args <- utils::modifyList(args, list(...))
     p <- do.call(pheatmap::pheatmap, c(args))
     if(!is.na(args$filename)){
@@ -696,16 +696,16 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
 #' @family DTUrtle visualization
 #' @export
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
-plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=NULL, tested_transcripts_only="mixed", reduce_introns=T,
+plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=NULL, tested_transcripts_only="mixed", reduce_introns=TRUE,
                                   reduce_introns_fill="white", reduce_introns_min_size=50, fontsize_vec=c(10,1.1,0.6),
                                   arrow_colors=c("#7CAE00", "#00BFC4"), arrow_start=0.88, extension_factors=c(0.025, 0.22),
-                                  savepath=NULL, filename_ext="_transcripts.png", add_to_table=F, BPPARAM=BiocParallel::SerialParam(), ...){
+                                  savepath=NULL, filename_ext="_transcripts.png", add_to_table=FALSE, BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
   assertthat::assert_that(methods::is(gtf, "character") && file.exists(gtf) || methods::is(gtf, "GRanges"), msg = "Invalid gtf filepath or object. Must be either a filepath to a gtf file or a previously created granges object.")
   assertthat::assert_that(!missing(genome), msg = "Please specify a UCSC genome identifier in `genome` (e.g. 'hg38', 'mm10', 'danRer11', etc.). Can also be NULL to skip ideogram track generation.")
   assertthat::assert_that(is.null(genome)||methods::is(genome, "character") && length(genome)==1, msg = "The genome object must be a character vector of length 1 or NULL.")
   assertthat::assert_that(is.null(one_to_one)||isTRUE(one_to_one)||(methods::is(one_to_one, "character")&&length(one_to_one)==1), msg = "The one_to_one object must be a character vector of length 1, TRUE or NULL.")
-  assertthat::assert_that(length(tested_transcripts_only)==1&&tested_transcripts_only %in% c("mixed",T,F), msg = "The tested_transcripts_only object must be 'mixed', TRUE or FALSE.")
+  assertthat::assert_that(length(tested_transcripts_only)==1&&tested_transcripts_only %in% c("mixed",TRUE,FALSE), msg = "The tested_transcripts_only object must be 'mixed', TRUE or FALSE.")
   assertthat::assert_that(is.logical(reduce_introns), msg = "The reduce_introns objects must be logical.")
   assertthat::assert_that(methods::is(reduce_introns_fill, "character")&&length(reduce_introns_fill)==1, msg = "The reduce_introns_fill objects must be a character vector of length 1")
   assertthat::assert_that((is.integer(reduce_introns_min_size)||(is.numeric(reduce_introns_min_size) && all(reduce_introns_min_size == trunc(reduce_introns_min_size))))&&reduce_introns_min_size>=0, msg = "The provided reduce_introns_min_size must be a positive integer.")
@@ -727,7 +727,7 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
 
   if(!methods::is(gtf, "GRanges")){
     message("\nImporting gtf file from disk.")
-    gtf <- import_gtf(gtf_file = gtf, feature_type = NULL, out_df = F)
+    gtf <- import_gtf(gtf_file = gtf, feature_type = NULL, out_df = FALSE)
   }
 
   if(is.null(genes)){
@@ -789,7 +789,7 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
   }
 
   if(length(valid_genes)>10){
-    BiocParallel::bpprogressbar(BPPARAM) <- T
+    BiocParallel::bpprogressbar(BPPARAM) <- TRUE
   }
 
   message("Creating ", length(valid_genes), " plots:")
@@ -801,7 +801,7 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
     gene_info <- as.data.frame(gene_gtf[gene_gtf$type=="gene",])
 
     #which transcripts are displayed
-    if(tested_transcripts_only %in% c("mixed",T)){
+    if(tested_transcripts_only %in% c("mixed",TRUE)){
       tested_tx <- dturtle$FDR_table$txID[dturtle$FDR_table$geneID == gene & !is.na(dturtle$FDR_table$transcript)]
       if(length(tested_tx)==0){
         if(tested_transcripts_only=="mixed"){
@@ -847,11 +847,11 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
 
     #fitted mean per group
     grouped_mean_df <- get_diff(gene, dturtle)
-    grouped_mean_df <- grouped_mean_df[tested_tx,,drop=F]
+    grouped_mean_df <- grouped_mean_df[tested_tx,,drop=FALSE]
     rownames(grouped_mean_df) <- tested_tx
     #order transcripts by fitted mean diff
     #cave: do not reorder grtrack_list with overlayplots - custom tracks will not follow new ordering!
-    tested_tx <- rownames(grouped_mean_df)[order(abs(grouped_mean_df$diff), decreasing = T)]
+    tested_tx <- rownames(grouped_mean_df)[order(abs(grouped_mean_df$diff), decreasing = TRUE)]
 
     for(tx_id in tested_tx){
       gtf_tx <- gtf_trans[[tx_id]]
@@ -892,7 +892,7 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
       if(length(new_intron_starts)>0){
         grtrack_list <- Gviz::HighlightTrack(trackList = grtrack_list, start = new_intron_starts,
                                              width = reduction_obj$reduced_regions$new_width, chromosome = gtf_trans[[1]]@seqnames@values, fill = reduce_introns_fill,
-                                             col="white", inBackground=T)
+                                             col="white", inBackground=TRUE)
       }
     }
 
@@ -927,7 +927,7 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
       }
     }
 
-    p <- Gviz::plotTracks(append(track_list, grtrack_list), collapse=T, from = min(tx_ranges$start), to = max(tx_ranges$end),
+    p <- Gviz::plotTracks(append(track_list, grtrack_list), collapse=TRUE, from = min(tx_ranges$start), to = max(tx_ranges$end),
                           extend.left = extension_front, extend.right = extension_back, title.width=if(any(tested_tx %in% dturtle$sig_tx)) NULL else 0,
                           main = paste0(gene_info$gene_name, " (", gene_info$gene_id,") ---  ", levels(dturtle$group)[1], " vs. ",levels(dturtle$group)[2] ),
                           cex.main = fontsize_vec[[2]])
@@ -983,9 +983,9 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
 #' @param plot_scale Specify how the scales of each facet should act. Values are "fixed", "free_x", "free_y" or "free", to either have the same fixed scale, a free x- or y-axis or both axis free.
 #' @param point_alpha Specify an alpha level for the single cells / samples.
 #' @param point_size Specify the size of the points representing a single cell / sample. If `NULL`, chosen automatically.
-#' @param label_size If `include_labels=T`, set size of labels (in mm).
-#' @param label_colors If `include_labels=T`, set color of labels of positive or negative proportional differences.
-#' @param label_y_expansion If `include_labels=T`, define the factor the y-axis is extended by. This extension is performed to avoid overlapping of labels and cells / samples.
+#' @param label_size If `include_labels=TRUE`, set size of labels (in mm).
+#' @param label_colors If `include_labels=TRUE`, set color of labels of positive or negative proportional differences.
+#' @param label_y_expansion If `include_labels=TRUE`, define the factor the y-axis is extended by. This extension is performed to avoid overlapping of labels and cells / samples.
 #'  Labels are added to bottom of the plots of the second comparison group.
 #' @inheritParams plot_proportion_barplot
 #' @inheritDotParams ggplot2::ggsave
@@ -995,16 +995,16 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
 #' @family DTUrtle visualization
 #' @export
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
-plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="proportions", include_gene=T, log_expression=T, include_labels=T, reduction_to_use="umap",
-                                       indicate_significant_tx=T,  plot_colors=c("grey", "#9ECAE1", "#6BAED6", "#4292C6", "#2171B5", "#08519C", "#08306B"),  plot_scale="fixed",
+plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="proportions", include_gene=TRUE, log_expression=TRUE, include_labels=TRUE, reduction_to_use="umap",
+                                       indicate_significant_tx=TRUE,  plot_colors=c("grey", "#9ECAE1", "#6BAED6", "#4292C6", "#2171B5", "#08519C", "#08306B"),  plot_scale="fixed",
                                        point_alpha=1, point_size=NULL, text_size=11, label_size=3, label_colors=c("#7CAE00", "#00BFC4"), label_y_expansion=0.2, savepath=NULL,
-                                       filename_ext="_dim_reduce.png", add_to_table=F, BPPARAM=BiocParallel::SerialParam(), ...){
+                                       filename_ext="_dim_reduce.png", add_to_table=FALSE, BPPARAM=BiocParallel::SerialParam(), ...){
 
   assertthat::assert_that(!is.null(dturtle$sig_gene), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(!is.null(dturtle$drim), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   assertthat::assert_that(!is.null(dturtle$sig_tx), msg = "The provided dturtle object does not contain all the needed information. Have you run 'posthoc_and_stager()'?")
   if(methods::is(reduction_df, "Seurat")){
-    assertthat::assert_that(requireNamespace("Seurat", quietly = T), msg = "The package Seurat is needed if a Seurat object is provided as reduction data frame.")
+    assertthat::assert_that(requireNamespace("Seurat", quietly = TRUE), msg = "The package Seurat is needed if a Seurat object is provided as reduction data frame.")
     assertthat::assert_that(utils::packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
     assertthat::assert_that(reduction_df@version>="3.0.0", msg = "The provided 'reduction_df' is not a Seurat 3 object. Currently only Seurat 3 objects are supported.")
     assertthat::assert_that(reduction_to_use %in% names(reduction_df@reductions), msg = paste0("The provided reduction '", reduction_to_use, "' was not found in the provided Seurat object. The following reductions are available:\n\t", paste0(names(reduction_df@reductions), collapse = "\n\t")))
@@ -1035,7 +1035,7 @@ plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="
 
 
   tx_cts <- dturtle$drim@counts@unlistData
-  reduction_df <- reduction_df[rownames(reduction_df) %in% colnames(tx_cts),,drop=F]
+  reduction_df <- reduction_df[rownames(reduction_df) %in% colnames(tx_cts),,drop=FALSE]
   message("Retrieved coordinates for ", nrow(reduction_df), " out of ", ncol(tx_cts)," cells / samples.")
 
   if(nrow(reduction_df)==0){
@@ -1072,13 +1072,13 @@ plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="
   }
 
   if(!is.null(savepath) && !dir.exists(file.path(savepath))){
-    dir.create(file.path(savepath), recursive = T)
+    dir.create(file.path(savepath), recursive = TRUE)
   }
 
   plot_value_title <- switch(plot, "expression"=ifelse(log_expression, "Log expression", "Expression"), "proportions"="Proportions")
 
   if(length(valid_genes)>10){
-    BiocParallel::bpprogressbar(BPPARAM) <- T
+    BiocParallel::bpprogressbar(BPPARAM) <- TRUE
   }
 
   message("Creating ", length(valid_genes), " plots:")
@@ -1088,9 +1088,9 @@ plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="
   plot_list <- BiocParallel::bplapply(valid_genes, function(gene){
 
     group_diff <- get_diff(gene, dturtle)
-    group_diff <- group_diff[order(abs(group_diff$diff),decreasing = T),]
+    group_diff <- group_diff[order(abs(group_diff$diff),decreasing = TRUE),]
     tx_elements <- rownames(group_diff)
-    temp_tx_cts <- t(tx_cts[tx_elements,,drop=F])
+    temp_tx_cts <- t(tx_cts[tx_elements,,drop=FALSE])
 
     if(plot=="proportions"){
       temp_tx_cts <- t(temp_tx_cts)
@@ -1101,13 +1101,13 @@ plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="
     }
 
     if(include_gene&&plot=="expression"){
-      temp_gene_cts <- t(gene_cts[gene,,drop=F])
-      plot_df <- cbind(reduction_df, temp_gene_cts[match(rownames(reduction_df), rownames(temp_gene_cts)),,drop=F],
-                       temp_tx_cts[match(rownames(reduction_df), rownames(temp_tx_cts)),,drop=F])
+      temp_gene_cts <- t(gene_cts[gene,,drop=FALSE])
+      plot_df <- cbind(reduction_df, temp_gene_cts[match(rownames(reduction_df), rownames(temp_gene_cts)),,drop=FALSE],
+                       temp_tx_cts[match(rownames(reduction_df), rownames(temp_tx_cts)),,drop=FALSE])
       plot_df$cell <- rownames(plot_df)
       plot_df <- reshape2::melt(plot_df, measure.vars=c(gene, tx_elements))
     }else{
-      plot_df <- cbind(reduction_df, temp_tx_cts[match(rownames(reduction_df), rownames(temp_tx_cts)),,drop=F])
+      plot_df <- cbind(reduction_df, temp_tx_cts[match(rownames(reduction_df), rownames(temp_tx_cts)),,drop=FALSE])
       plot_df$cell <- rownames(plot_df)
       plot_df <- reshape2::melt(plot_df, measure.vars=tx_elements)
     }
@@ -1132,7 +1132,7 @@ plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="
 
     if(include_labels){
       #inverse differences, as labels are shown in the second group plots.
-      label_df <- data.frame("variable"=tx_elements, "group"=factor(levels(dturtle$group)[2], levels=levels(dturtle$group)), "value"=0, "label"=(group_diff$diff*-1), stringsAsFactors = F)
+      label_df <- data.frame("variable"=tx_elements, "group"=factor(levels(dturtle$group)[2], levels=levels(dturtle$group)), "value"=0, "label"=(group_diff$diff*-1), stringsAsFactors = FALSE)
       label_df$color <- ifelse(label_df$label>0, label_colors[1], label_colors[2])
       label_df$label <- paste0(ifelse(label_df$label>0, intToUtf8(11014), intToUtf8(11015)), scales::percent(label_df$label, accuracy = .01))
       label_df$variable <- factor(label_df$variable, levels = tx_elements)
@@ -1141,7 +1141,7 @@ plot_dimensional_reduction <- function(dturtle, reduction_df, genes=NULL, plot="
         ggplot2::geom_label(data = label_df,
                             ggplot2::aes_string(label="label", x=mean(range(plot_df$x)), y=min(plot_df$y)-diff(range(plot_df$x))*label_y_expansion),
                             fill=label_df$color, color="black",
-                            fontface='bold', size=label_size, show.legend = F)
+                            fontface='bold', size=label_size, show.legend = FALSE)
     }
 
     if(indicate_significant_tx){
@@ -1235,7 +1235,7 @@ table_percentage_bar <- function(color1, color2, digits, color_break = 0, ...) {
 #' @param gradient_max_color The color of the maximal value in the color gradient.
 #' @param gradient_alpha Logical of whether to include alpha channel. NULL to let the function decide by input.
 #' @param digits The number of digits to format the numbers to. Scientific notation is used.
-#' @param gradient_na_rm 	Logical indicating whether to ignore missing values.
+#' @param gradient_na_rm Logical indicating whether to ignore missing values.
 #' @param ... Further arguments passed to \code{\link[formattable:style]{style}}.
 #'
 #' @return A formatter function, to be used by [plot_dtu_table()] or \code{\link[formattable:formattable]{formattable}}.
@@ -1244,7 +1244,7 @@ table_percentage_bar <- function(color1, color2, digits, color_break = 0, ...) {
 #'
 #' @seealso [create_dtu_table()] and [plot_dtu_table()] for table visualization.
 table_pval_tile <- function(gradient_min_color, gradient_max_color,
-                            gradient_alpha=NULL, digits,  gradient_na_rm=T, ...) {
+                            gradient_alpha=NULL, digits,  gradient_na_rm=TRUE, ...) {
       formattable::formatter(
             "span",
             x ~ formattable::digits(x, digits = digits, format = "e"),

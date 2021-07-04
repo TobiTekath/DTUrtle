@@ -61,7 +61,7 @@ mv SRR10669448_1.fastq.gz bulk_D2hr_rep2_1.fastq.gz
 mv SRR10669448_2.fastq.gz bulk_D2hr_rep2_2.fastq.gz
 mv SRR10669449_1.fastq.gz bulk_D2hr_rep3_1.fastq.gz
 mv SRR10669449_2.fastq.gz bulk_D2hr_rep3_2.fastq.gz
-	
+
 #Quality control
 fastqc -t 4 -o fastqc/ *.fastq.gz
 
@@ -90,7 +90,7 @@ To run the `Salmon` quantification, we first need a transcriptomic index. For th
 
 Assume you have downloaded and unpacked the above mentioned files in the analysis root directory. To build the actual index we run this *bash* code:
 
-```{bash, eval=F}
+```{bash, eval=FALSE}
 #installation in conda evironment
 conda install salmon
 
@@ -104,7 +104,7 @@ salmon index -t ../gencode.v34.transcripts.fa --gencode -p 4 -i index
 
 The actual quantification can be performed in *bash* with:
 
-```{bash, eval=F}
+```{bash, eval=FALSE}
 cd ../trim
 
 #loop over files

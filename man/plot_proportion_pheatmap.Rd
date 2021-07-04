@@ -8,10 +8,10 @@ plot_proportion_pheatmap(
   dturtle,
   genes = NULL,
   sample_meta_table_columns = NULL,
-  include_expression = F,
+  include_expression = FALSE,
   savepath = NULL,
   filename_ext = "_pheatmap.png",
-  add_to_table = F,
+  add_to_table = FALSE,
   BPPARAM = BiocParallel::SerialParam(),
   ...
 )

@@ -26,7 +26,7 @@ knitr::opts_chunk$set(
 if(dir.exists(root_dir)){
   knitr::opts_knit$set(root.dir = root_dir)
   #remove previous results
-  unlink(paste0(root_dir,"/*"),recursive=T)
+  unlink(paste0(root_dir,"/*"),recursive=TRUE)
 }
 start_time <- Sys.time()
 ```
@@ -120,7 +120,7 @@ names(files) <- gsub(".*/","",gsub("/quant.sf","",files))
 ```
 
 The files object looks like this:
-```{r, echo=F}
+```{r, echo=FALSE}
 files
 ```
 
@@ -151,7 +151,7 @@ If such a table is not already present, it can be easily prepared:
 ```{r}
 pd <- data.frame("id"=colnames(cts), 
                  "group"=c(rep("Dex2hr",3), rep("EtOH",3)), 
-                 stringsAsFactors = F)
+                 stringsAsFactors = FALSE)
 ```
 
 ```{r}
@@ -330,7 +330,7 @@ A different visualization option is a heatmap, where additional meta data can be
 
 ```{r fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
 temp <- plot_proportion_pheatmap(dturtle = dturtle, genes = "TSC22D3", 
-                                 include_expression = T, treeheight_col=20)
+                                 include_expression = TRUE, treeheight_col=20)
 temp$TSC22D3
 ```
 
@@ -340,7 +340,7 @@ Again, we can save the plots to disk and add them to the `dtu_table`:
 
 ```{r}
 dturtle <- plot_proportion_pheatmap(dturtle = dturtle,
-                                    include_expression = T,
+                                    include_expression = TRUE,
                                     treeheight_col=20,
                                     savepath = "images", 
                                     add_to_table = "pheatmap",
@@ -367,7 +367,7 @@ plot_transcripts_view(dturtle = dturtle,
                               genes = "TSC22D3", 
                               gtf = "../gencode.v34.annotation.gtf", 
                               genome = 'hg38',
-                              one_to_one = T)
+                              one_to_one = TRUE)
 ```
 
 
@@ -383,7 +383,7 @@ Analogous as before, we can save plots to disk and add them to the `dtu_table`:
 dturtle <- plot_transcripts_view(dturtle = dturtle, 
                                  gtf = "../gencode.v34.annotation.gtf", 
                                  genome = 'hg38', 
-                                 one_to_one = T,
+                                 one_to_one = TRUE,
                                  savepath = "images", 
                                  add_to_table = "transcript_view",
                                  BPPARAM = biocpar)

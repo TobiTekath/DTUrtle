@@ -26,7 +26,7 @@ knitr::opts_chunk$set(
 if(dir.exists(root_dir)){
   knitr::opts_knit$set(root.dir = root_dir)
   #remove previous results
-  unlink(paste0(root_dir,"/*"),recursive=T)
+  unlink(paste0(root_dir,"/*"),recursive=TRUE)
 }
 start_time <- Sys.time()
 ```
@@ -121,7 +121,7 @@ names(files) <- basename(gsub("/alevin/quants_mat.gz", "", files))
 ```
 
 The files object looks like this:
-```{r, echo=F}
+```{r, echo=FALSE}
 files
 ```
 
@@ -169,7 +169,7 @@ The `meta.data` data frame of this object contains the wanted annotation.
 
 ```{r}
 library(Seurat)
-load("../droplet_Mammary_Gland_seurat_tiss.Robj", verbose=T)
+load("../droplet_Mammary_Gland_seurat_tiss.Robj", verbose=TRUE)
 
 tabula_muris_metadata <- tiss@meta.data
 dim(tabula_muris_metadata)
@@ -210,9 +210,9 @@ The score calculation can be summarized like this: For each gene, a reference tr
 We can add this score information to an already existing table, like the tx2gene table (`add_to_table = tx2gene`). As we need exon-level information for the calculation, we should provide an unfiltered GTF GRanges or data frame object - or alternatively a file path.
 
 ```{r}
-unfilt_gtf <- import_gtf("../gencode.vM24.annotation.gtf", feature_type = NULL, out_df = F)
+unfilt_gtf <- import_gtf("../gencode.vM24.annotation.gtf", feature_type = NULL, out_df = FALSE)
 #set priming_enrichment to '3', as we expect reads enriched towards the 3' end of the mRNA.
-tx2gene <- priming_bias_detection_probability(counts = cts, tx2gene = tx2gene, gtf = unfilt_gtf, one_to_one = T,
+tx2gene <- priming_bias_detection_probability(counts = cts, tx2gene = tx2gene, gtf = unfilt_gtf, one_to_one = TRUE,
                                               priming_enrichment = "3", add_to_table = tx2gene, BPPARAM = biocpar)
 ```
 
@@ -420,7 +420,7 @@ A different visualization option is a heatmap, where additional meta data can be
 ```{r, fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
 temp <- plot_proportion_pheatmap(dturtle = dturtle, genes = "Lcn2", 
                                  sample_meta_table_columns = c("sample_id","condition"),
-                                 include_expression = T, treeheight_col=20)
+                                 include_expression = TRUE, treeheight_col=20)
 temp$Lcn2
 ```
 
@@ -431,7 +431,7 @@ Again, we can save the plots to disk and add them to the `dtu_table`:
 
 ```{r}
 dturtle <- plot_proportion_pheatmap(dturtle = dturtle,
-                                    include_expression = T,
+                                    include_expression = TRUE,
                                     treeheight_col=20,
                                     sample_meta_table_columns = c("sample_id","condition"),
                                     savepath = "images", 
@@ -459,7 +459,7 @@ plot_transcripts_view(dturtle = dturtle,
                               genes = "Lcn2", 
                               gtf = "../gencode.vM24.annotation.gtf", 
                               genome = 'mm10',
-                              one_to_one = T)
+                              one_to_one = TRUE)
 ```
 
 
@@ -475,7 +475,7 @@ Analogous as before, we can save plots to disk and add them to the `dtu_table`:
 dturtle <- plot_transcripts_view(dturtle = dturtle, 
                                  gtf = "../gencode.vM24.annotation.gtf", 
                                  genome = 'mm10', 
-                                 one_to_one = T,
+                                 one_to_one = TRUE,
                                  savepath = "images", 
                                  add_to_table = "transcript_view",
                                  BPPARAM = biocpar)
@@ -603,7 +603,7 @@ As an Seurat object of the data set is already present in the Tabula muris publi
 We assume, you have followed this vignette till the [Sample metadata](#sample-metadata) section. The `tiss` Seurat object is still present from 
 
 ```{r}
-load("../droplet_Mammary_Gland_seurat_tiss.Robj", verbose=T)
+load("../droplet_Mammary_Gland_seurat_tiss.Robj", verbose=TRUE)
 tiss
 tiss@version
 ```
@@ -677,7 +677,7 @@ We can identify cell type specific transcripts via Seurats `FindAllMarkers` func
 #set cell types as active ident
 Idents(tiss) <- tiss$cell_ontology_class
 tiss <- NormalizeData(tiss)
-cell_markers <- FindAllMarkers(tiss, only.pos=T)
+cell_markers <- FindAllMarkers(tiss, only.pos=TRUE)
 ```
 
 
@@ -693,14 +693,14 @@ We can split the markers by their cell type:
 table(cell_markers$cluster)
 ```
 
-We can search for marker transcripts, which were also identified in the DTU analysis (between 'T cell' and 'luminal epithelial cell of mammary gland'):
+We can search for marker transcripts, which were also identified in the DTU analysis (between `T cell` and `luminal epithelial cell of mammary gland`):
 ```{r}
 #select common transcripts
 dtu_markers <- cell_markers[cell_markers$gene %in% dturtle$sig_tx,]
 table(dtu_markers$cluster)
 ```
 
-We see many markers, which have also been identified in the DTU analysis, are for the expected cell types ('luminal epithelial cell of mammary gland' and 'T cell'). This becomes even more prominent, when we take the total amount of markers per cell type into account:
+We see many markers, which have also been identified in the DTU analysis, are for the expected cell types (`luminal epithelial cell of mammary gland` and `T cell`). This becomes even more prominent, when we take the total amount of markers per cell type into account:
 
 ```{r}
 table(dtu_markers$cluster)/table(cell_markers$cluster)
@@ -739,7 +739,7 @@ Apparently 969 markers are belonging to genes, which occur more than once. We no
 interesting_dups <- aggregate(formula = dup_markers$cluster~dup_markers$gene, FUN=function(x){
   ("luminal epithelial cell of mammary gland" %in% x & "T cell" %in% x)
 })
-interesting_dups <- interesting_dups[interesting_dups$`dup_markers$cluster`==T,]
+interesting_dups <- interesting_dups[interesting_dups$`dup_markers$cluster`==TRUE,]
 
 
 dup_markers[dup_markers$gene %in% interesting_dups$`dup_markers$gene`,]
@@ -763,7 +763,7 @@ We see a striking difference for two transcripts: While 'Rps24-210' has a very h
 To get an overview of 'Rps24' transcript expression of the total data set, we can utilize the Seurat plotting functionality:
 ```{r, fig.height=4, fig.width=8, fig.align = "center", out.width="80%"}
 DimPlot(tiss)
-FeaturePlot(tiss, features = c("Rps24-202", "Rps24-210"), order = T)
+FeaturePlot(tiss, features = c("Rps24-202", "Rps24-210"), order = TRUE)
 ```
 
 We see, that the isoforms are not specific for a single cell type, but for multiple. Still we see a striking difference, with a very pronounced expression of 'Rps24-210' in 'T cell', 'B cell', 'macrophages' and a small subcluster of 'stromal cells'.

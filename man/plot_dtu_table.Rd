@@ -13,7 +13,7 @@ plot_dtu_table(
   num_digits_format = NULL,
   min_page_length = 25,
   savepath = NULL,
-  create_table_image = F,
+  create_table_image = FALSE,
   ...
 )
 }

@@ -46,7 +46,7 @@ quantification).
 Install from GitHub:
 
 ``` r
-if(!requireNamespace("remotes", quietly = T)){
+if(!requireNamespace("remotes", quietly = TRUE)){
     install.packages("remotes")
 }
 remotes::install_github("TobiTekath/DTUrtle")
@@ -59,7 +59,7 @@ reduce the dependency complexity). You might also try to install the
 needed Bioconductor packages beforehand:
 
 ``` r
-if(!requireNamespace("BiocManager", quietly = T)){
+if(!requireNamespace("BiocManager", quietly = TRUE)){
     install.packages("BiocManager")
 }
 BiocManager::install(c("BiocParallel", "GenomicRanges", "Gviz", "rtracklayer", "stageR", "tximport", "DESeq2"))
@@ -85,7 +85,7 @@ Gviz versions.
   - **See vignettes for a more detailed workflow with real
 data**
 
-<img src="man/figures/DTUrtle_workflow.svg" height="100%" style="display: block; margin: auto;" />
+<img src="man/figures/DTUrtle_workflow.svg" height="1000px" style="display: block; margin: auto;" />
 
 ## Vignettes
 
@@ -138,7 +138,7 @@ cts <- import_counts(files = files, type = "salmon")
 
 #create a sample data sheet, specifying which sample / cell belongs to which group
 pd <- data.frame("id"=colnames(cts), "group"="your_grouping_variable", 
-                 stringsAsFactors = F)
+                 stringsAsFactors = FALSE)
 ```
 
 ### DTU analysis
@@ -190,7 +190,7 @@ effect of this bias on the transcripts by:
 
 ``` r
 #Attention: calculation for all available genes might be time consuming.
-priming_bias_df <- priming_bias_detection_probability(counts = cts, gtf = "path_to_your_gtf_file.gtf", tx2gene = tx2gene, one_to_one = T,
+priming_bias_df <- priming_bias_detection_probability(counts = cts, gtf = "path_to_your_gtf_file.gtf", tx2gene = tx2gene, one_to_one = TRUE,
                                                       priming_enrichment = "3", BPPARAM = biocpar)
 ```
 
@@ -214,14 +214,14 @@ dturtle <- plot_proportion_barplot(dturtle = dturtle,
 
 dturtle <- plot_proportion_pheatmap(dturtle = dturtle, 
                                     savepath = "images", 
-                                    include_expression = T,
+                                    include_expression = TRUE,
                                     add_to_table = "pheatmap",
                                     BPPARAM = biocpar)
 
 dturtle <- plot_transcripts_view(dturtle = dturtle, 
                                  gtf = "path_to_your_gtf_file.gtf", 
                                  genome = 'hg38', 
-                                 one_to_one = T,
+                                 one_to_one = TRUE,
                                  savepath = "images", 
                                  add_to_table = "transcript_view",
                                  BPPARAM = biocpar)

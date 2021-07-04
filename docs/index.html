@@ -157,13 +157,13 @@
 <a href="#installation" class="anchor"></a>Installation</h2>
 <p>Install from GitHub:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit">
-<span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace</a></span><span class="op">(</span><span class="st">"remotes"</span>, quietly <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">{</span>
+<span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace</a></span><span class="op">(</span><span class="st">"remotes"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">{</span>
     <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span>
 <span class="op">}</span>
 <span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"TobiTekath/DTUrtle"</span><span class="op">)</span></pre></div>
 <p>As DTUrtle depends on multiple packages, the installation might fail due to the complex dependency structure. Normally, trying the above command multiple times helps (installed packages of the command are kept and reduce the dependency complexity). You might also try to install the needed Bioconductor packages beforehand:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit">
-<span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">{</span>
+<span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">{</span>
     <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span>
 <span class="op">}</span>
 <span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocManager/man/install.html">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"BiocParallel"</span>, <span class="st">"GenomicRanges"</span>, <span class="st">"Gviz"</span>, <span class="st">"rtracklayer"</span>, <span class="st">"stageR"</span>, <span class="st">"tximport"</span>, <span class="st">"DESeq2"</span><span class="op">)</span><span class="op">)</span></pre></div>
@@ -180,7 +180,7 @@
 <ul>
 <li><strong>See vignettes for a more detailed workflow with real data</strong></li>
 </ul>
-<p><img src="reference/figures/DTUrtle_workflow.svg" height="100%" style="display: block; margin: auto;"></p>
+<p><img src="reference/figures/DTUrtle_workflow.svg" height="1000px" style="display: block; margin: auto;"></p>
 </div>
 <div id="vignettes" class="section level2">
 <h2 class="hasAnchor">
@@ -232,7 +232,7 @@
 
 <span class="co">#create a sample data sheet, specifying which sample / cell belongs to which group</span>
 <span class="va">pd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span><span class="st">"id"</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">cts</span><span class="op">)</span>, <span class="st">"group"</span><span class="op">=</span><span class="st">"your_grouping_variable"</span>, 
-                 stringsAsFactors <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></pre></div>
+                 stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></pre></div>
 </div>
 <div id="dtu-analysis" class="section level3">
 <h3 class="hasAnchor">
@@ -269,7 +269,7 @@
 <p>If a prime-biased (single-cell) RNA-seq protocol was used, the ability to detect DTU in certain transcripts might be impaired. DTUrtle offers the calculation of a novel detection probability score to infer, which transcripts might be hard to detect with the given data - and thus might not pop-up in the DTU analysis. Suppose we have 3’-biased data (as generated by many prominent single-cell protocols), we can infer the effect of this bias on the transcripts by:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit">
 <span class="co">#Attention: calculation for all available genes might be time consuming.</span>
-<span class="va">priming_bias_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/priming_bias_detection_probability.html">priming_bias_detection_probability</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="va">cts</span>, gtf <span class="op">=</span> <span class="st">"path_to_your_gtf_file.gtf"</span>, tx2gene <span class="op">=</span> <span class="va">tx2gene</span>, one_to_one <span class="op">=</span> <span class="cn">T</span>,
+<span class="va">priming_bias_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/priming_bias_detection_probability.html">priming_bias_detection_probability</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="va">cts</span>, gtf <span class="op">=</span> <span class="st">"path_to_your_gtf_file.gtf"</span>, tx2gene <span class="op">=</span> <span class="va">tx2gene</span>, one_to_one <span class="op">=</span> <span class="cn">TRUE</span>,
                                                       priming_enrichment <span class="op">=</span> <span class="st">"3"</span>, BPPARAM <span class="op">=</span> <span class="va">biocpar</span><span class="op">)</span></pre></div>
 </div>
 <div id="result-aggregation-and-visualization" class="section level3">
@@ -293,14 +293,14 @@
 
 <span class="va">dturtle</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plot_proportion_pheatmap.html">plot_proportion_pheatmap</a></span><span class="op">(</span>dturtle <span class="op">=</span> <span class="va">dturtle</span>, 
                                     savepath <span class="op">=</span> <span class="st">"images"</span>, 
-                                    include_expression <span class="op">=</span> <span class="cn">T</span>,
+                                    include_expression <span class="op">=</span> <span class="cn">TRUE</span>,
                                     add_to_table <span class="op">=</span> <span class="st">"pheatmap"</span>,
                                     BPPARAM <span class="op">=</span> <span class="va">biocpar</span><span class="op">)</span>
 
 <span class="va">dturtle</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plot_transcripts_view.html">plot_transcripts_view</a></span><span class="op">(</span>dturtle <span class="op">=</span> <span class="va">dturtle</span>, 
                                  gtf <span class="op">=</span> <span class="st">"path_to_your_gtf_file.gtf"</span>, 
                                  genome <span class="op">=</span> <span class="st">'hg38'</span>, 
-                                 one_to_one <span class="op">=</span> <span class="cn">T</span>,
+                                 one_to_one <span class="op">=</span> <span class="cn">TRUE</span>,
                                  savepath <span class="op">=</span> <span class="st">"images"</span>, 
                                  add_to_table <span class="op">=</span> <span class="st">"transcript_view"</span>,
                                  BPPARAM <span class="op">=</span> <span class="va">biocpar</span><span class="op">)</span>

@@ -14,7 +14,7 @@ plot_proportion_barplot(
   label_angle = 25,
   savepath = NULL,
   filename_ext = "_barplot.png",
-  add_to_table = F,
+  add_to_table = FALSE,
   BPPARAM = BiocParallel::SerialParam(),
   ...
 )

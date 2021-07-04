@@ -17,7 +17,7 @@ run_deseq2(
   subset_sample = NULL,
   deseq_opts = list(),
   lfc_shrink_opts = list(),
-  return_dds = F,
+  return_dds = FALSE,
   BPPARAM = BiocParallel::SerialParam()
 )
 }

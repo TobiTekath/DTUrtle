@@ -26,7 +26,7 @@ knitr::opts_chunk$set(
 if(dir.exists(root_dir)){
   knitr::opts_knit$set(root.dir = root_dir)
   #remove previous results
-  unlink(paste0(root_dir,"/*"),recursive=T)
+  unlink(paste0(root_dir,"/*"),recursive=TRUE)
 }
 start_time <- Sys.time()
 ```
@@ -78,7 +78,7 @@ ercc_gtf <- import_gtf(gtf_file = "../ERCC92.gtf", feature_type = NULL)
 #change not necessary transcript-IDs
 ercc_gtf$transcript_id <- ercc_gtf$gene_id
 
-tx2gene <- merge(tx2gene, ercc_gtf, all = T)
+tx2gene <- merge(tx2gene, ercc_gtf, all = TRUE)
 
 #fix missing gene_name and transcript_name for ERCCs
 tx2gene$gene_name[is.na(tx2gene$gene_name)] <- tx2gene$gene_id[is.na(tx2gene$gene_name)]
@@ -136,7 +136,7 @@ names(files) <- basename(gsub("/quant.sf","",files))
 ```
 
 The files object looks like this:
-```{r, echo=F}
+```{r, echo=FALSE}
 head(files)
 ```
 
@@ -167,7 +167,7 @@ Finally, we need a sample metadata data frame, specifying which sample belongs t
 We can reuse the ENA Bioproject report table from [here](https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA433520&result=read_run&fields=study_accession,sample_accession,scientific_name,fastq_md5,fastq_ftp,sample_title&format=tsv&download=true):
 
 ```{r}
-pd <- read.table("../filereport_read_run_PRJNA433520_tsv.txt", sep = "\t", header = T, stringsAsFactors = F)
+pd <- read.table("../filereport_read_run_PRJNA433520_tsv.txt", sep = "\t", header = TRUE, stringsAsFactors = FALSE)
 
 #especially the columns run_accession and sample_title are of interest
 pd <- pd[,c("run_accession", "sample_title")]
@@ -219,9 +219,9 @@ Of the initial 384 cells, 108 are already on the exclude list because of these t
 
 ```{r}
 #get expression of Keratin genes 'Krt5', 'Krt14' and 'Krt8'
-pd$krt5_expr <- colSums(cts_gene["Krt5",,drop=F])[match(pd$run_accession, colnames(cts_gene))]
-pd$krt14_expr <- colSums(cts_gene["Krt14",,drop=F])[match(pd$run_accession, colnames(cts_gene))]
-pd$krt8_expr <- colSums(cts_gene["Krt8",,drop=F])[match(pd$run_accession, colnames(cts_gene))]
+pd$krt5_expr <- colSums(cts_gene["Krt5",,drop=FALSE])[match(pd$run_accession, colnames(cts_gene))]
+pd$krt14_expr <- colSums(cts_gene["Krt14",,drop=FALSE])[match(pd$run_accession, colnames(cts_gene))]
+pd$krt8_expr <- colSums(cts_gene["Krt8",,drop=FALSE])[match(pd$run_accession, colnames(cts_gene))]
 
 #we set a threshold of 1 count for 'expression'
 excl_bc_emp <- pd$run_accession[pd$group %in% c("Basal Cell", "Embryonal Progenitor Cell") & (pd$krt5_expr<1 | pd$krt14_expr<1)]
@@ -264,9 +264,9 @@ The score calculation can be summarized like this: For each gene, a reference tr
 We can add this score information to an already existing table, like the tx2gene table (`add_to_table = tx2gene`). As we need exon-level information for the calculation, we should provide an unfiltered GTF GRanges or data frame object - or alternatively a file path.
 
 ```{r}
-unfilt_gtf <- import_gtf("../gencode.vM24.annotation_spike.gtf", feature_type = NULL, out_df = F)
+unfilt_gtf <- import_gtf("../gencode.vM24.annotation_spike.gtf", feature_type = NULL, out_df = FALSE)
 #set priming_enrichment to '3', as we expect reads enriched towards the 3' end of the mRNA.
-tx2gene <- priming_bias_detection_probability(counts = cts, tx2gene = tx2gene, gtf = unfilt_gtf, one_to_one = T,
+tx2gene <- priming_bias_detection_probability(counts = cts, tx2gene = tx2gene, gtf = unfilt_gtf, one_to_one = TRUE,
                                               priming_enrichment = "3", add_to_table = tx2gene, BPPARAM = biocpar)
 ```
 
@@ -469,7 +469,7 @@ A different visualization option is a heatmap, where additional meta data can be
 ```{r fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
 temp <- plot_proportion_pheatmap(dturtle = dturtle, genes = "Eif1",
                                  sample_meta_table_columns = c("sample_id","condition"),
-                                 include_expression = T, treeheight_col=20)
+                                 include_expression = TRUE, treeheight_col=20)
 temp$Eif1
 ```
 
@@ -479,7 +479,7 @@ Again, we can save the plots to disk and add them to the `dtu_table`:
 
 ```{r}
 dturtle <- plot_proportion_pheatmap(dturtle = dturtle,
-                                    include_expression = T,
+                                    include_expression = TRUE,
                                     treeheight_col=20,
                                     sample_meta_table_columns = c("sample_id","condition"),
                                     savepath = "images", 
@@ -507,7 +507,7 @@ plot_transcripts_view(dturtle = dturtle,
                               genes = "Eif1", 
                               gtf = "../gencode.vM24.annotation_spike.gtf", 
                               genome = 'mm10',
-                              one_to_one = T)
+                              one_to_one = TRUE)
 ```
 
 
@@ -523,7 +523,7 @@ Analogous as before, we can save plots to disk and add them to the `dtu_table`:
 dturtle <- plot_transcripts_view(dturtle = dturtle, 
                                  gtf = "../gencode.vM24.annotation_spike.gtf", 
                                  genome = 'mm10', 
-                                 one_to_one = T,
+                                 one_to_one = TRUE,
                                  savepath = "images", 
                                  add_to_table = "transcript_view",
                                  BPPARAM = biocpar)

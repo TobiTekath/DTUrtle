@@ -75,11 +75,11 @@ import_counts <- function(files, type, ...){
             }
         }
         if(methods::hasArg("txOut")){
-            if(args$txOut==F){
+            if(args$txOut==FALSE){
                 warning("Unless you exactly know what you are doing it is not recommended to set txOut to FALSE.\nDownstream analysis may fail!")
             }
         }else{
-            args$txOut <- T
+            args$txOut <- TRUE
         }
         args$files <- files
         args$type <- type
@@ -110,7 +110,7 @@ import_counts <- function(files, type, ...){
 combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side="append", seurat_obj=NULL, tx2gene=NULL, assay_name="dtutx"){
 
     if(!is.null(seurat_obj)){
-        assertthat::assert_that(requireNamespace("Seurat", quietly = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
+        assertthat::assert_that(requireNamespace("Seurat", quietly = TRUE), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
         assertthat::assert_that(utils::packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
         assertthat::assert_that(methods::is(seurat_obj, "Seurat"), msg = "The provided 'seurat_obj' is not of class Seurat.")
         assertthat::assert_that(seurat_obj@version>="3.0.0", msg = "The provided 'seurat_obj' is not a Seurat 3 object. Currently only Seurat 3 objects are supported.")
@@ -207,13 +207,13 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
             message("Subsetting!")
         }
         seurat_obj <- subset(seurat_obj, cells=common_cells)
-        tx_list <- tx_list[,common_cells,drop=F]
+        tx_list <- tx_list[,common_cells,drop=FALSE]
     }
 
     #exclude not expressed
     excl_tx <- Matrix::rowSums(tx_list)>0
     message("Excluding ", sum(!excl_tx), " overall not expressed features.")
-    tx_list <- tx_list[excl_tx,,drop=F]
+    tx_list <- tx_list[excl_tx,,drop=FALSE]
     message(nrow(tx_list), " features left.")
 
     if(!is.null(seurat_obj)){
@@ -274,9 +274,9 @@ combine_to_matrix <- function(tx_list, cell_extensions=NULL, cell_extension_side
 #'
 #' @family DTUrtle DTU
 #' @export
-run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", add_pseudocount=F, BPPARAM=BiocParallel::SerialParam(), force_dense=T, subset_feature=NULL, subset_sample=NULL, carry_over_metadata=T, filter_only=F, ...){
+run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=NULL, filtering_strategy="bulk", add_pseudocount=FALSE, BPPARAM=BiocParallel::SerialParam(), force_dense=TRUE, subset_feature=NULL, subset_sample=NULL, carry_over_metadata=TRUE, filter_only=FALSE, ...){
     if(methods::is(counts, "Seurat")){
-        assertthat::assert_that(requireNamespace("Seurat", quietly = T), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
+        assertthat::assert_that(requireNamespace("Seurat", quietly = TRUE), msg = "The package Seurat is needed for adding the combined matrix to a seurat object.")
         assertthat::assert_that(utils::packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
         assertthat::assert_that(counts@version>="3.0.0", msg = "The provided 'counts' is not a Seurat 3 object. Currently only Seurat 3 objects are supported.")
         if(is.vector(tx2gene)){
@@ -308,10 +308,10 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 
     if(!is.null(subset_feature)|!is.null(subset_sample)){
       if(is.null(subset_feature)){
-        subset_feature <- T
+        subset_feature <- TRUE
       }
       if(is.null(subset_sample)){
-        subset_sample <- T
+        subset_sample <- TRUE
       }
       if(is.character(subset_feature)){
         assertthat::assert_that(all(subset_feature %in% rownames(counts)), msg="Invalid 'subset_feature' names provided.")
@@ -319,7 +319,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
       if(is.character(subset_sample)){
         assertthat::assert_that(all(subset_sample %in% colnames(counts)), msg="Invalid 'subset_sample' names provided.")
       }
-      counts <- counts[subset_feature, subset_sample, drop=F]
+      counts <- counts[subset_feature, subset_sample, drop=FALSE]
     }
 
     assertthat::assert_that(all(rownames(counts) %in% tx2gene[[1]]), msg = "Not all rownames of the counts are present in the first tx2gene column. You may want to reorder the tx2gene columns with 'move_columns_to_front()' or use 'subset_feature' to subset the counts.")
@@ -329,7 +329,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     assertthat::assert_that(nrow(tx2gene)==nrow(counts))
     message("Using tx2gene columns:\n\t",colnames(tx2gene)[[1]]," ---> 'feature_id'\n\t",colnames(tx2gene)[[2]]," ---> 'gene_id'")
     colnames(tx2gene)[c(1,2)] <- c("feature_id", "gene_id")
-    colnames(tx2gene) <- make.names(colnames(tx2gene), unique = T)
+    colnames(tx2gene) <- make.names(colnames(tx2gene), unique = TRUE)
 
     if(is.null(cond_levels)){
             cond_levels <- unique(pd[[cond_col]])
@@ -339,20 +339,24 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 
     if(is.null(id_col)){
       assertthat::assert_that(all(rownames(pd) %in% colnames(counts)), msg = "Provided id_col does not match with sample names in counts.")
-      samp <- data.frame("sample_id"=rownames(pd), "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd)==cond_col)),drop=F], row.names = NULL, stringsAsFactors = F)
+      samp <- data.frame("sample_id"=rownames(pd), "condition"=pd[[cond_col]],
+                         pd[,-c(which(colnames(pd)==cond_col)),drop=FALSE],
+                         row.names = NULL, stringsAsFactors = FALSE)
     }else{
-      samp <- data.frame("sample_id"=pd[[id_col]], "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd) %in% c(id_col, cond_col))),drop=F], row.names = NULL, stringsAsFactors = F)
+      samp <- data.frame("sample_id"=pd[[id_col]], "condition"=pd[[cond_col]],
+                         pd[,-c(which(colnames(pd) %in% c(id_col, cond_col))),drop=FALSE],
+                         row.names = NULL, stringsAsFactors = FALSE)
     }
     samp$condition <- factor(samp$condition, levels=cond_levels)
-    samp <- samp[samp$sample_id %in% colnames(counts),,drop=F]
-    counts <- counts[, samp$sample_id, drop=F]
+    samp <- samp[samp$sample_id %in% colnames(counts),,drop=FALSE]
+    counts <- counts[, samp$sample_id, drop=FALSE]
 
     #exclude samples not in comparison
     exclude <- as.vector(samp$sample_id[is.na(samp$condition)])
     if(length(exclude)!=0){
         message("Excluding ", ifelse(length(exclude)<10, paste(exclude, collapse=" "), paste(length(exclude), "cells/samples")), " for this comparison!")
         samp <- samp[!is.na(samp$condition),]
-        counts <- counts[, !(colnames(counts) %in% exclude), drop=F]
+        counts <- counts[, !(colnames(counts) %in% exclude), drop=FALSE]
     }
     message("\nProceed with cells/samples: ",paste0(utils::capture.output(table(samp$condition)), collapse = "\n"))
     assertthat::assert_that(length(levels(samp$condition))==2, msg="No two sample groups left for comparison. Aborting!")
@@ -367,7 +371,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     sc={
         smallest_group <- min(table(samp$condition))*0.05
         filter_opt_list <- utils::modifyList(filter_opt_list, list("min_samps_feature_prop" = smallest_group,
-                                      "min_feature_prop" = 0.05, "run_gene_twice" = T))
+                                      "min_feature_prop" = 0.05, "run_gene_twice" = TRUE))
     },
     bulk={
         smallest_group <- min(table(samp$condition))*0.5
@@ -375,16 +379,16 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
                                       list("min_samps_gene_expr" = smallest_group,
                                            "min_gene_expr" = 5,
                                            "min_samps_feature_prop" = smallest_group,
-                                           "min_feature_prop" = 0.05, "run_gene_twice" = T))
+                                           "min_feature_prop" = 0.05, "run_gene_twice" = TRUE))
     },
     own={
         filter_opt_list <- utils::modifyList(filter_opt_list, list(...))
     })
     #force garbage collection before RAM intensive computations.
-    x <- gc(verbose=F)
-    BiocParallel::bpprogressbar(BPPARAM) <- T
+    x <- gc(verbose=FALSE)
+    BiocParallel::bpprogressbar(BPPARAM) <- TRUE
     counts <- do.call(sparse_filter, args = c(list("counts" = counts, "tx2gene" = tx2gene, "BPPARAM" = BPPARAM), filter_opt_list), quote=TRUE)
-    BiocParallel::bpprogressbar(BPPARAM) <- F
+    BiocParallel::bpprogressbar(BPPARAM) <- FALSE
 
     if(filter_only){
       return(counts)
@@ -413,11 +417,11 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
         tx2gene <- tx2gene[match(rownames(exp_in_tx), tx2gene$feature_id),]
         tx2gene <- tx2gene[,!apply(tx2gene,2,function(x) any(is.na(x)))]
         if(nrow(tx2gene)==nrow(exp_in_tx)&ncol(tx2gene)>2){
-            exp_in_tx <- cbind(exp_in_tx, tx2gene[,-c(1,2)], stringsAsFactors = F)
+            exp_in_tx <- cbind(exp_in_tx, tx2gene[,-c(1,2)], stringsAsFactors = FALSE)
             add_to_gene_columns <- check_unique_by_partition(tx2gene[,-c(1,2)], drim@counts@partitioning)
             if(!is.null(add_to_gene_columns)){
                 tx2gene <- get_by_partition(df = tx2gene, columns =add_to_gene_columns, partitioning = drim@counts@partitioning, FUN=unique, BPPARAM = BPPARAM)
-                exp_in_gn <- cbind(exp_in_gn, tx2gene[match(rownames(exp_in_gn), tx2gene[[1]]),-c(1)], stringsAsFactors = F)
+                exp_in_gn <- cbind(exp_in_gn, tx2gene[match(rownames(exp_in_gn), tx2gene[[1]]),-c(1)], stringsAsFactors = FALSE)
             }
         }
     }
@@ -428,7 +432,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     ### do not add uniform distribution to full fit, as it is not added to null fit
     drim_test <- sparseDRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=add_pseudocount, verbose=1)
     drim_test <- sparseDRIMSeq::dmTest(drim_test, coef=2, BPPARAM=BPPARAM, verbose=1)
-    group <- factor(samp$condition, levels = cond_levels, ordered = T)
+    group <- factor(samp$condition, levels = cond_levels, ordered = TRUE)
 
     exp_in_gn <- rapply(exp_in_gn, as.character, classes="factor", how="replace")
     exp_in_tx <- rapply(exp_in_tx, as.character, classes="factor", how="replace")
@@ -467,7 +471,7 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
     assertthat::assert_that(0<=ofdr & ofdr<=1, msg = "The provided 'ofdr' parameter is invalid. Must be a number between [0,1].")
 
     res <- sparseDRIMSeq::results(dturtle$drim)
-    if(posthoc!=F||posthoc>0){
+    if(posthoc!=FALSE||posthoc>0){
         res_txp <- run_posthoc(dturtle$drim, posthoc)
     }else{
         res_txp <- sparseDRIMSeq::results(dturtle$drim, level="feature")
@@ -484,14 +488,14 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
     rownames(pconfirm) <- res_txp$feature_id
     tx2gene <- res_txp[,c("feature_id", "gene_id")]
 
-    stageRObj <- stageR::stageRTx(pScreen = pscreen, pConfirmation = pconfirm, pScreenAdjusted = F, tx2gene = tx2gene)
+    stageRObj <- stageR::stageRTx(pScreen = pscreen, pConfirmation = pconfirm, pScreenAdjusted = FALSE, tx2gene = tx2gene)
     stageRObj <- stageR::stageWiseAdjustment(stageRObj, method = "dtu", alpha = ofdr)
-    fdr_table <- stageR::getAdjustedPValues(stageRObj, order = F, onlySignificantGenes = F)
+    fdr_table <- stageR::getAdjustedPValues(stageRObj, order = FALSE, onlySignificantGenes = FALSE)
     fdr_table <- rapply(fdr_table, as.character, classes="factor", how="replace")
     sig_gene <- unique(fdr_table$geneID[fdr_table$gene<ofdr])
 
     if(length(sig_gene)>0){
-        temp <- fdr_table[fdr_table$gene<ofdr&fdr_table$transcript<ofdr,,drop=F]
+        temp <- fdr_table[fdr_table$gene<ofdr&fdr_table$transcript<ofdr,,drop=FALSE]
         sig_tx <- stats::setNames(temp$txID, temp$geneID)
         message("Found ",length(sig_gene)," significant genes with ",length(sig_tx)," significant transcripts (OFDR: ",ofdr,")")
     }else{
@@ -503,7 +507,7 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
     return_obj <- append(list("sig_gene" = sig_gene, "sig_tx" = sig_tx,
                                        "FDR_table" = fdr_table), dturtle)
     return_obj$used_filtering_options$posthoc_stager <- list("ofdr" = ofdr,
-                                       "posthoc"=ifelse(posthoc==F, 0, posthoc))
+                                       "posthoc"=ifelse(posthoc==FALSE, 0, posthoc))
     class(return_obj) <- append("dturtle", class(return_obj))
     return(return_obj)
 }
@@ -527,7 +531,7 @@ posthoc_and_stager <- function(dturtle, ofdr=0.05, posthoc=0.1){
 #' Thus, DTU effects for transcripts with a low score are less likely to be detectable with the given data.
 #'
 #' @param counts A (sparse) count matrix, where columns represent a sample / cell and rows represent a single transcript isoform. This data is used to infer each gene's reference transcript.
-#' @param gtf A GTF file with gene and exon-level information. Can be a filepath or a previously imported gtf file (as GRanges or data frame). It is advised to read-in the file like this: `gtf <- import_gtf("YOUR_PATH", feature_type = NULL, out_df=F)`.
+#' @param gtf A GTF file with gene and exon-level information. Can be a filepath or a previously imported gtf file (as GRanges or data frame). It is advised to read-in the file like this: `gtf <- import_gtf("YOUR_PATH", feature_type = NULL, out_df=FALSE)`.
 #' @param tx2gene Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object.
 #' @param priming_enrichment Specify, which end of the mRNA is supposed to be enriched in your (single-cell) RNA-seq protocol. Can be either '3' or '5', for the 3'-end or the 5'-end respectively.
 #' @param genes (Optional) Specify certain genes, that shall be analysed. If `NULL`, defaults to all genes in the provided tx2gene data frame.
@@ -559,9 +563,9 @@ priming_bias_detection_probability <- function(counts, gtf, tx2gene, one_to_one=
   assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object in BPPARAM.")
 
   if(is.data.frame(gtf)){
-    gtf <- GenomicRanges::makeGRangesFromDataFrame(gtf, keep.extra.columns = T)
+    gtf <- GenomicRanges::makeGRangesFromDataFrame(gtf, keep.extra.columns = TRUE)
   }else if(is.character(gtf)){
-    gtf <- import_gtf(gtf_file = gtf, feature_type = NULL, out_df = F)
+    gtf <- import_gtf(gtf_file = gtf, feature_type = NULL, out_df = FALSE)
   }
 
   assertthat::assert_that(class(gtf) %in% c("GRanges"))
@@ -603,10 +607,10 @@ priming_bias_detection_probability <- function(counts, gtf, tx2gene, one_to_one=
 
   #compute mean proportion of each tx to infer the reference tx
   counts <- get_proportion_matrix(counts, tx2gene = tx2gene, genes=valid_genes)
-  counts <- Matrix::rowMeans(x=counts, na.rm = T)
+  counts <- Matrix::rowMeans(x=counts, na.rm = TRUE)
 
   if(length(valid_genes)>10){
-    BiocParallel::bpprogressbar(BPPARAM) <- T
+    BiocParallel::bpprogressbar(BPPARAM) <- TRUE
   }
 
   message("Scoring transcripts of ", length(valid_genes), " genes.")
@@ -680,7 +684,7 @@ priming_bias_detection_probability <- function(counts, gtf, tx2gene, one_to_one=
     return(add_to_table)
   }
 
-  return_df <- data.frame("tx"=names(score_list), "detection_probability"=score_list, "used_as_ref"=ref_tx, row.names = NULL, stringsAsFactors = F)
+  return_df <- data.frame("tx"=names(score_list), "detection_probability"=score_list, "used_as_ref"=ref_tx, row.names = NULL, stringsAsFactors = FALSE)
   return_df$gene <- tx2gene[[2]][match(return_df$tx, tx2gene[[1]])]
   return_df <- move_columns_to_front(return_df, "gene")
 

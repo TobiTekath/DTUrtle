@@ -18,7 +18,7 @@ priming_bias_detection_probability(
 \arguments{
 \item{counts}{A (sparse) count matrix, where columns represent a sample / cell and rows represent a single transcript isoform. This data is used to infer each gene's reference transcript.}
 
-\item{gtf}{A GTF file with gene and exon-level information. Can be a filepath or a previously imported gtf file (as GRanges or data frame). It is advised to read-in the file like this: \code{gtf <- import_gtf("YOUR_PATH", feature_type = NULL, out_df=F)}.}
+\item{gtf}{A GTF file with gene and exon-level information. Can be a filepath or a previously imported gtf file (as GRanges or data frame). It is advised to read-in the file like this: \code{gtf <- import_gtf("YOUR_PATH", feature_type = NULL, out_df=FALSE)}.}
 
 \item{tx2gene}{Data frame, where the first column consists of feature identifiers and the second column consists of corresponding gene identifiers. Feature identifiers must match with the rownames of the counts object.}
 

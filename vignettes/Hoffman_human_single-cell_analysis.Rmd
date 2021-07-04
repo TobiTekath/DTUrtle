@@ -26,7 +26,7 @@ knitr::opts_chunk$set(
 if(dir.exists(root_dir)){
   knitr::opts_knit$set(root.dir = root_dir)
   #remove previous results
-  unlink(paste0(root_dir,"/*"),recursive=T)
+  unlink(paste0(root_dir,"/*"),recursive=TRUE)
 }
 start_time <- Sys.time()
 ```
@@ -121,7 +121,7 @@ names(files) <- c("sc_Dex2hr", "sc_EtOH")
 ```
 
 The files object looks like this:
-```{r, echo=F}
+```{r, echo=FALSE}
 files
 ```
 
@@ -161,7 +161,7 @@ If such a table is not already present, it can be easily prepared:
 ```{r}
 pd <- data.frame("id"=colnames(cts), 
                  "group"=ifelse(colnames(cts) %in% colnames(cts_list$sc_Dex2hr),"Dex2hr","EtOH"),  
-                 stringsAsFactors = F)
+                 stringsAsFactors = FALSE)
 ```
 
 ```{r}
@@ -180,9 +180,9 @@ The score calculation can be summarized like this: For each gene, a reference tr
 We can add this score information to an already existing table, like the tx2gene table (`add_to_table = tx2gene`). As we need exon-level information for the calculation, we should provide an unfiltered GTF GRanges or data frame object - or alternatively a file path.
 
 ```{r}
-unfilt_gtf <- import_gtf("../gencode.v34.annotation.gtf", feature_type = NULL, out_df = F)
+unfilt_gtf <- import_gtf("../gencode.v34.annotation.gtf", feature_type = NULL, out_df = FALSE)
 #set priming_enrichment to '3', as we expect reads enriched towards the 3' end of the mRNA.
-tx2gene <- priming_bias_detection_probability(counts = cts, tx2gene = tx2gene, gtf = unfilt_gtf, one_to_one = T,
+tx2gene <- priming_bias_detection_probability(counts = cts, tx2gene = tx2gene, gtf = unfilt_gtf, one_to_one = TRUE,
                                               priming_enrichment = "3", add_to_table = tx2gene, BPPARAM = biocpar)
 ```
 
@@ -380,7 +380,7 @@ A different visualization option is a heatmap, where additional meta data can be
 
 ```{r, fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
 temp <- plot_proportion_pheatmap(dturtle = dturtle, genes = "PPIA", 
-                                 include_expression = T, treeheight_col=20)
+                                 include_expression = TRUE, treeheight_col=20)
 temp$PPIA
 ```
 
@@ -391,7 +391,7 @@ Again, we can save the plots to disk and add them to the `dtu_table`:
 
 ```{r}
 dturtle <- plot_proportion_pheatmap(dturtle = dturtle,
-                                    include_expression = T,
+                                    include_expression = TRUE,
                                     treeheight_col=20,
                                     savepath = "images", 
                                     add_to_table = "pheatmap",
@@ -418,7 +418,7 @@ plot_transcripts_view(dturtle = dturtle,
                               genes = "PPIA", 
                               gtf = "../gencode.v34.annotation.gtf", 
                               genome = 'hg38',
-                              one_to_one = T)
+                              one_to_one = TRUE)
 ```
 
 
@@ -434,7 +434,7 @@ Analogous as before, we can save plots to disk and add them to the `dtu_table`:
 dturtle <- plot_transcripts_view(dturtle = dturtle, 
                                  gtf = "../gencode.v34.annotation.gtf", 
                                  genome = 'hg38', 
-                                 one_to_one = T,
+                                 one_to_one = TRUE,
                                  savepath = "images", 
                                  add_to_table = "transcript_view",
                                  BPPARAM = biocpar)
@@ -540,7 +540,7 @@ dim(cts_gene)
 We use these gene level counts for a standard *Seurat* analysis (Normalization + Scaling, PCA, Clustering, UMAP).
 
 ```{r, fig.height=6, fig.width=8, fig.align = "center", out.width="80%"}
-seur_obj <- CreateSeuratObject(counts = cts_gene, meta.data = data.frame(row.names=pd$id, "group"=pd$group, stringsAsFactors = F))
+seur_obj <- CreateSeuratObject(counts = cts_gene, meta.data = data.frame(row.names=pd$id, "group"=pd$group, stringsAsFactors = FALSE))
 
 #check if names are kept
 all(Cells(seur_obj) %in% pd$id)

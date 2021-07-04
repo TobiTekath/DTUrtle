@@ -83,7 +83,7 @@ As with most single-cell data, the first analysis step is the determination of v
 
 To error-correct the cell barcodes we use `umi_tools` (Version 1.0.1).  The read data was created using the Illumina SureCell protocol, which uses a quite complex barcode / UMI pattern. Luckily, `umi_tools` can process arbitrary complex barcode / UMI structures via regular expressions. We allow correction of barcodes with up to one error and allow for an edit distance of 1 in each linker segment with the following *bash* code:
 
-```{bash, eval=F}
+```{bash, eval=FALSE}
 #installation in conda evironment
 conda install -c bioconda umi_tools 
 
@@ -103,24 +103,24 @@ In the publication, only 400 cells of each sample were used in the analysis. For
 
 Assume you have downloaded and unpacked the mentioned file. Lists of the valid cell barcodes can be created with this *R* code:
 
-```{r, eval=F}
+```{r, eval=FALSE}
 setwd("$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/umi_tools")
 
 #get valid barcodes from raw count table
-raw_expr <- read.table("GSE141834_scRNAseq_rawCounts.txt", header=T, sep="\t")
-etoh_selected_cells <- gsub(".*_","",grep("Dex.00.2_", colnames(raw_expr), value = T))
-dex2hr_selected_cells <- gsub(".*_","",grep("Dex.02.2_", colnames(raw_expr), value = T))
+raw_expr <- read.table("GSE141834_scRNAseq_rawCounts.txt", header=TRUE, sep="\t")
+etoh_selected_cells <- gsub(".*_","",grep("Dex.00.2_", colnames(raw_expr), value = TRUE))
+dex2hr_selected_cells <- gsub(".*_","",grep("Dex.02.2_", colnames(raw_expr), value = TRUE))
 
 #read-in created umi_tools whitelists
-etoh_white <- read.table("etoh_whitelist.tsv", stringsAsFactors = F)
-dex2hr_white <- read.table("dex2hr_whitelist.tsv", stringsAsFactors = F)
+etoh_white <- read.table("etoh_whitelist.tsv", stringsAsFactors = FALSE)
+dex2hr_white <- read.table("dex2hr_whitelist.tsv", stringsAsFactors = FALSE)
 
 #write subset to file
 etoh_white_sub <- etoh_white[etoh_white$V1 %in% etoh_selected_cells,]
-write.table(etoh_white_sub, "etoh_whitelist_sub.tsv", sep = "\t", quote = F, row.names = F, col.names = F)
+write.table(etoh_white_sub, "etoh_whitelist_sub.tsv", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
 
 dex2hr_white_sub <- dex2hr_white[dex2hr_white$V1 %in% dex2hr_selected_cells,]
-write.table(dex2hr_white_sub, "dex2hr_whitelist_sub.tsv", sep = "\t", quote = F, row.names = F, col.names = F)
+write.table(dex2hr_white_sub, "dex2hr_whitelist_sub.tsv", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
 ```
 
 The subsetted *TSV* files contain only the 400 valid barcodes per cell, together with the barcodes that shall be corrected.
@@ -129,7 +129,7 @@ The subsetted *TSV* files contain only the 400 valid barcodes per cell, together
 
 The actual barcode extraction and correction is again performed with `umi_tools`. In this process, only the reads of the R2 files are kept, that had a matching barcode in the R1 file. The barcode and UMI sequence are added to the sequence identifier line of each read in the new files. The not matching parts of the R1 reads are kept in the new R1 file. The `umi_tools` *bash* command looks like this:
 
-```{bash, eval=F}
+```{bash, eval=FALSE}
 umi_tools extract --filter-cell-barcode --error-correct-cell --whitelist=etoh_whitelist_sub.tsv --extract-method=regex -p '(?P<discard_1>.{0,20})(?P<cell_1>.{6})(?P<discard_2>TAGCCATCGCATTGC){e<=1}(?P<cell_2>.{6})(?P<discard_3>TACCTCTGAGCTGAA){e<=1}(?P<cell_3>.{6})(?P<discard_4>ACG)(?P<umi_1>.{8})(?P<discard_5>GAC).*' -I ../samples/sc_EtOH_1.fastq.gz -S sc_EtOH_1_extracted.fastq.gz --read2-in ../samples/sc_EtOH_2_matched.fastq.gz --read2-out sc_EtOH_2_extracted.fastq.gz
 
 
@@ -142,7 +142,7 @@ The `umi_tools` folder should now contain four gzipped *FASTQ* files, two for ea
 
 We plan to use `Alevin` for transcript level quantification, which does not support the Illumina SureCell protocol by default. We can overcome this limitation by slightly editing the new R1 files with some *bash* code:
 
-```{bash, eval=F}
+```{bash, eval=FALSE}
 zgrep "^@" sc_EtOH_1_extracted.fastq.gz |  awk -F '_' -v OFS='\n' '{split($3,a," ");print $0,$2a[1],"+","KKKKKKKKKKKKKKKKKKKKKKKKKK"}' | gzip > sc_EtOH_1_altered.fastq.gz
 
 
@@ -164,7 +164,7 @@ To run the `Alevin` quantification, we first need a transcriptomic index. For th
 
 Assume you have downloaded and unpacked the above mentioned files in the analysis root directory. To build the actual index we run this *bash* code:
 
-```{bash, eval=F}
+```{bash, eval=FALSE}
 #installation in conda evironment
 conda install salmon
 
@@ -180,7 +180,7 @@ To perform the actual quantification, we need one last file specifying the trans
 
 We can create such a mapping file with the help of the `DTUrtle` package in *R*:
 
-```{r, eval=F}
+```{r, eval=FALSE}
 library(DTUrtle)
 setwd("$PATH_TO_ANAYLSIS_ROOT_DIRECTORY$/alevin")
 
@@ -195,13 +195,13 @@ tx2gene <- import_gtf(gtf_file = "../gencode.v34.annotation.gtf")
   
 
 write.table(x = tx2gene[,c("transcript_id", "transcript_name")], 
-            file = "txmap.tsv", sep = "\t", quote = F, 
-            row.names = F, col.names = F)
+            file = "txmap.tsv", sep = "\t", quote = FALSE, 
+            row.names = FALSE, col.names = FALSE)
 ```
 
 The actual quantification can be performed in *bash* with:
 
-```{bash, eval=F}
+```{bash, eval=FALSE}
 salmon alevin -l A -i index/ -1 ../umi_tools/sc_EtOH_1_altered.fastq.gz -2 ../umi_tools/sc_EtOH_2_extracted.fastq.gz --keepCBFraction 1 --end 5 --umiLength 8 --barcodeLength 18 --dumpFeatures --tgMap txmap.tsv -o sc_EtOH
 
 salmon alevin -l A -i index/ -1 ../umi_tools/sc_Dex2hr_1_altered.fastq.gz -2 ../umi_tools/sc_Dex2hr_2_extracted.fastq.gz --keepCBFraction 1 --end 5 --umiLength 8 --barcodeLength 18 --dumpFeatures --tgMap txmap.tsv -o sc_Dex2hr

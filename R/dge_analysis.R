@@ -41,12 +41,12 @@ import_dge_counts <- function(files, type, ...){
     }
 
     if(methods::hasArg("txOut")){
-        if(args$txOut==T){
+        if(args$txOut==TRUE){
             warning("Unless you exactly know what you are doing, it is not recommended to set txOut to TRUE\nDownstream analysis may fail!")
         }
     }else{
         assertthat::assert_that(methods::hasArg("tx2gene"), msg = "Please provide a 'tx2gene' data frame for gene-level summarisation.")
-        args$txOut <- F
+        args$txOut <- FALSE
     }
 
     if(type=="alevin"||type=="bustools"){
@@ -120,9 +120,9 @@ import_dge_counts <- function(files, type, ...){
 #' @seealso [import_dge_counts()] for correct import of gene-level counts. [combine_to_matrix()] to summarize scRNA counts to one matrix.
 run_deseq2 <- function(counts, pd, id_col=NULL, cond_col, cond_levels=NULL, lfc_threshold=0, sig_threshold=0.01,
                        dge_calling_strategy="bulk", subset_feature=NULL, subset_sample=NULL, deseq_opts=list(),
-                       lfc_shrink_opts=list(), return_dds=F, BPPARAM=BiocParallel::SerialParam()){
+                       lfc_shrink_opts=list(), return_dds=FALSE, BPPARAM=BiocParallel::SerialParam()){
     if(methods::is(counts, "Seurat")){
-        assertthat::assert_that(requireNamespace("Seurat", quietly = T), msg = "The package Seurat is needed if a Seurat object is provided.")
+        assertthat::assert_that(requireNamespace("Seurat", quietly = TRUE), msg = "The package Seurat is needed if a Seurat object is provided.")
         assertthat::assert_that(utils::packageVersion("Seurat")>="3.0.0", msg = "At least Version 3 of Seurat is needed. Currently only Seurat 3 objects are supported.")
         assertthat::assert_that(counts@version>="3.0.0", msg = "The provided 'counts' is not a Seurat 3 object. Currently only Seurat 3 objects are supported.")
         counts <- Seurat::GetAssayData(counts)
@@ -155,17 +155,21 @@ run_deseq2 <- function(counts, pd, id_col=NULL, cond_col, cond_levels=NULL, lfc_
 
     if(is.null(id_col)){
         assertthat::assert_that(all(rownames(pd) %in% colnames(counts)), msg = "Provided id_col does not match with sample names in counts.")
-        samp <- data.frame("sample_id"=rownames(pd), "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd)==cond_col)),drop=F], row.names = NULL, stringsAsFactors = F)
+        samp <- data.frame("sample_id"=rownames(pd), "condition"=pd[[cond_col]],
+                           pd[,-c(which(colnames(pd)==cond_col)),drop=FALSE],
+                           row.names = NULL, stringsAsFactors = FALSE)
     }else{
-        samp <- data.frame("sample_id"=pd[[id_col]], "condition"=pd[[cond_col]], pd[,-c(which(colnames(pd) %in% c(id_col, cond_col))),drop=F], row.names = NULL, stringsAsFactors = F)
+        samp <- data.frame("sample_id"=pd[[id_col]], "condition"=pd[[cond_col]],
+                           pd[,-c(which(colnames(pd) %in% c(id_col, cond_col))),drop=FALSE],
+                           row.names = NULL, stringsAsFactors = FALSE)
     }
 
     if(!is.null(subset_feature)|!is.null(subset_sample)){
         if(is.null(subset_feature)){
-            subset_feature <- T
+            subset_feature <- TRUE
         }
         if(is.null(subset_sample)){
-            subset_sample <- T
+            subset_sample <- TRUE
         }
         if(is.character(subset_feature)){
             assertthat::assert_that(all(subset_feature %in% rownames(counts)), msg="Invalid 'subset_feature' names provided.")
@@ -173,8 +177,8 @@ run_deseq2 <- function(counts, pd, id_col=NULL, cond_col, cond_levels=NULL, lfc_
         if(is.character(subset_sample)){
             assertthat::assert_that(all(subset_sample %in% colnames(counts)), msg="Invalid 'subset_sample' names provided.")
         }
-        counts <- counts[subset_feature, subset_sample, drop=F]
-        samp <- samp[samp$sample_id %in% colnames(counts),,drop=F]
+        counts <- counts[subset_feature, subset_sample, drop=FALSE]
+        samp <- samp[samp$sample_id %in% colnames(counts),,drop=FALSE]
     }
 
     if(is.null(cond_levels)){
@@ -184,28 +188,28 @@ run_deseq2 <- function(counts, pd, id_col=NULL, cond_col, cond_levels=NULL, lfc_
     message("\nComparing in '", cond_col, "': '", cond_levels[1], "' vs '", cond_levels[2], "'")
 
     samp$condition <- factor(samp$condition, levels=cond_levels)
-    samp <- samp[samp$sample_id %in% colnames(counts),,drop=F]
-    counts <- counts[, samp$sample_id, drop=F]
+    samp <- samp[samp$sample_id %in% colnames(counts),,drop=FALSE]
+    counts <- counts[, samp$sample_id, drop=FALSE]
 
     #exclude samples not in comparison
     exclude <- as.vector(samp$sample_id[is.na(samp$condition)])
     if(length(exclude)!=0){
         message("Excluding ", ifelse(length(exclude)<10, paste(exclude, collapse=" "), paste(length(exclude), "cells/samples")), " for this comparison!")
         samp <- samp[!is.na(samp$condition),]
-        counts <- counts[, !(colnames(counts) %in% exclude), drop=F]
+        counts <- counts[, !(colnames(counts) %in% exclude), drop=FALSE]
     }
     message("\nProceed with cells/samples: ",paste0(utils::capture.output(table(samp$condition)), collapse = "\n"))
     assertthat::assert_that(length(levels(samp$condition))==2, msg="No two sample groups left for comparison. Aborting!")
 
 
     if(exists("eff_len")){
-        eff_len <- eff_len[rownames(counts), colnames(counts), drop=F]
+        eff_len <- eff_len[rownames(counts), colnames(counts), drop=FALSE]
         dds <- DESeq2::DESeqDataSetFromTximport(txi = list("counts"=counts, "length"=eff_len, "countsFromAbundance"=cfa),
                                                 colData = samp, design = ~condition)
     }else{
         counts <- round(counts)
         dds <- DESeq2::DESeqDataSetFromMatrix(countData = counts, colData = samp,
-                                         design = ~condition)
+                                              design = ~condition)
     }
 
     dds$condition <- stats::relevel(dds$condition, ref=cond_levels[[2]])
@@ -216,19 +220,19 @@ run_deseq2 <- function(counts, pd, id_col=NULL, cond_col, cond_levels=NULL, lfc_
         #use recommended parameters for single-cell analysis from the DESeq2 vignette and https://doi.org/10.1186/s13059-018-1406-4.
         #DESeq2 version must be >=1.3.0 for glmGamPoi
         use_deseq_opts <- utils::modifyList(use_deseq_opts,
-                                        list("fitType" = "glmGamPoi",
-                                             "sfType"="poscounts",
-                                             "test" = "LRT",
-                                             "reduced"=~1,
-                                             "useT"=TRUE, "minmu"=1e-6,
-                                             "minReplicatesForReplace"=Inf))
+                                            list("fitType" = "glmGamPoi",
+                                                 "sfType"="poscounts",
+                                                 "test" = "LRT",
+                                                 "reduced"=~1,
+                                                 "useT"=TRUE, "minmu"=1e-6,
+                                                 "minReplicatesForReplace"=Inf))
 
         if(utils::packageVersion("DESeq2")<"1.3.0"){
             warning("DESeq2 1.3.0 and above offer a much faster and more precise GLM estimation method (glmGamPoi).
                     It is advised to update the DESeq2 package to benefit from this development. Falling back to the default fitType for now.")
             use_deseq_opts$fitType <- NULL
         }
-        if(!requireNamespace("glmGamPoi", quietly = T)){
+        if(!requireNamespace("glmGamPoi", quietly = TRUE)){
             warning("Installation of the bioconductor package 'glmGamPoi' would offer a much faster and more precise GLM estimation method (glmGamPoi).
                     It is advised to install the package to benefit from this development. Falling back to the default fitType for now.")
             use_deseq_opts$fitType <- NULL
@@ -246,7 +250,7 @@ run_deseq2 <- function(counts, pd, id_col=NULL, cond_col, cond_levels=NULL, lfc_
                                 "parallel"=TRUE,
                                 "BPPARAM"=BPPARAM)
 
-    if(!requireNamespace("apeglm", quietly = T)){
+    if(!requireNamespace("apeglm", quietly = TRUE)){
         warning("Installation of the bioconductor package 'apeglm' would offer a better performing shrinkage estimator.
                 It is advised to install the package to benefit from this development. Falling back to the 'normal' estimator.")
         message("Using provided svalue threshold to filter as pvalue threshold.")
@@ -263,11 +267,11 @@ run_deseq2 <- function(counts, pd, id_col=NULL, cond_col, cond_levels=NULL, lfc_
         threshold_col <- "padj"
     }
 
-    res_all <- as.data.frame(res[!is.na(res[[threshold_col]]),,drop=F])
+    res_all <- as.data.frame(res[!is.na(res[[threshold_col]]),,drop=FALSE])
     res_all$gene <- rownames(res_all)
     res_all <- move_columns_to_front(res_all, "gene")
-    res_sig <- res_all[res_all[[threshold_col]]<sig_threshold,,drop=F]
-    res_sig <- res_sig[order(abs(res_sig$log2FoldChange), decreasing = T),,drop=F]
+    res_sig <- res_all[res_all[[threshold_col]]<sig_threshold,,drop=FALSE]
+    res_sig <- res_sig[order(abs(res_sig$log2FoldChange), decreasing = TRUE),,drop=FALSE]
 
     message("Found " ,nrow(res_sig), " significant DEGs.")
     message("\t\tOver-expressed: ", sum(res_sig$log2FoldChange>0))

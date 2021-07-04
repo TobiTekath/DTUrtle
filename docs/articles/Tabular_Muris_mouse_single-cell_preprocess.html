@@ -135,7 +135,7 @@
       <h1 data-toc-skip>Pre-processing of Tabular Muris mouse single-cell RNA-seq data</h1>
                         <h4 class="author">Tobias Tekath</h4>
             
-            <h4 class="date">2021-07-02</h4>
+            <h4 class="date">2021-07-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/TobiTekath/DTUrtle/blob/master/vignettes/Tabular_Muris_mouse_single-cell_preprocess.Rmd"><code>vignettes/Tabular_Muris_mouse_single-cell_preprocess.Rmd</code></a></small>
       <div class="hidden name"><code>Tabular_Muris_mouse_single-cell_preprocess.Rmd</code></div>
@@ -207,8 +207,8 @@
   
 
 <span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">tx2gene</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"transcript_id"</span>, <span class="st">"transcript_name"</span><span class="op">)</span><span class="op">]</span>, 
-            file <span class="op">=</span> <span class="st">"txmap.tsv"</span>, sep <span class="op">=</span> <span class="st">"\t"</span>, quote <span class="op">=</span> <span class="cn">F</span>, 
-            row.names <span class="op">=</span> <span class="cn">F</span>, col.names <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></pre></div>
+            file <span class="op">=</span> <span class="st">"txmap.tsv"</span>, sep <span class="op">=</span> <span class="st">"\t"</span>, quote <span class="op">=</span> <span class="cn">FALSE</span>, 
+            row.names <span class="op">=</span> <span class="cn">FALSE</span>, col.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></pre></div>
 <p>The actual quantification can be performed in <em>bash</em> with:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="co">#change back to sample directory for shorter command</span></a>
 <a class="sourceLine" id="cb4-2" data-line-number="2"><span class="bu">cd</span> ../samples/10X_P7_12/10X_P7_12_MissingLibrary_1_H2H5YDMXX</a>

@@ -90,7 +90,7 @@ Additionally, in this experiment ERCC Spike-In sequences have been used in the s
 
 We can get the ERCC `FASTA`-sequences and a corresponing `GTF`-file directly from [ThermoFisher](https://assets.thermofisher.com/TFS-Assets/LSG/manuals/ERCC92.zip) and combine those files with the Gencode files:
 
-```{bash eval=F}
+```{bash eval=FALSE}
 #create folder and change directory
 mkdir ../salmon
 cd ../salmon
@@ -117,7 +117,7 @@ rm gencode.v34.annotation.gtf.gz
 
 This reference `FASTA` including the ERCC-sequences can then be used to build the `Salmon` index:
 
-```{bash, eval=F}
+```{bash, eval=FALSE}
 #installation in conda evironment
 conda install salmon
 
@@ -127,7 +127,7 @@ salmon index -t ../gencode.vM24.transcripts_spike.fa --gencode -p 4 -i index
 
 The actual quantification can be performed in *bash* with:
 
-```{bash, eval=F}
+```{bash, eval=FALSE}
 cd ../trim
 
 #loop over files
