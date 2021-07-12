@@ -155,11 +155,11 @@ run_deseq2 <- function(counts, pd, id_col=NULL, cond_col, cond_levels=NULL, lfc_
 
     if(is.null(id_col)){
         assertthat::assert_that(all(rownames(pd) %in% colnames(counts)), msg = "Provided id_col does not match with sample names in counts.")
-        samp <- data.frame("sample_id"=rownames(pd), "condition"=pd[[cond_col]],
+        samp <- data.frame("sample_id"=rownames(pd), "condition"=as.character(pd[[cond_col]]),
                            pd[,-c(which(colnames(pd)==cond_col)),drop=FALSE],
                            row.names = NULL, stringsAsFactors = FALSE)
     }else{
-        samp <- data.frame("sample_id"=pd[[id_col]], "condition"=pd[[cond_col]],
+        samp <- data.frame("sample_id"=pd[[id_col]], "condition"=as.character(pd[[cond_col]]),
                            pd[,-c(which(colnames(pd) %in% c(id_col, cond_col))),drop=FALSE],
                            row.names = NULL, stringsAsFactors = FALSE)
     }
@@ -243,7 +243,7 @@ run_deseq2 <- function(counts, pd, id_col=NULL, cond_col, cond_levels=NULL, lfc_
     dds <- do.call(DESeq2::DESeq, c(list("object"=dds), use_deseq_opts))
 
     #prepare LFC shrinking
-    use_lfc_shrink_opts <- list("coef"=make.names(paste0("condition_",cond_levels[[1]],"_vs_",cond_levels[[2]])),
+    use_lfc_shrink_opts <- list("coef"=paste0("condition_",make.names(cond_levels[[1]]),"_vs_",make.names(cond_levels[[2]])),
                                 "type"="apeglm",
                                 "svalue"=TRUE,
                                 "lfcThreshold"=lfc_threshold,

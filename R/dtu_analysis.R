@@ -339,11 +339,11 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
 
     if(is.null(id_col)){
       assertthat::assert_that(all(rownames(pd) %in% colnames(counts)), msg = "Provided id_col does not match with sample names in counts.")
-      samp <- data.frame("sample_id"=rownames(pd), "condition"=pd[[cond_col]],
+      samp <- data.frame("sample_id"=rownames(pd), "condition"=as.character(pd[[cond_col]]),
                          pd[,-c(which(colnames(pd)==cond_col)),drop=FALSE],
                          row.names = NULL, stringsAsFactors = FALSE)
     }else{
-      samp <- data.frame("sample_id"=pd[[id_col]], "condition"=pd[[cond_col]],
+      samp <- data.frame("sample_id"=pd[[id_col]], "condition"=as.character(pd[[cond_col]]),
                          pd[,-c(which(colnames(pd) %in% c(id_col, cond_col))),drop=FALSE],
                          row.names = NULL, stringsAsFactors = FALSE)
     }
