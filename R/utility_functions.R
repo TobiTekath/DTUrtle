@@ -285,7 +285,7 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=TRUE,
     assertthat::assert_that(methods::is(BPPARAM, "BiocParallelParam"), msg = "Please provide a valid BiocParallelParam object.")
     if(!is.null(columns)){
         assertthat::assert_that(all(columns %in% colnames(df)))
-        df <- df[,columns]
+        df <- df[,columns,drop=F]
     }
     if(!BiocParallel::bpisup(BPPARAM)){
         BiocParallel::bpstart(BPPARAM)

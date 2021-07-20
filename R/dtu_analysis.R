@@ -292,7 +292,7 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     assertthat::assert_that(methods::is(pd, "data.frame"), msg="pd must be a data frame.")
     assertthat::assert_that(ncol(tx2gene)>1, msg = "'tx2gene' should at least have two columns [feature | gene --- in that order].")
     assertthat::assert_that(is.null(id_col)||(is.character(id_col)&&length(id_col)==1&&id_col %in% colnames(pd)), msg="id_col should be a single column name of pd or NULL.")
-    assertthat::assert_that((is.character(cond_col)&&length(cond_col)==1&&cond_col %in% colnames(pd)), msg = paste0("Could not find", cond_col, " in column names of pd."))
+    assertthat::assert_that((is.character(cond_col)&&length(cond_col)==1&&cond_col %in% colnames(pd)), msg = paste0("Could not find ", cond_col, " in column names of pd."))
     assertthat::assert_that(is.null(cond_levels)||length(cond_levels)==2, msg="'cond_levels' should be of length two or NULL.")
     assertthat::assert_that(filtering_strategy %in% c("bulk", "sc", "own"), msg = "Please select a valid filtering strategy ('bulk', 'sc' or 'own').")
     assertthat::assert_that(is.logical(add_pseudocount), msg="`add_pseudocount` must be `TRUE` or `FALSE`.")
