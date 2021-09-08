@@ -1,6 +1,14 @@
 DTUrtle News
 ================
 
+# DTUrtle 1.0.0
+
+## Changes
+
+  - DTUrtle manuscript got published in Bioinformatics:
+      - added citation information.
+      - added DOI in Readme.
+
 # DTUrtle 0.8.1
 
 ## Changes

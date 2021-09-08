@@ -39,6 +39,15 @@ Besides the expression counts, a transcript-level annotation file for
 your species is needed (which is also required for the transcript-level
 quantification).
 
+## More information
+
+For more information about the used methods and package capabilities,
+please refer to the publication in Bioinformatics:
+
+[Tekath, T., & Dugas, M. (2021). Differential transcript usage analysis
+of bulk and single-cell RNA-seq data with
+DTUrtle.](https://doi.org/10.1093/bioinformatics/btab629)
+
 -----
 
 ## Installation

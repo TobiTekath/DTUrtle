@@ -1,0 +1,16 @@
+citHeader("To cite DTUrtle in publications use:")
+
+citEntry(
+  entry    = "article",
+  title    = "Differential transcript usage analysis of bulk and single-cell RNA-seq data with {DTUrtle}",
+  author   = personList(person(given="Tobias", family="Tekath"),
+                   person(given="Martin", family="Dugas")),
+  journal  = "Bioinformatics",
+  year     = "2021",
+  doi      = "10.1093/bioinformatics/btab629",
+  url      = "https://doi.org/10.1093/bioinformatics/btab629",
+  textVersion = paste("Tobias Tekath, Martin Dugas.",
+  "Differential transcript usage analysis of bulk and single-cell RNA-seq data with DTUrtle.",
+  "Bioinformatics, 2021.",
+  "https://doi.org/10.1093/bioinformatics/btab629.")
+)
