@@ -107,7 +107,7 @@ analyzing real world data sets.
 
 A minimal DTUrtle workflow might look like this:
 
-### setup environment
+### Setup environment
 
 ``` r
 library(DTUrtle)
@@ -120,7 +120,7 @@ library(DTUrtle)
 #multiple other options available for computational clusters.
 ```
 
-### import and format data
+### Import and format data
 
 ``` r
 #import gtf Annotation to get transcript to gene mapping

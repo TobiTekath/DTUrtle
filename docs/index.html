@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.8.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -150,6 +150,12 @@
 <a href="#required-input-data" class="anchor"></a>Required input data</h2>
 <p>DTUrtle relies on transcript-level expression counts, which can be generated with transcript-level quantifiers like Salmon, Alevin, kallisto, etc. from ordinary RNA-seq fastq files. As an alternative, even standard splice-aware genomic aligners like STAR (generating a transcript-level BAM with ‘–quantMode TranscriptomeSAM’ and then quantifying it with Salmon) can be used for data generation.</p>
 <p>Besides the expression counts, a transcript-level annotation file for your species is needed (which is also required for the transcript-level quantification).</p>
+</div>
+<div id="more-information" class="section level2">
+<h2 class="hasAnchor">
+<a href="#more-information" class="anchor"></a>More information</h2>
+<p>For more information about the used methods and package capabilities, please refer to the publication in Bioinformatics:</p>
+<p><a href="https://doi.org/10.1093/bioinformatics/btab629">Tekath, T., &amp; Dugas, M. (2021). Differential transcript usage analysis of bulk and single-cell RNA-seq data with DTUrtle.</a></p>
 <hr>
 </div>
 <div id="installation" class="section level2">
@@ -193,7 +199,7 @@
 <p>A minimal DTUrtle workflow might look like this:</p>
 <div id="setup-environment" class="section level3">
 <h3 class="hasAnchor">
-<a href="#setup-environment" class="anchor"></a>setup environment</h3>
+<a href="#setup-environment" class="anchor"></a>Setup environment</h3>
 <div class="sourceCode" id="cb4"><pre class="downlit">
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/TobiTekath/DTUrtle">DTUrtle</a></span><span class="op">)</span>
 
@@ -206,7 +212,7 @@
 </div>
 <div id="import-and-format-data" class="section level3">
 <h3 class="hasAnchor">
-<a href="#import-and-format-data" class="anchor"></a>import and format data</h3>
+<a href="#import-and-format-data" class="anchor"></a>Import and format data</h3>
 <div class="sourceCode" id="cb5"><pre class="downlit">
 <span class="co">#import gtf Annotation to get transcript to gene mapping</span>
 <span class="va">tx2gene</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/import_gtf.html">import_gtf</a></span><span class="op">(</span>gtf_file <span class="op">=</span> <span class="st">"path_to_your_gtf_file.gtf"</span><span class="op">)</span>
@@ -346,6 +352,12 @@
 <ul class="list-unstyled">
 <li>GPL (&gt;= 3) + file <a href="LICENSE-text.html">LICENSE</a>
 </li>
+</ul>
+</div>
+<div class="citation">
+<h2>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html">Citing DTUrtle</a></li>
 </ul>
 </div>
 <div class="developers">
