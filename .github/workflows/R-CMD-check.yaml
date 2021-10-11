@@ -40,15 +40,11 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      - name: Install Remotes and BiocManager
-        run: |
-            install.packages(c("remotes","BiocManager"))
-            # set Bioc Goettingen mirror
-            options("BioC_mirror"="https://ftp.gwdg.de/pub/misc/bioconductor")
-        shell: Rscript {0}
-          
       - name: Install R dependencies
         run: |
+          install.packages(c("remotes","BiocManager"))
+          # set Bioc Goettingen mirror
+          options("BioC_mirror"="https://ftp.gwdg.de/pub/misc/bioconductor")
           BiocManager::install(c("BiocParallel", "GenomicRanges", "Gviz", "rtracklayer", "stageR", "tximport", "DESeq2", "GenomicFeatures"))
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
