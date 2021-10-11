@@ -1,3 +1,6 @@
+#' @import sparseDRIMSeq
+NULL
+
 .onAttach <- function(libname, pkgname){
     cit <- utils::citation(pkgname)
     attr(cit, "mfooter") <- paste0("Use citation(",pkgname,") for BibTeX information.")

@@ -86,7 +86,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
       </span>
     </div>
 
@@ -193,7 +193,7 @@
   group_colors <span class='op'>=</span> <span class='cn'>NULL</span>,
   fit_line_color <span class='op'>=</span> <span class='st'>"red"</span>,
   text_size <span class='op'>=</span> <span class='fl'>11</span>,
-  label_angle <span class='op'>=</span> <span class='fl'>25</span>,
+  label_angle <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>25</span>, <span class='fl'>1</span>, <span class='fl'>1</span><span class='op'>)</span>,
   savepath <span class='op'>=</span> <span class='cn'>NULL</span>,
   filename_ext <span class='op'>=</span> <span class='st'>"_barplot.png"</span>,
   add_to_table <span class='op'>=</span> <span class='cn'>FALSE</span>,
@@ -227,6 +227,10 @@
     <tr>
       <th>text_size</th>
       <td><p>Specify basic text size (in pt) to use in plot.</p></td>
+    </tr>
+    <tr>
+      <th>label_angle</th>
+      <td><p>Specify the angle of the x-axis labels, the vjust and hjust value (in that order).</p></td>
     </tr>
     <tr>
       <th>savepath</th>

@@ -11,7 +11,7 @@ plot_proportion_barplot(
   group_colors = NULL,
   fit_line_color = "red",
   text_size = 11,
-  label_angle = 25,
+  label_angle = c(25, 1, 1),
   savepath = NULL,
   filename_ext = "_barplot.png",
   add_to_table = FALSE,
@@ -31,6 +31,8 @@ plot_proportion_barplot(
 \item{fit_line_color}{Optionally specify the colour to use for the mean fit line.}
 
 \item{text_size}{Specify basic text size (in pt) to use in plot.}
+
+\item{label_angle}{Specify the angle of the x-axis labels, the vjust and hjust value (in that order).}
 
 \item{savepath}{If you want your files to be saved to disk, specify a save path here. The directories will be created if necessary.}
 

@@ -278,7 +278,7 @@ run_deseq2 <- function(counts, pd, id_col=NULL, cond_col, cond_levels=NULL, lfc_
     message("\t\tUnder-expressed: ", sum(res_sig$log2FoldChange<0))
 
     comp_name <- paste0(cond_col,"__",cond_levels[[1]],"_vs_",cond_levels[[2]])
-    return_list <- setNames(list(res_all, res_sig, dds, sig_threshold,
+    return_list <- stats::setNames(list(res_all, res_sig, dds, sig_threshold,
                                  comp_name, cond_levels[[1]], cond_levels[[2]],
                                  samp, use_deseq_opts, use_lfc_shrink_opts),
                             c("results_all", "results_sig", "dds", paste0(threshold_col, "_threshold"),

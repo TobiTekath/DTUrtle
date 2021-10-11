@@ -85,7 +85,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">DTUrtle</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
       </span>
     </div>
 
@@ -180,12 +180,39 @@
       <small>Source: <a href='https://github.com/TobiTekath/DTUrtle/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="dturtle-1-0-0" class="section level1">
-<h1 class="page-header" data-toc-text="1.0.0">
-<a href="#dturtle-1-0-0" class="anchor"></a>DTUrtle 1.0.0</h1>
+    <div id="dturtle-1-0-1" class="section level1">
+<h1 class="page-header" data-toc-text="1.0.1">
+<a href="#dturtle-1-0-1" class="anchor"></a>DTUrtle 1.0.1</h1>
 <div id="changes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#changes" class="anchor"></a>Changes</h2>
+<ul>
+<li>filtering confusing DRIMSeq computation time messages.
+<ul>
+<li>implemented a message filtering function <code><a href="../reference/filter_messages.html">filter_messages()</a></code>.</li>
+</ul>
+</li>
+<li>
+<code><a href="../reference/plot_transcripts_view.html">plot_transcripts_view()</a></code>: added <code>include_ID_in_title</code> parameter.</li>
+<li>
+<code><a href="../reference/plot_proportion_barplot.html">plot_proportion_barplot()</a></code>: added <code>label_angle</code> parameter.</li>
+<li>added <code>lifecycle</code> and <code>R build status</code> badges.
+<ul>
+<li>added automatic <code>R CMD check</code> via GitHub actions.</li>
+</ul>
+</li>
+<li>moved general package code from <code>zzz.R</code> to <code>DTUrtle-package.R</code>.</li>
+<li>new Suggests: <code>lifecycle</code>
+</li>
+</ul>
+</div>
+</div>
+    <div id="dturtle-1-0-0" class="section level1">
+<h1 class="page-header" data-toc-text="1.0.0">
+<a href="#dturtle-1-0-0" class="anchor"></a>DTUrtle 1.0.0</h1>
+<div id="changes-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#changes-1" class="anchor"></a>Changes</h2>
 <ul>
 <li>DTUrtle manuscript got published in Bioinformatics:
 <ul>
@@ -199,9 +226,9 @@
     <div id="dturtle-0-8-1" class="section level1">
 <h1 class="page-header" data-toc-text="0.8.1">
 <a href="#dturtle-0-8-1" class="anchor"></a>DTUrtle 0.8.1</h1>
-<div id="changes-1" class="section level2">
+<div id="changes-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-1" class="anchor"></a>Changes</h2>
+<a href="#changes-2" class="anchor"></a>Changes</h2>
 <ul>
 <li>remodeled a lot of code - preserving functionality if not stated otherwise.</li>
 <li>added basic DGE-calling methods:
@@ -225,9 +252,9 @@
     <div id="dturtle-0-7-4" class="section level1">
 <h1 class="page-header" data-toc-text="0.7.4">
 <a href="#dturtle-0-7-4" class="anchor"></a>DTUrtle 0.7.4</h1>
-<div id="changes-2" class="section level2">
+<div id="changes-3" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-2" class="anchor"></a>Changes</h2>
+<a href="#changes-3" class="anchor"></a>Changes</h2>
 <ul>
 <li>
 <code><a href="../reference/plot_transcripts_view.html">plot_transcripts_view()</a></code>: added <code>tested_transcripts_only</code> parameter, to allow better control which transcripts of a gene should be displayed. Also allows to create plot for genes which have been excluded from the analysis.</li>
@@ -239,9 +266,9 @@
     <div id="dturtle-0-7-3" class="section level1">
 <h1 class="page-header" data-toc-text="0.7.3">
 <a href="#dturtle-0-7-3" class="anchor"></a>DTUrtle 0.7.3</h1>
-<div id="changes-3" class="section level2">
+<div id="changes-4" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-3" class="anchor"></a>Changes</h2>
+<a href="#changes-4" class="anchor"></a>Changes</h2>
 <ul>
 <li>readded “GenomicFeatures” as dependency - eases installation.</li>
 <li>measure and show computation time in vignettes.</li>
@@ -278,9 +305,9 @@
     <div id="dturtle-0-7-1" class="section level1">
 <h1 class="page-header" data-toc-text="0.7.1">
 <a href="#dturtle-0-7-1" class="anchor"></a>DTUrtle 0.7.1</h1>
-<div id="changes-4" class="section level2">
+<div id="changes-5" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-4" class="anchor"></a>Changes</h2>
+<a href="#changes-5" class="anchor"></a>Changes</h2>
 <ul>
 <li>add new vignette for Tabula Muris (Mouse) data set.</li>
 <li>
@@ -313,9 +340,9 @@
     <div id="dturtle-0-2-6" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.6">
 <a href="#dturtle-0-2-6" class="anchor"></a>DTUrtle 0.2.6</h1>
-<div id="changes-5" class="section level2">
+<div id="changes-6" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-5" class="anchor"></a>Changes</h2>
+<a href="#changes-6" class="anchor"></a>Changes</h2>
 <ul>
 <li>add <code>add_to_table</code> parameter to plotting functions, to add plot savepaths directly to <code>dtu_table</code>.</li>
 <li>
@@ -335,9 +362,9 @@
     <div id="dturtle-0-2-5" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.5">
 <a href="#dturtle-0-2-5" class="anchor"></a>DTUrtle 0.2.5</h1>
-<div id="changes-6" class="section level2">
+<div id="changes-7" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-6" class="anchor"></a>Changes</h2>
+<a href="#changes-7" class="anchor"></a>Changes</h2>
 <ul>
 <li>initial first version.</li>
 </ul>

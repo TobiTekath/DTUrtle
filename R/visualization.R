@@ -363,19 +363,20 @@ plot_dtu_table <- function(dturtle, columns=NULL, column_formatters=list(),
 #' @param group_colors Optionally specify the colours for the two sample groups in the plot. Must be a named vector, with the group names as names.
 #' @param fit_line_color Optionally specify the colour to use for the mean fit line.
 #' @param text_size Specify basic text size (in pt) to use in plot.
+#' @param label_angle Specify the angle of the x-axis labels, the vjust and hjust value (in that order).
 #' @param savepath If you want your files to be saved to disk, specify a save path here. The directories will be created if necessary.
 #' @param filename_ext Optionally specify a file name extension here, which also defines the save image format. The file name will be 'gene_name+extension'.
 #' @param add_to_table If a `savepath` is provided, add the filepaths of the created plots to the corresponding entries in `dtu_table`. The name of the column that shall be created can be specified here.
 #' @param BPPARAM If multicore processing should be used, specify a `BiocParallelParam` object here. Among others, can be `SerialParam()` (default) for non-multicore processing or `MulticoreParam('number_cores')` for multicore processing. See \code{\link[BiocParallel:BiocParallel-package]{BiocParallel}} for more information.
 #' @inheritDotParams ggplot2::ggsave
 #'
-#' @return  Returns list of saved plots, for adding to the DTU table. If no `savepath` is provided, returns a list of the created plots for further processing. If `add_to_table` is provided, return the altered `dturtle` object, if at least one of the plots could be added to the DTU summary table.
+#' @return Returns list of saved plots, for adding to the DTU table. If no `savepath` is provided, returns a list of the created plots for further processing. If `add_to_table` is provided, return the altered `dturtle` object, if at least one of the plots could be added to the DTU summary table.
 #' @family DTUrtle visualization
 #' @export
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
 plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
                                     group_colors=NULL, fit_line_color="red",
-                                    text_size=11, label_angle=25, savepath=NULL,
+                                    text_size=11, label_angle=c(25,1,1), savepath=NULL,
                                     filename_ext="_barplot.png", add_to_table=FALSE,
                                     BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
@@ -383,6 +384,7 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
   assertthat::assert_that(is.null(group_colors)||(methods::is(group_colors, "list")&&!is.null(names(group_colors))), msg = "The provided group colors must be a named list or NULL.")
   assertthat::assert_that(is.null(fit_line_color)||methods::is(fit_line_color,"character"), msg = "The provided fit_line_color must be of type character or NULL.")
   assertthat::assert_that(is.numeric(text_size)&&length(text_size)==1, msg = "The text_size object must be a single numeric.")
+  assertthat::assert_that(is.numeric(label_angle)&&length(label_angle)==3, msg = "The label_angle object must a numeric of length 3.")
   assertthat::assert_that(is.null(savepath)||methods::is(savepath,"character"), msg = "The provided savepath must be of type character or NULL.")
   assertthat::assert_that(is.null(savepath)||!(file.exists(savepath)&&!dir.exists(savepath)), msg = "The savepath already exists but is not a directory. Change the savepath to a (already existing) directory.")
   assertthat::assert_that(is.null(savepath)||(is.character(savepath)&&length(savepath)==1), msg = "The savepath object must be a character vector of length 1 or NULL.")
@@ -497,7 +499,7 @@ plot_proportion_barplot <- function(dturtle, genes=NULL, meta_gene_id=NULL,
     #barplot
     ggp <- ggplot2::ggplot(data = prop_samp, mapping = ggplot2::aes_string(x = "feature_id", y = "proportion", group = "sample_id", fill = "group")) +
       ggplot2::geom_bar(stat = "identity", position = ggplot2::position_dodge(width = 0.9)) + ggplot2::theme_bw(base_size = text_size) +
-      suppressWarnings(ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 25, vjust = 1, hjust=1, colour = text_colour),
+      suppressWarnings(ggplot2::theme(axis.text.x = ggplot2::element_text(angle = label_angle[1], vjust = label_angle[2], hjust=label_angle[3], colour = text_colour),
                      axis.title = ggplot2::element_text(face = "bold"))) +
       ggplot2::scale_fill_manual(name = "Group", values = group_colors, breaks = names(group_colors)) +
       ggplot2::labs(title = main, x = "Transcripts", y = "Proportions")
@@ -684,6 +686,7 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
 #' @param reduce_introns Logical if intron ranges shall be shrunken down, highlighting the exonic structure.
 #' @param reduce_introns_fill Optionally specify the background color of ranges where introns have been reduced.
 #' @param reduce_introns_min_size Specify the minimal size introns are reduced to (in bp).
+#' @param include_ID_in_title Logial, if the Gene-ID should be included in the plot title. Defaults to TRUE.
 #' @param fontsize_vec Vector of fontsizes to use. The first value is the side annotation text fontsize (in pt), the second value the cex factor for the title, the third value the cex factor for the feature & chromosome names.
 #' @param arrow_colors Specify the colors of the arrows indicating the direction of proportional changes. The first color string is for a positive change, the second for a negative one.
 #' @param arrow_start Advanced: Set the x coordinate of the arrow annotations (in NPC)
@@ -697,7 +700,7 @@ plot_proportion_pheatmap <- function(dturtle, genes=NULL, sample_meta_table_colu
 #' @export
 #' @seealso [run_drimseq()] and [posthoc_and_stager()] for DTU object creation. [create_dtu_table()] and [plot_dtu_table()] for table visualization.
 plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=NULL, tested_transcripts_only="mixed", reduce_introns=TRUE,
-                                  reduce_introns_fill="white", reduce_introns_min_size=50, fontsize_vec=c(10,1.1,0.6),
+                                  reduce_introns_fill="white", reduce_introns_min_size=50, include_ID_in_title=TRUE, fontsize_vec=c(10,1.1,0.6),
                                   arrow_colors=c("#7CAE00", "#00BFC4"), arrow_start=0.88, extension_factors=c(0.025, 0.22),
                                   savepath=NULL, filename_ext="_transcripts.png", add_to_table=FALSE, BPPARAM=BiocParallel::SerialParam(), ...){
   assertthat::assert_that(is.null(genes)||(methods::is(genes,"character")&&length(genes)>0), msg = "The genes object must be a non-empty character vector or NULL.")
@@ -707,8 +710,9 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
   assertthat::assert_that(is.null(one_to_one)||isTRUE(one_to_one)||(methods::is(one_to_one, "character")&&length(one_to_one)==1), msg = "The one_to_one object must be a character vector of length 1, TRUE or NULL.")
   assertthat::assert_that(length(tested_transcripts_only)==1&&tested_transcripts_only %in% c("mixed",TRUE,FALSE), msg = "The tested_transcripts_only object must be 'mixed', TRUE or FALSE.")
   assertthat::assert_that(is.logical(reduce_introns), msg = "The reduce_introns objects must be logical.")
-  assertthat::assert_that(methods::is(reduce_introns_fill, "character")&&length(reduce_introns_fill)==1, msg = "The reduce_introns_fill objects must be a character vector of length 1")
+  assertthat::assert_that(methods::is(reduce_introns_fill, "character")&&length(reduce_introns_fill)==1, msg = "The reduce_introns_fill objects must be a character vector of length 1.")
   assertthat::assert_that((is.integer(reduce_introns_min_size)||(is.numeric(reduce_introns_min_size) && all(reduce_introns_min_size == trunc(reduce_introns_min_size))))&&reduce_introns_min_size>=0, msg = "The provided reduce_introns_min_size must be a positive integer.")
+  assertthat::assert_that(is.logical(include_ID_in_title)&&length(include_ID_in_title)==1, msg = "The include_ID_in_title object must be TRUE or FALSE.")
   assertthat::assert_that(is.numeric(fontsize_vec)&&length(fontsize_vec)==3, msg = "The fontsize_vec object must be a numeric vector of length 3.")
   assertthat::assert_that(methods::is(arrow_colors, "character")&&length(arrow_colors)==2, msg = "The arrow_colors object must be a character vector of length 2.")
   assertthat::assert_that(is.numeric(arrow_start)&&length(arrow_start)==1, msg="The arrow_start object must be a single numeric.")
@@ -927,9 +931,10 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
       }
     }
 
+    base_title <- paste0(gene_info$gene_name, ifelse(include_ID_in_title, paste0(" (", gene_info$gene_id,")"), ""))
     p <- Gviz::plotTracks(append(track_list, grtrack_list), collapse=TRUE, from = min(tx_ranges$start), to = max(tx_ranges$end),
                           extend.left = extension_front, extend.right = extension_back, title.width=if(any(tested_tx %in% dturtle$sig_tx)) NULL else 0,
-                          main = paste0(gene_info$gene_name, " (", gene_info$gene_id,") ---  ", levels(dturtle$group)[1], " vs. ",levels(dturtle$group)[2] ),
+                          main = paste0(base_title, " --- ", levels(dturtle$group)[1], " vs. ",levels(dturtle$group)[2] ),
                           cex.main = fontsize_vec[[2]])
     if(!is.null(savepath)){
       grDevices::dev.off()

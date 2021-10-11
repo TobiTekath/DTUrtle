@@ -1,6 +1,19 @@
 DTUrtle News
 ================
 
+# DTUrtle 1.0.1
+
+## Changes
+
+  - filtering confusing DRIMSeq computation time messages.
+      - implemented a message filtering function `filter_messages()`.
+  - `plot_transcripts_view()`: added `include_ID_in_title` parameter.
+  - `plot_proportion_barplot()`: added `label_angle` parameter.
+  - added `lifecycle` and `R build status` badges.
+      - added automatic `R CMD check` via GitHub actions.
+  - moved general package code from `zzz.R` to `DTUrtle-package.R`.
+  - new Suggests: `lifecycle`
+
 # DTUrtle 1.0.0
 
 ## Changes

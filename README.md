@@ -4,6 +4,14 @@
 **Perform differential transcript usage (DTU) analysis of bulk or
 single-cell RNA-seq data and visualize the results.**
 
+<!-- badges: start -->
+
+[![Lifecycle:
+stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
+[![R build
+status](https://github.com/TobiTekath/DTUrtle/workflows/R-CMD-check/badge.svg)](https://github.com/TobiTekath/DTUrtle/actions)
+<!-- badges: end -->
+
 ## Background
 
 While most RNA-seq data sets are mainly analyzed in regard to

@@ -1,6 +1,3 @@
-#' @import sparseDRIMSeq
-NULL
-
 
 #' Import quantification results
 #'
@@ -428,10 +425,10 @@ run_drimseq <- function(counts, tx2gene, pd, id_col=NULL, cond_col, cond_levels=
     design_full <- stats::model.matrix(~condition, data=samp)
 
     message("\nPerforming statistical tests...\n")
-    drim_test <- sparseDRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, add_uniform=add_pseudocount, verbose=1)
+    drim_test <- filter_messages(sparseDRIMSeq::dmPrecision(drim, design=design_full, prec_subset=1, BPPARAM=BPPARAM, add_uniform=add_pseudocount, verbose=1))
     ### do not add uniform distribution to full fit, as it is not added to null fit
-    drim_test <- sparseDRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=add_pseudocount, verbose=1)
-    drim_test <- sparseDRIMSeq::dmTest(drim_test, coef=2, BPPARAM=BPPARAM, verbose=1)
+    drim_test <- filter_messages(sparseDRIMSeq::dmFit(drim_test, design=design_full, BPPARAM=BPPARAM, add_uniform=add_pseudocount, verbose=1))
+    drim_test <- filter_messages(sparseDRIMSeq::dmTest(drim_test, coef=2, BPPARAM=BPPARAM, verbose=1))
     group <- factor(samp$condition, levels = cond_levels, ordered = TRUE)
 
     exp_in_gn <- rapply(exp_in_gn, as.character, classes="factor", how="replace")
@@ -623,11 +620,11 @@ priming_bias_detection_probability <- function(counts, gtf, tx2gene, one_to_one=
     gene_info <- as.data.frame(gene_gtf[gene_gtf$type=="gene",])
     expressed_tx <- gene_gtf@elementMetadata[[gtf_tx_column]][gene_gtf$type=="transcript"]
     if(length(expressed_tx)<2){
-      return(setNames(rep(1, length(expressed_tx)), expressed_tx))
+      return(stats::setNames(rep(1, length(expressed_tx)), expressed_tx))
     }
     if(gene_info$strand=="*"){
       message("Could not score ", gene_info$gene_name, ": Strand information needed!")
-      return(setNames(rep(NA, length(expressed_tx)), expressed_tx))
+      return(stats::setNames(rep(NA, length(expressed_tx)), expressed_tx))
     }
     # use tx with highest proportion as reference
     tx_counts <- counts[expressed_tx]
@@ -665,13 +662,13 @@ priming_bias_detection_probability <- function(counts, gtf, tx2gene, one_to_one=
       return(temp_score)
     })
     #use score of 2 to indicate reference transcript... is set to 1 later.
-    score_vec <- setNames(c(2,score_vec), c(reference_tx, other_tx))
+    score_vec <- stats::setNames(c(2,score_vec), c(reference_tx, other_tx))
     return(score_vec)
   }, BPPARAM=BPPARAM)
   BiocParallel::bpstop(BPPARAM)
 
   score_list <- unlist(score_list)
-  ref_tx <- setNames(score_list==2, names(score_list))
+  ref_tx <- stats::setNames(score_list==2, names(score_list))
   score_list[ref_tx] <- 1
 
   if(!is.null(add_to_table)){

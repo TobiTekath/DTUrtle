@@ -264,6 +264,7 @@ dturtle$used_filtering_options
 ```
 
 The resulting `dturtle` object will be used as our main results object, storing all necessary and interesting data of the analysis. It is a simple and easy-accessible list, which can be easily extended / altered by the user. By default three different meta data tables are generated:
+
  - `meta_table_gene`: Contains gene level meta data.
  - `meta_table_tx`: Contains transcript level meta data.
  - `meta_table_sample`: Contains sample level meta data (as the created `pd` data frame)

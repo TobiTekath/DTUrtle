@@ -14,6 +14,7 @@ plot_transcripts_view(
   reduce_introns = TRUE,
   reduce_introns_fill = "white",
   reduce_introns_min_size = 50,
+  include_ID_in_title = TRUE,
   fontsize_vec = c(10, 1.1, 0.6),
   arrow_colors = c("#7CAE00", "#00BFC4"),
   arrow_start = 0.88,
@@ -44,6 +45,8 @@ Defaults to \code{mixed}, meaning if a gene has no tested transcripts (i.e. it w
 \item{reduce_introns_fill}{Optionally specify the background color of ranges where introns have been reduced.}
 
 \item{reduce_introns_min_size}{Specify the minimal size introns are reduced to (in bp).}
+
+\item{include_ID_in_title}{Logial, if the Gene-ID should be included in the plot title. Defaults to TRUE.}
 
 \item{fontsize_vec}{Vector of fontsizes to use. The first value is the side annotation text fontsize (in pt), the second value the cex factor for the title, the third value the cex factor for the feature & chromosome names.}
 
