@@ -22,7 +22,6 @@ jobs:
           - {os: windows-latest, r: '4.0'}
           - {os: ubuntu-latest,   r: '4.0', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: '3.6'}
-          - {os: ubuntu-latest,   r: '3.4'}
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -39,13 +38,18 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+          
+      - name: Install libcurl for Rhtslib
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt install -y libcurl-dev
 
       - name: Install R dependencies
         run: |
           install.packages(c("remotes","BiocManager"))
           # set Bioc Goettingen mirror
           options("BioC_mirror"="https://ftp.gwdg.de/pub/misc/bioconductor")
-          BiocManager::install(c("BiocParallel", "GenomicRanges", "Gviz", "rtracklayer", "stageR", "tximport", "DESeq2", "GenomicFeatures"))
+          BiocManager::install(c("BiocParallel", "GenomicRanges", "Gviz", "rtracklayer", "stageR", "tximport", "DESeq2", "GenomicFeatures", "glmGamPoi", "apeglm", "GenomeInfoDb"))
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
