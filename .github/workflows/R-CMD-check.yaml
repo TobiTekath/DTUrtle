@@ -42,7 +42,7 @@ jobs:
       - name: Install libcurl for Rhtslib
         if: runner.os == 'Linux'
         run: |
-          sudo apt install -y libcurl-dev
+          sudo apt install -y libcurl4-openssl-dev
 
       - name: Install R dependencies
         run: |
