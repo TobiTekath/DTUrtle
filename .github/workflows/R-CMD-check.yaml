@@ -39,13 +39,13 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-      
+
       - name: Install Remotes and BiocManager
-      	run: |
-      	  install.packages(c("remotes","BiocManager"))
-      	  # set Bioc Goettingen mirror
-      	  options("BioC_mirror"="https://ftp.gwdg.de/pub/misc/bioconductor")
-      	shell: Rscript {0}
+        run: |
+            install.packages(c("remotes","BiocManager"))
+            # set Bioc Goettingen mirror
+            options("BioC_mirror"="https://ftp.gwdg.de/pub/misc/bioconductor")
+        shell: Rscript {0}
       
       - name: Install system dependencies
         if: runner.os == 'Linux'
