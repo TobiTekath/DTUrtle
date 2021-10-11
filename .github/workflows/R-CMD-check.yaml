@@ -46,16 +46,8 @@ jobs:
             # set Bioc Goettingen mirror
             options("BioC_mirror"="https://ftp.gwdg.de/pub/misc/bioconductor")
         shell: Rscript {0}
-      
-      - name: Install system dependencies
-        if: runner.os == 'Linux'
-        run: |
-          while read -r cmd
-          do
-            eval sudo $cmd
-          done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "latest"))')
           
-      - name: Install dependencies
+      - name: Install R dependencies
         run: |
           BiocManager::install(c("BiocParallel", "GenomicRanges", "Gviz", "rtracklayer", "stageR", "tximport", "DESeq2", "GenomicFeatures"))
           remotes::install_deps(dependencies = TRUE)
