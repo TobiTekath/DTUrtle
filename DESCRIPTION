@@ -40,7 +40,7 @@ Suggests:
     magick,
     glmGamPoi,
     apeglm
-Remotes: TobiTekath/sparseDRIMSeq, BiocParallel, GenomicRanges, GenomeInfoDb, Gviz, rtracklayer, stageR, tximport, rstudio/webshot2, DESeq2, glmGamPoi, apeglm, GenomicFeatures
+Remotes: github::TobiTekath/sparseDRIMSeq, bioc::BiocParallel, bioc::GenomicRanges, bioc::GenomeInfoDb, bioc::Gviz, bioc::rtracklayer, bioc::stageR, bioc::tximport, github::rstudio/webshot2, bioc::DESeq2, bioc::glmGamPoi, bioc::apeglm, bioc::GenomicFeatures
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr

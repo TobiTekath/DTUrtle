@@ -27,6 +27,7 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      UPGRADE_PKGS: ${{ matrix.config.r == '3.6' }}
 
     steps:
       - uses: actions/checkout@v2
@@ -52,6 +53,13 @@ jobs:
           BiocManager::install(c("BiocParallel", "GenomicRanges", "Gviz", "rtracklayer", "stageR", "tximport", "DESeq2", "GenomicFeatures", "glmGamPoi", "apeglm", "GenomeInfoDb"))
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
+        shell: Rscript {0}
+        
+      - name: glmGamPoi and Seurat for R < 4.0
+        if: runner.os == "Linux" && ${{ env.UPGRADE_PKGS }}
+        run: |
+          remotes::install_github("const-ae/glmGamPoi")
+          remotes::install_version("Seurat", version="3.0.0")
         shell: Rscript {0}
 
       - uses: r-lib/actions/check-r-package@v1
