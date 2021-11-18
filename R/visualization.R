@@ -796,6 +796,10 @@ plot_transcripts_view <- function(dturtle, genes=NULL, gtf, genome, one_to_one=N
     BiocParallel::bpprogressbar(BPPARAM) <- TRUE
   }
 
+  if(!is.null(savepath) && !dir.exists(savepath)){
+    dir.create(file.path(savepath), recursive = TRUE)
+  }
+
   message("Creating ", length(valid_genes), " plots:")
   if(!BiocParallel::bpisup(BPPARAM)){
     BiocParallel::bpstart(BPPARAM)

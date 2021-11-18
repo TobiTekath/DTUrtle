@@ -256,6 +256,7 @@ check_unique_by_partition <- function(df, partitioning, columns=NULL){
     for(part in partitioning){
         dat <- df[part, cols, drop=FALSE]
         cols <- cols[apply(dat, 2, function(x){all(x == x[1])})]
+        cols <- cols[!is.na(cols)]
         if(length(cols)==0){
             return(NULL)
         }
@@ -286,12 +287,15 @@ get_by_partition <- function(df, partitioning, FUN, columns=NULL, simplify=TRUE,
     if(!is.null(columns)){
         assertthat::assert_that(all(columns %in% colnames(df)))
         df <- df[,columns,drop=FALSE]
+        factor_columns <- which(sapply(df,is.factor))
+        df[,factor_columns,drop=FALSE] <- apply(df[,factor_columns,drop=FALSE], 2, as.character)
     }
     if(!BiocParallel::bpisup(BPPARAM)){
         BiocParallel::bpstart(BPPARAM)
     }
     ret <- BiocParallel::bpaggregate(df, by=list(rep(names(partitioning), lengths(partitioning))), FUN=FUN,  simplify=simplify, drop=TRUE, BPPARAM = BPPARAM)
     BiocParallel::bpstop(BPPARAM)
+    ret[,factor_columns,drop=FALSE] <- apply(ret[,factor_columns,drop=FALSE], 2, as.factor)
     return(ret)
 }
 
