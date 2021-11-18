@@ -1,6 +1,17 @@
 DTUrtle News
 ================
 
+# DTUrtle 1.0.2
+
+## Changes
+
+  - `plot_transcripts_view()`: now creates missing save folder, like
+    other plotting functions.
+  - `check_unique_by_partition()`: now handles columns with only `NA`
+    values.
+  - `get_by_partition()`: correctly retains factor columns.
+  - styled R code with `styler`-package for better code readability.
+
 # DTUrtle 1.0.1
 
 ## Changes
@@ -87,7 +98,7 @@ DTUrtle News
     extension.
   - removed dependency of ‘stringi’.
   - added ‘sparseDRIMSeq’ to depending packages, to get rid of sometimes
-    not-occuring package load.
+    not-occurring package load.
   - fixed some smaller bugs.
 
 # DTUrtle 0.7.1
