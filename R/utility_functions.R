@@ -294,14 +294,14 @@ get_by_partition <- function(df, partitioning, FUN, columns = NULL, simplify = T
     assertthat::assert_that(all(columns %in% colnames(df)))
     df <- df[, columns, drop = FALSE]
     factor_columns <- which(sapply(df, is.factor))
-    df[, factor_columns, drop = FALSE] <- apply(df[, factor_columns, drop = FALSE], 2, as.character)
+    df[, factor_columns] <- apply(df[, factor_columns, drop = FALSE], 2, as.character)
   }
   if (!BiocParallel::bpisup(BPPARAM)) {
     BiocParallel::bpstart(BPPARAM)
   }
   ret <- BiocParallel::bpaggregate(df, by = list(rep(names(partitioning), lengths(partitioning))), FUN = FUN, simplify = simplify, drop = TRUE, BPPARAM = BPPARAM)
   BiocParallel::bpstop(BPPARAM)
-  ret[, factor_columns, drop = FALSE] <- apply(ret[, factor_columns, drop = FALSE], 2, as.factor)
+  ret[, factor_columns] <- apply(ret[, factor_columns, drop = FALSE], 2, as.factor)
   return(ret)
 }
 
