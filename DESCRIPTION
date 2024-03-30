@@ -2,7 +2,7 @@ Package: DTUrtle
 Type: Package
 URL: https://github.com/TobiTekath/DTUrtle, https://tobitekath.github.io/DTUrtle
 Title: Differential Transcript Usage analysis of bulk and single-cell RNA-seq data
-Version: 1.0.2
+Version: 1.0.3
 Authors@R: c(person(given = "Tobias", family = "Tekath", role = c("aut", "cre"), email = "tobias.tekath@wwu.de", comment = c(ORCID = "0000-0002-9315-5452")))
 Description: Easily perform and visualize Differential Transcript Usage (DTU) analysis for bulk or single-cell RNA-seq data, utilizing transcript level quantification counts.
 License: GPL (>= 3) + file LICENSE

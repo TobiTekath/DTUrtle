@@ -491,7 +491,7 @@ plot_proportion_barplot <- function(dturtle, genes = NULL, meta_gene_id = NULL,
     feature_levels <- rownames(prop_samp)[oo]
 
     # order_samples
-    o <- order(group, -prop_samp[feature_levels[1], -1])
+    o <- order(group, as.numeric(-prop_samp[feature_levels[1], -1]))
     sample_levels <- colnames(counts_gene)[o]
 
     prop_samp <- reshape2::melt(prop_samp,
